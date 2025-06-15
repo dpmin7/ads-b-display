@@ -1,0 +1,43 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<BorlandProject>
+	<Transactions>
+    <Transaction>1899-12-30 00:00:00.000.640,=C:\Users\dplakosh\Desktop\ADS-B-2025\ADS-B-Display\Map\libgefetch\gefetch_http.cpp</Transaction>
+    <Transaction>1899-12-30 00:00:00.000.942,=C:\Users\dplakosh\Desktop\ADS-B-2025\ADS-B-Display\Map\libgefetch\Request.cpp</Transaction>
+    <Transaction>1899-12-30 00:00:00.000.878,=C:\Users\dplakosh\Desktop\ADS-B-2025\ADS-B-Display\Map\libgefetch\gefetch_zlib.cpp</Transaction>
+    <Transaction>1899-12-30 00:00:00.000.664,C:\Users\dplakosh\Desktop\ADS-B-2025\ADS-B-Display\Map\libgefetch\gefetch_meta.cpp=</Transaction>
+    <Transaction>1899-12-30 00:00:00.000.692,C:\Users\dplakosh\Desktop\ADS-B-2025\ADS-B-Display\Map\libgefetch\gefetch_crypt.cpp=</Transaction>
+    <Transaction>1899-12-30 00:00:00.000.448,=C:\Users\dplakosh\Desktop\ADS-B-2025\ADS-B-Display\Map\libgefetch\gefetch_crypt.cpp</Transaction>
+    <Transaction>1899-12-30 00:00:00.000.694,=C:\Users\dplakosh\Desktop\ADS-B-2025\ADS-B-Display\Map\libgefetch\gefetch_image.cpp</Transaction>
+    <Transaction>1899-12-30 00:00:00.000.384,=C:\Users\dplakosh\Desktop\ADS-B-2025\ADS-B-Display\Map\libgefetch\gefetch_auth.cpp</Transaction>
+    <Transaction>1899-12-30 00:00:00.000.786,C:\Users\dplakosh\Desktop\ADS-B-2025\ADS-B-Display\Map\libgefetch\gefetch_auth.cpp=</Transaction>
+    <Transaction>1899-12-30 00:00:00.000.576,=C:\Users\dplakosh\Desktop\ADS-B-2025\ADS-B-Display\Map\libgefetch\gefetch_fetch.cpp</Transaction>
+    <Transaction>1899-12-30 00:00:00.000.528,=C:\Users\dplakosh\Desktop\ADS-B-2025\ADS-B-Display\Map\libgefetch\gefetch_data.cpp</Transaction>
+    <Transaction>1899-12-30 00:00:00.000.642,C:\Users\dplakosh\OneDrive\Documents\Embarcadero\Studio\Projects\Project1.cbproj=C:\Users\dplakosh\Desktop\ADS-B-2025\ADS-B-Display\Map\libgefetch\libgefetch.cbproj</Transaction>
+    <Transaction>1899-12-30 00:00:00.000.815,=C:\Users\dplakosh\Desktop\ADS-B-2025\ADS-B-Display\Map\libgefetch\gefetch_meta.cpp</Transaction>
+    <Transaction>1899-12-30 00:00:00.000.663,=C:\Users\dplakosh\OneDrive\Documents\Embarcadero\Studio\Projects\Project1PCH1.h</Transaction>
+    <Transaction>1899-12-30 00:00:00.000.455,=C:\Users\dplakosh\OneDrive\Documents\Embarcadero\Studio\Projects\Project1PCH1.h</Transaction>
+    <Transaction>1899-12-30 00:00:00.000.807,=C:\Users\dplakosh\Desktop\ADS-B-2025\ADS-B-Display\Map\libgefetch\gefetch_internal.h</Transaction>
+    <Transaction>1899-12-30 00:00:00.000.200,C:\Users\dplakosh\Desktop\ADS-B-2025\ADS-B-Display\Map\libgefetch\libgefetch.cbproj=C:\Users\dplakosh\Desktop\ADS-B-2025\ADS-B-Display\Map\libgefetch\libgefetch.cbproj</Transaction>
+    <Transaction>1899-12-30 00:00:00.000.272,=C:\Users\dplakosh\OneDrive\Documents\Embarcadero\Studio\Projects\Project1PCH1.h</Transaction>
+    <Transaction>1899-12-30 00:00:00.000.107,=C:\Users\dplakosh\OneDrive\Documents\Embarcadero\Studio\Projects\Project1PCH1.h</Transaction>
+    <Transaction>1899-12-30 00:00:00.000.345,=C:\Users\dplakosh\OneDrive\Documents\Embarcadero\Studio\Projects\Unit1.cpp</Transaction>
+    <Transaction>1899-12-30 00:00:00.000.821,=C:\Users\dplakosh\OneDrive\Documents\Embarcadero\Studio\Projects\Unit1.cpp</Transaction>
+    <Transaction>1899-12-30 00:00:00.000.656,=C:\Users\dplakosh\OneDrive\Documents\Embarcadero\Studio\Projects\Unit1.cpp</Transaction>
+    <Transaction>1899-12-30 00:00:00.000.759,=C:\Users\dplakosh\Desktop\ADS-B-2025\ADS-B-Display\Map\libgefetch\gefetch.h</Transaction>
+    <Transaction>1899-12-30 00:00:00.000.752,=C:\Users\dplakosh\Desktop\ADS-B-2025\ADS-B-Display\Map\libgefetch\gefetch_init.cpp</Transaction>
+    <Transaction>1899-12-30 00:00:00.000.444,=C:\Users\dplakosh\OneDrive\Documents\Embarcadero\Studio\Projects\Unit1.cpp</Transaction>
+  </Transactions>
+	<ProjectSortOrder AutoSort="0" SortType="0">
+    <File Path="gefetch.h"/>
+    <File Path="gefetch_data.cpp"/>
+    <File Path="gefetch_fetch.cpp"/>
+    <File Path="gefetch_http.cpp"/>
+    <File Path="gefetch_image.cpp"/>
+    <File Path="gefetch_init.cpp"/>
+    <File Path="gefetch_internal.h"/>
+    <File Path="gefetch_zlib.cpp"/>
+    <File Path="Request.cpp"/>
+    <File Path="Request.cpp"/>
+    <File Path="Request.h"/>
+  </ProjectSortOrder>
+</BorlandProject>
