@@ -1,0 +1,307 @@
+﻿using OpenTK.Graphics.OpenGL;
+using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+using System.Windows.Media.Imaging;
+
+namespace ADS_B_Display
+{
+    /// <summary>
+    /// ADS-B Display용 2D 드로잉 유틸리티 모음 (ntds2d.h/.cpp 변환)
+    /// </summary>
+    public static class Ntds2d
+    {
+        private const int NUM_SPRITES = 81;
+        private const int SPRITE_WIDTH = 72;
+        private const int SPRITE_HEIGHT = 72;
+        private static readonly int[] TextureSprites = new int[NUM_SPRITES];
+        private static int NumSprites = 0;
+
+        private static int AirTrackFriendList;
+        private static int AirTrackHostileList;
+        private static int AirTrackUnknownList;
+        private static int SurfaceTrackFriendList;
+        private static int TrackHookList;
+
+        /// <summary>
+        /// 비행기 스프라이트 시트에서 개별 이미지를 분할하여 텍스처로 생성합니다.
+        /// </summary>
+        public static int MakeAirplaneImages()
+        {
+            // 스프라이트 시트 파일 경로
+            string path = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Symbols", "sprites-RGBA.png");
+            var decoder = new PngBitmapDecoder(new Uri(path), BitmapCreateOptions.PreservePixelFormat, BitmapCacheOption.OnLoad);
+            var sheet = decoder.Frames[0];
+            int width = sheet.PixelWidth;
+            int height = sheet.PixelHeight;
+            int stride = (sheet.Format.BitsPerPixel / 8) * width;
+            byte[] sheetPixels = new byte[stride * height];
+            sheet.CopyPixels(sheetPixels, stride, 0);
+
+            GL.GenTextures(NUM_SPRITES, TextureSprites);
+            NumSprites = 0;
+            for (int row = 0; row < 11; row++) {
+                for (int col = 0; col < 8; col++) {
+                    // 서브 이미지 버퍼
+                    byte[] sub = new byte[SPRITE_WIDTH * SPRITE_HEIGHT * 4];
+                    for (int y = 0; y < SPRITE_HEIGHT; y++)
+                        for (int x = 0; x < SPRITE_WIDTH; x++) {
+                            int srcIndex = ((y + row * SPRITE_HEIGHT) * width + (x + col * SPRITE_WIDTH)) * 4;
+                            int dstIndex = (y * SPRITE_WIDTH + x) * 4;
+                            Array.Copy(sheetPixels, srcIndex, sub, dstIndex, 4);
+                        }
+
+                    // 텍스처 생성
+                    int texId = TextureSprites[NumSprites];
+                    GL.BindTexture(TextureTarget.Texture2D, texId);
+                    GL.PixelStore(PixelStoreParameter.UnpackAlignment, 1);
+                    GL.TexImage2D(TextureTarget.Texture2D, 0, PixelInternalFormat.Rgba, SPRITE_WIDTH, SPRITE_HEIGHT, 0,
+                                  PixelFormat.Rgba, PixelType.UnsignedByte, sub);
+                    GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMinFilter, (int)TextureMinFilter.Linear);
+                    GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMagFilter, (int)TextureMagFilter.Linear);
+                    GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureWrapS, (int)All.ClampToEdge);
+                    GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureWrapT, (int)All.ClampToEdge);
+                    GL.BindTexture(TextureTarget.Texture2D, 0);
+
+                    NumSprites++;
+                    if (NumSprites == NUM_SPRITES)
+                        return NumSprites;
+                }
+            }
+            return NumSprites;
+        }
+
+        /// <summary>
+        /// 친구 항공기 트랙 심볼 GL display list 생성
+        /// </summary>
+        public static void MakeAirTrackFriend()
+        {
+            AirTrackFriendList = GL.GenLists(1);
+            GL.NewList(AirTrackFriendList, ListMode.Compile);
+            GL.PointSize(3f);
+            GL.LineWidth(2f);
+            GL.Enable(EnableCap.LineSmooth);
+            GL.Enable(EnableCap.PointSmooth);
+            GL.Enable(EnableCap.Blend);
+            GL.BlendFunc(BlendingFactor.SrcAlpha, BlendingFactor.OneMinusSrcAlpha);
+
+            GL.Begin(PrimitiveType.LineStrip);
+            for (int i = 0; i <= 50; i++) {
+                float angle = i * (float)Math.PI / 50f;
+                GL.Vertex2(Math.Cos(angle) * 20f, Math.Sin(angle) * 20f);
+            }
+            GL.End();
+
+            GL.Begin(PrimitiveType.Points);
+            GL.Vertex2(0f, 0f);
+            GL.End();
+            GL.EndList();
+        }
+
+        /// <summary>
+        /// 적대 항공기 트랙 심볼 생성
+        /// </summary>
+        public static void MakeAirTrackHostile()
+        {
+            AirTrackHostileList = GL.GenLists(1);
+            GL.NewList(AirTrackHostileList, ListMode.Compile);
+            GL.PointSize(3f);
+            GL.LineWidth(2f);
+            GL.Begin(PrimitiveType.LineStrip);
+            GL.Vertex2(-10f, 0f);
+            GL.Vertex2(0f, 10f);
+            GL.Vertex2(10f, 0f);
+            GL.End();
+            GL.Begin(PrimitiveType.Points);
+            GL.Vertex2(0f, 0f);
+            GL.End();
+            GL.EndList();
+        }
+
+        /// <summary>
+        /// 알 수 없음 트랙 심볼 생성
+        /// </summary>
+        public static void MakeAirTrackUnknown()
+        {
+            AirTrackUnknownList = GL.GenLists(1);
+            GL.NewList(AirTrackUnknownList, ListMode.Compile);
+            GL.PointSize(3f);
+            GL.LineWidth(2f);
+            GL.Begin(PrimitiveType.LineStrip);
+            GL.Vertex2(-10f, 0f);
+            GL.Vertex2(-10f, 10f);
+            GL.Vertex2(10f, 10f);
+            GL.Vertex2(10f, 0f);
+            GL.End();
+            GL.Begin(PrimitiveType.Points);
+            GL.Vertex2(0f, 0f);
+            GL.End();
+            GL.EndList();
+        }
+
+        /// <summary>
+        /// 포인트 심볼 생성
+        /// </summary>
+        public static void MakePoint()
+        {
+            SurfaceTrackFriendList = GL.GenLists(1);
+            GL.NewList(SurfaceTrackFriendList, ListMode.Compile);
+            GL.PointSize(3f);
+            GL.LineWidth(3f);
+            GL.Enable(EnableCap.LineSmooth);
+            GL.Enable(EnableCap.PointSmooth);
+            GL.Enable(EnableCap.Blend);
+            GL.BlendFunc(BlendingFactor.SrcAlpha, BlendingFactor.OneMinusSrcAlpha);
+
+            GL.Begin(PrimitiveType.LineStrip);
+            for (int i = 0; i < 100; i++) {
+                float angle = i * 2f * (float)Math.PI / 100f;
+                GL.Vertex2(Math.Cos(angle) * 20f, Math.Sin(angle) * 20f);
+            }
+            GL.End();
+            GL.Begin(PrimitiveType.LineStrip);
+            for (int i = 0; i < 100; i++) {
+                float angle = i * 2f * (float)Math.PI / 100f;
+                GL.Vertex2(Math.Cos(angle) * 2f, Math.Sin(angle) * 2f);
+            }
+            GL.End();
+            GL.EndList();
+        }
+
+        /// <summary>
+        /// 트랙 훅 심볼 생성
+        /// </summary>
+        public static void MakeTrackHook()
+        {
+            TrackHookList = GL.GenLists(1);
+            GL.NewList(TrackHookList, ListMode.Compile);
+            GL.PointSize(8f);
+            GL.LineWidth(10f);
+            GL.Enable(EnableCap.LineSmooth);
+            GL.Enable(EnableCap.PointSmooth);
+            GL.Enable(EnableCap.Blend);
+            GL.BlendFunc(BlendingFactor.SrcAlpha, BlendingFactor.OneMinusSrcAlpha);
+
+            GL.Begin(PrimitiveType.LineStrip);
+            for (int i = 0; i < 100; i++) {
+                float angle = i * 2f * (float)Math.PI / 100f;
+                GL.Vertex2(Math.Cos(angle) * 60f, Math.Sin(angle) * 60f);
+            }
+            GL.End();
+            GL.EndList();
+        }
+
+        /// <summary>
+        /// 비행기 이미지를 화면에 그리기
+        /// </summary>
+        public static void DrawAirplaneImage(float x, float y, float scale, float heading, int imageNum)
+        {
+            GL.PushMatrix();
+            GL.Enable(EnableCap.Texture2D);
+            GL.BindTexture(TextureTarget.Texture2D, TextureSprites[imageNum]);
+            GL.ShadeModel(ShadingModel.Flat);
+            GL.Translate(x, y, 0f);
+            GL.Rotate(-heading - 90f, 0f, 0f, 1f);
+            GL.Begin(PrimitiveType.Quads);
+            float s = 36f * scale;
+            GL.TexCoord2(1f, 1f); GL.Vertex2(s, s);
+            GL.TexCoord2(0f, 1f); GL.Vertex2(-s, s);
+            GL.TexCoord2(0f, 0f); GL.Vertex2(-s, -s);
+            GL.TexCoord2(1f, 0f); GL.Vertex2(s, -s);
+            GL.End();
+            GL.BindTexture(TextureTarget.Texture2D, 0);
+            GL.Disable(EnableCap.Texture2D);
+            GL.PopMatrix();
+        }
+
+        /// <summary>
+        /// 친구 트랙 심볼 그리기
+        /// </summary>
+        public static void DrawAirTrackFriend(float x, float y)
+        {
+            GL.PushMatrix(); GL.Translate(x, y, 0f); GL.CallList(AirTrackFriendList); GL.PopMatrix();
+        }
+
+        /// <summary>
+        /// 적대 트랙 심볼 그리기
+        /// </summary>
+        public static void DrawAirTrackHostile(float x, float y)
+        {
+            GL.PushMatrix(); GL.Translate(x, y, 0f); GL.CallList(AirTrackHostileList); GL.PopMatrix();
+        }
+
+        /// <summary>
+        /// 알 수 없음 트랙 심볼 그리기
+        /// </summary>
+        public static void DrawAirTrackUnknown(float x, float y)
+        {
+            GL.PushMatrix(); GL.Translate(x, y, 0f); GL.CallList(AirTrackUnknownList); GL.PopMatrix();
+        }
+
+        /// <summary>
+        /// 점 심볼 그리기
+        /// </summary>
+        public static void DrawPoint(float x, float y)
+        {
+            GL.PushMatrix(); GL.Translate(x, y, 0f); GL.CallList(SurfaceTrackFriendList); GL.PopMatrix();
+        }
+
+        /// <summary>
+        /// 트랙 훅 심볼 그리기
+        /// </summary>
+        public static void DrawTrackHook(float x, float y)
+        {
+            GL.PushMatrix(); GL.Translate(x, y, 0f); GL.CallList(TrackHookList); GL.PopMatrix();
+        }
+
+        /// <summary>
+        /// 레이더 커버리지 영역 그리기 (타원형)
+        /// </summary>
+        public static void DrawRadarCoverage(float xc, float yc, float major, float minor)
+        {
+            GL.Begin(PrimitiveType.TriangleFan);
+            GL.Vertex2(xc, yc);
+            for (int i = 0; i <= 360; i += 5) {
+                float rad = (float)Math.PI * i / 180f;
+                GL.Vertex2(xc + major * Math.Cos(rad), yc + minor * Math.Sin(rad));
+            }
+            GL.End();
+        }
+
+        /// <summary>
+        /// 선 렌더링 (두 점 연결)
+        /// </summary>
+        public static void DrawLeader(float x1, float y1, float x2, float y2)
+        {
+            GL.Begin(PrimitiveType.LineStrip);
+            GL.Vertex2(x1, y1);
+            GL.Vertex2(x2, y2);
+            GL.End();
+        }
+
+        /// <summary>
+        /// 목적지 점 계산
+        /// </summary>
+        public static void ComputeTimeToGoPosition(float timeToGo, float xs, float ys, float xv, float yv, out float xe, out float ye)
+        {
+            xe = xs + (xv / 3600f) * timeToGo;
+            ye = ys + (yv / 3600f) * timeToGo;
+        }
+
+        /// <summary>
+        /// 다각형 형태의 선 그리기
+        /// </summary>
+        public static void DrawLines(int resolution, double[] xpts, double[] ypts)
+        {
+            GL.Begin(PrimitiveType.Lines);
+            for (int i = 0; i < resolution; i++) {
+                GL.Vertex3(xpts[i], ypts[i], 0.1);
+                GL.Vertex3(xpts[(i + 1) % resolution], ypts[(i + 1) % resolution], 0.1);
+            }
+            GL.End();
+        }
+    }
+}
