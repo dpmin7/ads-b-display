@@ -344,6 +344,11 @@ namespace AdsBDecoder
             return aircraft;
         }
 
+        public static bool TryGet(uint icao, out TADS_B_Aircraft aircraft)
+        {
+            return _dict.TryGetValue(icao, out aircraft);
+        }
+
         public static IEnumerable<TADS_B_Aircraft> GetAll()
             => _dict.Values.ToList();
     }

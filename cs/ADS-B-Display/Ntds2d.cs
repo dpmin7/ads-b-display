@@ -90,7 +90,7 @@ namespace ADS_B_Display
 
             GL.Begin(PrimitiveType.LineStrip);
             for (int i = 0; i <= 50; i++) {
-                float angle = i * (float)Math.PI / 50f;
+                double angle = i * (double)Math.PI / 50f;
                 GL.Vertex2(Math.Cos(angle) * 20f, Math.Sin(angle) * 20f);
             }
             GL.End();
@@ -158,13 +158,13 @@ namespace ADS_B_Display
 
             GL.Begin(PrimitiveType.LineStrip);
             for (int i = 0; i < 100; i++) {
-                float angle = i * 2f * (float)Math.PI / 100f;
+                double angle = i * 2f * (double)Math.PI / 100f;
                 GL.Vertex2(Math.Cos(angle) * 20f, Math.Sin(angle) * 20f);
             }
             GL.End();
             GL.Begin(PrimitiveType.LineStrip);
             for (int i = 0; i < 100; i++) {
-                float angle = i * 2f * (float)Math.PI / 100f;
+                double angle = i * 2f * (double)Math.PI / 100f;
                 GL.Vertex2(Math.Cos(angle) * 2f, Math.Sin(angle) * 2f);
             }
             GL.End();
@@ -187,7 +187,7 @@ namespace ADS_B_Display
 
             GL.Begin(PrimitiveType.LineStrip);
             for (int i = 0; i < 100; i++) {
-                float angle = i * 2f * (float)Math.PI / 100f;
+                double angle = i * 2f * (double)Math.PI / 100f;
                 GL.Vertex2(Math.Cos(angle) * 60f, Math.Sin(angle) * 60f);
             }
             GL.End();
@@ -197,7 +197,7 @@ namespace ADS_B_Display
         /// <summary>
         /// 비행기 이미지를 화면에 그리기
         /// </summary>
-        public static void DrawAirplaneImage(float x, float y, float scale, float heading, int imageNum)
+        public static void DrawAirplaneImage(double x, double y, double scale, double heading, int imageNum)
         {
             GL.PushMatrix();
             GL.Enable(EnableCap.Texture2D);
@@ -206,7 +206,7 @@ namespace ADS_B_Display
             GL.Translate(x, y, 0f);
             GL.Rotate(-heading - 90f, 0f, 0f, 1f);
             GL.Begin(PrimitiveType.Quads);
-            float s = 36f * scale;
+            double s = 36f * scale;
             GL.TexCoord2(1f, 1f); GL.Vertex2(s, s);
             GL.TexCoord2(0f, 1f); GL.Vertex2(-s, s);
             GL.TexCoord2(0f, 0f); GL.Vertex2(-s, -s);
@@ -220,7 +220,7 @@ namespace ADS_B_Display
         /// <summary>
         /// 친구 트랙 심볼 그리기
         /// </summary>
-        public static void DrawAirTrackFriend(float x, float y)
+        public static void DrawAirTrackFriend(double x, double y)
         {
             GL.PushMatrix(); GL.Translate(x, y, 0f); GL.CallList(AirTrackFriendList); GL.PopMatrix();
         }
@@ -228,7 +228,7 @@ namespace ADS_B_Display
         /// <summary>
         /// 적대 트랙 심볼 그리기
         /// </summary>
-        public static void DrawAirTrackHostile(float x, float y)
+        public static void DrawAirTrackHostile(double x, double y)
         {
             GL.PushMatrix(); GL.Translate(x, y, 0f); GL.CallList(AirTrackHostileList); GL.PopMatrix();
         }
@@ -236,7 +236,7 @@ namespace ADS_B_Display
         /// <summary>
         /// 알 수 없음 트랙 심볼 그리기
         /// </summary>
-        public static void DrawAirTrackUnknown(float x, float y)
+        public static void DrawAirTrackUnknown(double x, double y)
         {
             GL.PushMatrix(); GL.Translate(x, y, 0f); GL.CallList(AirTrackUnknownList); GL.PopMatrix();
         }
@@ -244,7 +244,7 @@ namespace ADS_B_Display
         /// <summary>
         /// 점 심볼 그리기
         /// </summary>
-        public static void DrawPoint(float x, float y)
+        public static void DrawPoint(double x, double y)
         {
             GL.PushMatrix(); GL.Translate(x, y, 0f); GL.CallList(SurfaceTrackFriendList); GL.PopMatrix();
         }
@@ -252,7 +252,7 @@ namespace ADS_B_Display
         /// <summary>
         /// 트랙 훅 심볼 그리기
         /// </summary>
-        public static void DrawTrackHook(float x, float y)
+        public static void DrawTrackHook(double x, double y)
         {
             GL.PushMatrix(); GL.Translate(x, y, 0f); GL.CallList(TrackHookList); GL.PopMatrix();
         }
@@ -260,12 +260,12 @@ namespace ADS_B_Display
         /// <summary>
         /// 레이더 커버리지 영역 그리기 (타원형)
         /// </summary>
-        public static void DrawRadarCoverage(float xc, float yc, float major, float minor)
+        public static void DrawRadarCoverage(double xc, double yc, double major, double minor)
         {
             GL.Begin(PrimitiveType.TriangleFan);
             GL.Vertex2(xc, yc);
             for (int i = 0; i <= 360; i += 5) {
-                float rad = (float)Math.PI * i / 180f;
+                double rad = (double)Math.PI * i / 180f;
                 GL.Vertex2(xc + major * Math.Cos(rad), yc + minor * Math.Sin(rad));
             }
             GL.End();
@@ -274,7 +274,7 @@ namespace ADS_B_Display
         /// <summary>
         /// 선 렌더링 (두 점 연결)
         /// </summary>
-        public static void DrawLeader(float x1, float y1, float x2, float y2)
+        public static void DrawLeader(double x1, double y1, double x2, double y2)
         {
             GL.Begin(PrimitiveType.LineStrip);
             GL.Vertex2(x1, y1);
@@ -285,7 +285,7 @@ namespace ADS_B_Display
         /// <summary>
         /// 목적지 점 계산
         /// </summary>
-        public static void ComputeTimeToGoPosition(float timeToGo, float xs, float ys, float xv, float yv, out float xe, out float ye)
+        public static void ComputeTimeToGoPosition(double timeToGo, double xs, double ys, double xv, double yv, out double xe, out double ye)
         {
             xe = xs + (xv / 3600f) * timeToGo;
             ye = ys + (yv / 3600f) * timeToGo;

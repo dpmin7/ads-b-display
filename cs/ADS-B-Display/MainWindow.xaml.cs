@@ -5,6 +5,7 @@ using OpenTK;
 using OpenTK.Graphics.OpenGL;
 using OpenTK.Wpf;
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.IO;
@@ -16,6 +17,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Threading;
 
@@ -26,6 +28,22 @@ namespace ADS_B_Display
     /// </summary>
     public partial class MainWindow : Window
     {
+        private struct TrackHookStruct
+        {
+            public bool Valid_CC;
+            public uint ICAO_CC;
+            public bool Valid_CPA;
+            public uint ICAO_CPA;
+        }
+
+        private class ADSBAircraft
+        {
+            public uint ICAO;
+            public bool HaveLatLon;
+            public double Latitude;
+            public double Longitude;
+        }
+
         private const float BG_INTENSITY = 0.37f; // 배경색 강도 (0.0f ~ 1.0f)
         private const float MAP_CENTER_LAT = 40.73612f; // 지도 중심 위도
         private const float MAP_CENTER_LON = -80.33158f; // 지도 중심 경도
@@ -54,6 +72,8 @@ namespace ADS_B_Display
         private List<uint> updated = new List<uint>();
         private DispatcherTimer _updateTimer = new DispatcherTimer();
 
+        private TrackHookStruct _trackHook = new TrackHookStruct();
+
         public MainWindow()
         {
             InitializeComponent();
@@ -77,6 +97,10 @@ namespace ADS_B_Display
             _updateTimer.Interval = TimeSpan.FromMilliseconds(500);
             _updateTimer.Tick += _updateTimer_Tick;
             _updateTimer.Start();
+
+            // read aircraft data from file if exists
+            var aircraftDir = $"{Directory.GetCurrentDirectory()}\\AircraftDB";
+            //AircraftDB.Init(aircraftDir);
         }
 
         private async void _updateTimer_Tick(object sender, EventArgs e)
@@ -618,15 +642,16 @@ namespace ADS_B_Display
 
         private void glControl_PreviewMouseDown(object sender, System.Windows.Input.MouseButtonEventArgs e)
         {
+            // 마우스 좌표 구하기 (정수형으로 변환)
+            int x = (int)e.GetPosition(glControl).X;
+            int y = (int)e.GetPosition(glControl).Y;
             // 마우스 왼쪽 버튼 클릭 확인
-            if (e.ChangedButton == System.Windows.Input.MouseButton.Left) {
+            if (e.ChangedButton == MouseButton.Left) {
                 // Ctrl 키가 눌렸는지 확인
                 if ((System.Windows.Input.Keyboard.Modifiers & System.Windows.Input.ModifierKeys.Control) != 0) {
                     // Ctrl + 왼쪽 클릭 시 동작 (필요시 구현)
                 } else {
-                    // 마우스 좌표 구하기 (정수형으로 변환)
-                    int x = (int)e.GetPosition(glControl).X;
-                    int y = (int)e.GetPosition(glControl).Y;
+                    
 
                     // 필요한 전역 변수에 값 저장 (예시)
                     _MouseLeftDownX = x;
@@ -635,6 +660,75 @@ namespace ADS_B_Display
 
                     // EarthView의 StartDrag 호출
                     _earthView.StartDrag(x, y, EarthView.NAV_DRAG_PAN);
+                }
+            } else if (e.ChangedButton == MouseButton.Right) {
+                //if (AreaTemp != null) {
+                //    if (AreaTemp.NumPoints < Area.MaxPoints) {
+                //        AddPoint(e.X, e.Y);
+                //    } else {
+                //        MessageBox.Show("Max Area Points Reached");
+                //    }
+                //} else {
+                    bool ctrl = Keyboard.Modifiers == ModifierKeys.Control;
+                    HookTrack(x, y, ctrl);
+                //}
+            } else if (e.ChangedButton == MouseButton.Middle) {
+                //ResetXYOffset();
+            }
+        }
+
+        private void HookTrack(int x, int y, bool cpaHook)
+        {
+            int Y1 = ((int)glControl.ActualHeight - 1) - y;
+            int X1 = x;
+
+            if ((X1 < Map_v[0].X) || (X1 > Map_v[1].X) ||
+                (Y1 < Map_v[0].Y) || (Y1 > Map_v[3].Y)) return;
+
+            double vLat = Math.Atan(Math.Sinh(Math.PI * (2 * (Map_w[1].Y - (yf * (Map_v[3].Y - Y1)))))) * (180.0 / Math.PI);
+            double vLon = (Map_w[1].X - (xf * (Map_v[1].X - X1))) * 360.0;
+
+            double minRange = 16.0;
+            uint currentICAO = 0;
+
+            foreach (var data in GlobalHashTable.GetAll()) {
+                if (data.HaveLatLon) {
+                    double dLat = vLat - data.Latitude;
+                    double dLon = vLon - data.Longitude;
+                    double range = Math.Sqrt(dLat * dLat + dLon * dLon);
+                    if (range < minRange) {
+                        currentICAO = data.ICAO;
+                        minRange = range;
+                    }
+                }
+            }
+
+            if (minRange < 0.2) {
+                var selectedAircraft = GlobalHashTable.GetOrAdd(currentICAO);
+                if (!cpaHook) {
+                    _trackHook.Valid_CC = true;
+                    _trackHook.ICAO_CC = selectedAircraft.ICAO;
+                    Console.WriteLine(AircraftDB.GetAircraftInfo(selectedAircraft.ICAO));
+                } else {
+                    _trackHook.Valid_CPA = true;
+                    _trackHook.ICAO_CPA = selectedAircraft.ICAO;
+                }
+            } else {
+                if (!cpaHook) {
+                    _trackHook.Valid_CC = false;
+                    //ICAOLabel.Text = "N/A";
+                    //FlightNumLabel.Text = "N/A";
+                    //CLatLabel.Text = "N/A";
+                    //CLonLabel.Text = "N/A";
+                    //SpdLabel.Text = "N/A";
+                    //HdgLabel.Text = "N/A";
+                    //AltLabel.Text = "N/A";
+                    //MsgCntLabel.Text = "N/A";
+                    //TrkLastUpdateTimeLabel.Text = "N/A";
+                } else {
+                    //TrackHook.Valid_CPA = false;
+                    //CpaTimeValue.Text = "None";
+                    //CpaDistanceValue.Text = "None";
                 }
             }
         }
@@ -829,6 +923,55 @@ namespace ADS_B_Display
                 Ntds2d.DrawAirplaneImage((float)scrX, (float)scrY, airplaneScale, (float)data.Heading, data.SpriteImage);
                 // TODO: Draw2DText 구현 필요
             }
+
+            // TrackHook 정보 그리기
+            if (_trackHook.Valid_CC) {
+                if (GlobalHashTable.TryGet(_trackHook.ICAO_CC, out var data)) {
+                    IcaoText.Text = data.HexAddr;
+
+                    FlightText.Text = data.HaveFlightNum ? data.FlightNum : "N/A";
+
+                    if (data.HaveLatLon) {
+                        SelLatText.Text = DMS.DegreesMinutesSecondsLat(data.Latitude);
+                        SelLonText.Text = DMS.DegreesMinutesSecondsLon(data.Longitude);
+                    } else {
+                        SelLatText.Text = "N/A";
+                        SelLonText.Text = "N/A";
+                    }
+
+                    if (data.HaveSpeedAndHeading) {
+                        SpeedText.Text = $"{data.Speed:F2} KTS  VRATE: {data.VerticalRate:F2}";
+                        HdgText.Text = $"{data.Heading:F2} DEG";
+                    } else {
+                        SpeedText.Text = "N/A";
+                        HdgText.Text = "N/A";
+                    }
+
+                    AltText.Text = data.Altitude > 0 ? $"{data.Altitude:F2} FT" : "N/A";
+
+                    RawCnt.Text = data.NumMessagesRaw.ToString();
+                    SbsCnt.Text = data.NumMessagesSBS.ToString();
+                    //LastUpdateText.Text = new DateTime().from TimeFormatter.TimeToString(data.LastSeen);
+
+                    // 시각화용 OpenGL 또는 DrawingContext에서 호출해야 할 부분
+                    // 예: glColor4f 대신 내부 렌더링에 맞춰 구현
+                    LatLon2XY(data.Latitude, data.Longitude, out scrX, out scrY);
+                    Ntds2d.DrawTrackHook(scrX, scrY);
+                } else {
+                    _trackHook.Valid_CC = false;
+                    IcaoText.Text = "N/A";
+                    FlightText.Text = "N/A";
+                    SelLatText.Text = "N/A";
+                    SelLonText.Text = "N/A";
+                    SpeedText.Text = "N/A";
+                    HdgText.Text = "N/A";
+                    AltText.Text = "N/A";
+                    RawCnt.Text = "N/A";
+                    SbsCnt.Text = "N/A";
+                    //TrkLastUpdateTimeLabel.Text = "N/A";
+                }
+            }
+
 
             // 화면에 항공기 카운트 표시
             NumAircraftText.Text = viewableAircraft.ToString();
