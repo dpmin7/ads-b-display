@@ -68,24 +68,15 @@ namespace ADS_B_Display
             MapCenterLon = MAP_CENTER_LON;
 
             LoadMap(TileServerType.GoogleMaps);
+            SetMapCenter(out double x, out double y);
+            _earthView.Eye.X = x;
+            _earthView.Eye.Y = y;
+            _earthView.Eye.H /= Math.Pow(1.3, 18); // 높이(줌)도 필요시 조정
             //dg.ItemsSource = Aircrafts;
 
             _updateTimer.Interval = TimeSpan.FromMilliseconds(500);
             _updateTimer.Tick += _updateTimer_Tick;
             _updateTimer.Start();
-        }
-
-        private void InitializeBackend()
-        {
-            string cacheDir = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Cache");
-            _storage = new FileSystemStorage(cacheDir, true);
-            _keyhole = new KeyholeConnection(TileServerType.GoogleMaps);
-            _storage.SetNextLoadStorage(_keyhole);
-            _keyhole.SetSaveStorage(_storage);
-
-            _tileManager = new TileManager(_storage);
-            _masterLayer = new GoogleLayer(_tileManager);
-            _earthView = new FlatEarthView(_masterLayer);
         }
 
         private async void _updateTimer_Tick(object sender, EventArgs e)

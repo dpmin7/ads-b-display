@@ -6,6 +6,8 @@
         xmlns:local="clr-namespace:ADS_B_Display"
         xmlns:gl="clr-namespace:OpenTK.Wpf;assembly=GLWpfControl"
         mc:Ignorable="d"
+        WindowStartupLocation="CenterScreen"
+        WindowState="Maximized"
         MouseWheel="Window_MouseWheel"
         Title="ADS-B Display" Height="800" Width="1280">
     <DockPanel>
