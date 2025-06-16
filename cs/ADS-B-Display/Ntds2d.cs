@@ -204,7 +204,7 @@ namespace ADS_B_Display
             GL.BindTexture(TextureTarget.Texture2D, TextureSprites[imageNum]);
             GL.ShadeModel(ShadingModel.Flat);
             GL.Translate(x, y, 0f);
-            GL.Rotate(-heading - 90f, 0f, 0f, 1f);
+            GL.Rotate(heading, 0f, 0f, 1f);
             GL.Begin(PrimitiveType.Quads);
             double s = 36f * scale;
             GL.TexCoord2(1f, 1f); GL.Vertex2(s, s);
