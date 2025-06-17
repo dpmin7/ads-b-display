@@ -44,6 +44,7 @@
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Data" />
+    <Reference Include="System.Drawing" />
     <Reference Include="System.Xml" />
     <Reference Include="Microsoft.CSharp" />
     <Reference Include="System.Core" />
@@ -66,9 +67,11 @@
     <Compile Include="AircraftDB.cs" />
     <Compile Include="AircraftForUI.cs" />
     <Compile Include="Area.cs" />
-    <Compile Include="csv.cs" />
+    <Compile Include="Controllers\MVVM.cs" />
+    <Compile Include="Utils\csv.cs" />
     <Compile Include="DecodeRawADS_B.cs" />
-    <Compile Include="Dms.cs" />
+    <Compile Include="Utils\Dms.cs" />
+    <Compile Include="Utils\LatLonConv.cs" />
     <Compile Include="Map\MapSrc\DMS.cs" />
     <Compile Include="Map\MapSrc\EarthView.cs" />
     <Compile Include="Map\MapSrc\FileSystemStorage.cs" />
@@ -90,10 +93,13 @@
     <Compile Include="Map\MapSrc\TileStorage.cs" />
     <Compile Include="Map\MapSrc\Triangulation.cs" />
     <Compile Include="Map\MapSrc\ViewPoint.cs" />
+    <Compile Include="Models\AircraftManager.cs" />
     <Compile Include="Ntds2d.cs" />
-    <Compile Include="SBS_Message.cs" />
+    <Compile Include="Models\SbsWorker.cs" />
+    <Compile Include="Models\SBS_Message.cs" />
     <Compile Include="TriangulatPoly.cs" />
     <Compile Include="Util.cs" />
+    <Compile Include="Views\GLWpfControlExtensions.cs" />
     <Page Include="MainWindow.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
@@ -135,6 +141,7 @@
   <ItemGroup>
     <None Include="App.config" />
   </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
     <PostBuildEvent>xcopy /s /d /y $(ProjectDir)Resources\ $(TargetDir)</PostBuildEvent>

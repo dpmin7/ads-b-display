@@ -1,4 +1,5 @@
-﻿using ADS_B_Display_NET.Map.MapSrc;
+﻿using ADS_B_Display.Models;
+using ADS_B_Display_NET.Map.MapSrc;
 using AdsBDecoder;
 using Microsoft.Win32;
 using OpenTK;
@@ -18,7 +19,9 @@ using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
+using System.Windows.Markup;
 using System.Windows.Media;
+//using System.Windows.Shapes;
 using System.Windows.Threading;
 
 namespace ADS_B_Display
@@ -73,7 +76,7 @@ namespace ADS_B_Display
         private DispatcherTimer _updateTimer = new DispatcherTimer();
 
         private TrackHookStruct _trackHook = new TrackHookStruct();
-
+        private SbsWorker _sbsWorker = null;
         public MainWindow()
         {
             InitializeComponent();
@@ -94,6 +97,8 @@ namespace ADS_B_Display
             _earthView.Eye.H /= Math.Pow(1.3, 18); // 높이(줌)도 필요시 조정
             //dg.ItemsSource = Aircrafts;
 
+            _sbsWorker = new SbsWorker(OnSbsMessageReceived);
+
             _updateTimer.Interval = TimeSpan.FromMilliseconds(500);
             _updateTimer.Tick += _updateTimer_Tick;
             _updateTimer.Start();
@@ -113,7 +118,7 @@ namespace ADS_B_Display
                 updated.Clear();
             }
             foreach (var icao in temp) {
-                var aircraft = GlobalHashTable.GetOrAdd(icao);
+                var aircraft = AircraftManager.GetOrAdd(icao);
                 var airUI = Aircrafts.FirstOrDefault(a => a.ICAO == aircraft.ICAO);
                 if (airUI == null) {
                     airUI = new AircraftForUI();
@@ -223,7 +228,29 @@ namespace ADS_B_Display
 
         private void SbsPlaybackButton_Click(object sender, RoutedEventArgs e)
         {
+            if (SbsPlaybackButton.Content.ToString() == "SBS Playback" && sender != null) {
+                var dialog = new Microsoft.Win32.OpenFileDialog();
+                if (dialog.ShowDialog() == true) {
+                    string fileName = dialog.FileName;
+                    if (!File.Exists(fileName)) {
+                        MessageBox.Show("File " + fileName + " does not exist");
+                    } else {
+                        try {
+                            _sbsWorker.Start(fileName);
 
+                            SbsPlaybackButton.Content = "Stop SBS Playback";
+                            SbsConnectButton.IsEnabled = false;
+                        } catch (Exception ex) {
+                            MessageBox.Show("Cannot open file " + fileName + "\n" + ex.Message);
+                        }
+                    }
+                }
+            } else {
+                _sbsWorker.Stop();
+
+                SbsPlaybackButton.Content = "SBS Playback";
+                SbsConnectButton.IsEnabled = true;
+            }
         }
 
         /// <summary>
@@ -317,7 +344,7 @@ namespace ADS_B_Display
         /// </summary>
         private void OnRawMessageReceived(string rawLine)
         {
-            SBSMessage.SBS_Message_Decode(rawLine, out uint icao);
+            //SBSMessage.SBS_Message_Decode(rawLine, out uint icao);
             // TODO: rawLine을 파싱하거나, 지도에 나타내는 로직을 여기에 구현하세요.
             // 예: DisplayRawOnMap(rawLine);
         }
@@ -378,23 +405,7 @@ namespace ADS_B_Display
                     });
 
                     // 연결 후, 스트림에서 한 줄씩 읽어서 처리 (예시: OnSbsMessageReceived(rawLine))
-                    using (var reader = new StreamReader(_sbsClient.GetStream(), Encoding.ASCII)) {
-                        while (_isSbsConnected) {
-                            string rawLine = reader.ReadLine();
-                            if (string.IsNullOrEmpty(rawLine))
-                                continue;
-                            
-                            // 필요하다면 UI 업데이트
-                            Dispatcher.Invoke(() =>
-                            {
-                                // 예: SbsLogListBox.Items.Add(rawLine);
-                            });
-
-                            // rawLine을 OnSbsMessageReceived(rawLine) 같은 메서드로 넘겨서 
-                            // “SBS Record” 기능이나 화면 갱신 로직과 연결
-                            OnSbsMessageReceived(rawLine);
-                        }
-                    }
+                    _sbsWorker.Start(_sbsClient);
                 } catch (Exception ex) {
                     Dispatcher.Invoke(() =>
                     {
@@ -422,7 +433,7 @@ namespace ADS_B_Display
         private void OnSbsMessageReceived(string rawLine)
         {
             
-            SBSMessage.SBS_Message_Decode(rawLine, out uint icao);
+            var icao = AircraftManager.ReceiveSBSMessage(rawLine);
             lock (lockObj) {
                 updated.Add(icao);
             }
@@ -576,7 +587,7 @@ namespace ADS_B_Display
             _isLoaded = true;
         }
 
-        private float _x = 1.0f, _y = 0.5f, _z = 0.0f;
+        private double _x = 1.0f, _y = 0.5f, _z = 0.0f;
 
         private void glControl_PreviewMouseUp(object sender, System.Windows.Input.MouseButtonEventArgs e)
         {
@@ -586,13 +597,13 @@ namespace ADS_B_Display
             }
         }
 
-        private float airplaneScale;
+        private double airplaneScale;
         private void Window_MouseWheel(object sender, System.Windows.Input.MouseWheelEventArgs e)
         {
             if (e.Delta > 0)
                 _earthView.SingleMovement(EarthView.NAV_ZOOM_IN);
             else _earthView.SingleMovement(EarthView.NAV_ZOOM_OUT);
-            airplaneScale = (float)Math.Min((0.05 / _earthView.Eye.H), 1.5); // 스케일 계산
+            airplaneScale = (double)Math.Min((0.05 / _earthView.Eye.H), 1.5); // 스케일 계산
             
             glControl.InvalidateVisual(); // 마우스 휠 이벤트 후 강제 갱신
         }
@@ -691,7 +702,7 @@ namespace ADS_B_Display
             double minRange = 16.0;
             uint currentICAO = 0;
 
-            foreach (var data in GlobalHashTable.GetAll()) {
+            foreach (var data in AircraftManager.GetAll()) {
                 if (data.HaveLatLon) {
                     double dLat = vLat - data.Latitude;
                     double dLon = vLon - data.Longitude;
@@ -704,7 +715,7 @@ namespace ADS_B_Display
             }
 
             if (minRange < 0.2) {
-                var selectedAircraft = GlobalHashTable.GetOrAdd(currentICAO);
+                var selectedAircraft = AircraftManager.GetOrAdd(currentICAO);
                 if (!cpaHook) {
                     _trackHook.Valid_CC = true;
                     _trackHook.ICAO_CC = selectedAircraft.ICAO;
@@ -753,6 +764,7 @@ namespace ADS_B_Display
         private const int MIDDLE_MOUSE_DOWN = 4; // 마우스 가운데 버튼 클릭 상태 플래그
 
         private Area _areaTemp; // 폴리곤 영역 임시 저장용. 나중에 하자
+        private StreamReader _playbackSbsStream;
 
         private void glControl_Render(TimeSpan obj)
         {
@@ -906,7 +918,7 @@ namespace ADS_B_Display
             //}
 
             // 항공기 정보 그리기
-            var aircraftTable = GlobalHashTable.GetAll();
+            var aircraftTable = AircraftManager.GetAll();
             foreach (var data in aircraftTable) {
                 if (!data.HaveLatLon) continue;
                 viewableAircraft++;
@@ -920,13 +932,28 @@ namespace ADS_B_Display
                     GL.Color4(1f, 0f, 0f, 1f);
                 }
                 
-                Ntds2d.DrawAirplaneImage((float)scrX, (float)scrY, airplaneScale, (float)data.Heading, data.SpriteImage);
+                Ntds2d.DrawAirplaneImage(scrX, scrY, airplaneScale, data.Heading, data.SpriteImage);
+                //glControl.Draw2DText(data.HexAddr, scrX + 10, scrY - 10, System.Drawing.Color.Pink);
                 // TODO: Draw2DText 구현 필요
+
+                if ((data.HaveSpeedAndHeading) && ((bool)TimeToGoCheckBox.IsChecked)) {
+                    double lat, lon, az;
+                    if (LatLonConv.VDirect(data.Latitude, data.Longitude,
+                                data.Heading, data.Speed / 3060.0 * TimeToGoSlider.Value, out lat, out lon, out az) == TCoordConvStatus.OKNOERROR) {
+                        double scrX2, scrY2;
+                        LatLon2XY(lat, lon, out scrX2, out scrY2);
+                        GL.Color4(1.0, 1.0, 0.0, 1.0);
+                        GL.Begin(PrimitiveType.Lines);
+                        GL.Vertex2(scrX, scrY);
+                        GL.Vertex2(scrX2, scrY2);
+                        GL.End();
+                    }
+                }
             }
 
             // TrackHook 정보 그리기
             if (_trackHook.Valid_CC) {
-                if (GlobalHashTable.TryGet(_trackHook.ICAO_CC, out var data)) {
+                if (AircraftManager.TryGet(_trackHook.ICAO_CC, out var data)) {
                     IcaoText.Text = data.HexAddr;
 
                     FlightText.Text = data.HaveFlightNum ? data.FlightNum : "N/A";
