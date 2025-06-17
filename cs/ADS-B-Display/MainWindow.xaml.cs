@@ -37,6 +37,8 @@ namespace ADS_B_Display
             public uint ICAO_CC;
             public bool Valid_CPA;
             public uint ICAO_CPA;
+            public Dictionary<string, string> DepartureAirport;
+            public Dictionary<string, string> ArrivalAirport;
         }
 
         private class ADSBAircraft
@@ -720,9 +722,28 @@ namespace ADS_B_Display
                     _trackHook.Valid_CC = true;
                     _trackHook.ICAO_CC = selectedAircraft.ICAO;
                     Console.WriteLine(AircraftDB.GetAircraftInfo(selectedAircraft.ICAO));
+
+                    // 출발 - 도착 정보 저장
+                    List<Dictionary<string, string>> airportsInfo = AirportDB.GetAirPortsInfo();
+                    List<Dictionary<string, string>> routesInfo = AirportDB.GetRoutesInfo();
+
+                    // callSign
+                    if (airportsInfo != null && routesInfo != null && selectedAircraft.FlightNum.Trim() != "")
+                    {
+                        var selectedRoute = routesInfo.FirstOrDefault(dict => dict.ContainsKey("Callsign") && dict["Callsign"] == selectedAircraft.FlightNum.Trim());
+
+                        if (selectedRoute != null) { 
+                            var airportCodes = selectedRoute["AirportCodes"].Split('-');
+                            _trackHook.DepartureAirport = airportsInfo.FirstOrDefault(dict => dict.ContainsKey("ICAO") && dict["ICAO"] == airportCodes[0]);
+                            _trackHook.ArrivalAirport = airportsInfo.FirstOrDefault(dict => dict.ContainsKey("ICAO") && dict["ICAO"] == airportCodes[1]);
+                        }
+                    }
+                            
                 } else {
                     _trackHook.Valid_CPA = true;
                     _trackHook.ICAO_CPA = selectedAircraft.ICAO;
+                    _trackHook.DepartureAirport = null;
+                    _trackHook.ArrivalAirport = null;
                 }
             } else {
                 if (!cpaHook) {
@@ -736,6 +757,8 @@ namespace ADS_B_Display
                     //AltLabel.Text = "N/A";
                     //MsgCntLabel.Text = "N/A";
                     //TrkLastUpdateTimeLabel.Text = "N/A";
+                    _trackHook.DepartureAirport = null;
+                    _trackHook.ArrivalAirport = null;
                 } else {
                     //TrackHook.Valid_CPA = false;
                     //CpaTimeValue.Text = "None";
@@ -999,6 +1022,43 @@ namespace ADS_B_Display
                 }
             }
 
+            // hook 된 항공기 공항 정보 표시
+            if (_trackHook.DepartureAirport != null && _trackHook.ArrivalAirport != null)
+            {
+                if (double.TryParse(_trackHook.DepartureAirport["Latitude"], out double ddLat) && double.TryParse(_trackHook.DepartureAirport["Longitude"], out double ddLon)
+                        && double.TryParse(_trackHook.ArrivalAirport["Latitude"], out double daLat) && double.TryParse(_trackHook.ArrivalAirport["Longitude"], out double daLon))
+                {
+                    LatLon2XY(ddLat, ddLon, out double dLat, out double dLon);
+                    LatLon2XY(daLat, daLon, out double aLat, out double aLon);
+
+                    Ntds2d.DrawLinkedPointsWithCircles(dLat, dLon, aLat, aLon);
+                }
+            }
+
+            // 공항 정보 표시
+            var circles = new List<(double, double, double)>();
+            List<Dictionary<string, string>> airportsInfo = AirportDB.GetAirPortsInfo();
+            HashSet<String> uniqueAirports = AirportDB.GetUniqueAirportCodes();
+
+            if (airportsInfo != null)
+            {
+                foreach (var row in airportsInfo)
+                {
+                    string icao = row["ICAO"];
+                    string latitude = row["Latitude"];
+                    string longitude = row["Longitude"];
+
+                    if (uniqueAirports.Contains(icao) && double.TryParse(latitude, out double lat) && double.TryParse(longitude, out double lon))
+                    {
+                        double cLat, cLon;
+                        LatLon2XY(lat, lon, out cLat, out cLon);
+                        circles.Add((cLat, cLon, 3f));
+                    }
+
+                }
+
+                Ntds2d.DrawCirclesVBO(circles);
+            }
 
             // 화면에 항공기 카운트 표시
             NumAircraftText.Text = viewableAircraft.ToString();

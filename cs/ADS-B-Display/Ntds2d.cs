@@ -26,6 +26,9 @@ namespace ADS_B_Display
         private static int SurfaceTrackFriendList;
         private static int TrackHookList;
 
+        private static int circleVbo = 0;
+        private static int circleCount = 0;
+
         /// <summary>
         /// 비행기 스프라이트 시트에서 개별 이미지를 분할하여 텍스처로 생성합니다.
         /// </summary>
@@ -301,6 +304,79 @@ namespace ADS_B_Display
                 GL.Vertex3(xpts[i], ypts[i], 0.1);
                 GL.Vertex3(xpts[(i + 1) % resolution], ypts[(i + 1) % resolution], 0.1);
             }
+            GL.End();
+        }
+
+        /// <summary>
+        /// 여러 개의 원을 VBO를 사용해 그리기
+        /// </summary>
+        public static void DrawCirclesVBO(List<(double cx, double cy, double r)> circles, int segments = 12)
+        {
+            if (circleVbo == 0)
+                GL.GenBuffers(1, out circleVbo);
+
+            int vertsPerCircle = segments + 2; // 중심점 + segments + 끝점
+            int totalVerts = circles.Count * vertsPerCircle;
+            float[] vertexData = new float[totalVerts * 2]; // (x, y)
+
+            int index = 0;
+            foreach (var (cx, cy, r) in circles)
+            {
+                vertexData[index++] = (float)cx;
+                vertexData[index++] = (float)cy;
+
+                for (int i = 0; i <= segments; i++)
+                {
+                    double angle = 2.0 * Math.PI * i / segments;
+                    float x = (float)(cx + r * Math.Cos(angle));
+                    float y = (float)(cy + r * Math.Sin(angle));
+                    vertexData[index++] = x;
+                    vertexData[index++] = y;
+                }
+            }
+
+            GL.BindBuffer(BufferTarget.ArrayBuffer, circleVbo);
+            GL.BufferData(BufferTarget.ArrayBuffer, vertexData.Length * sizeof(float), vertexData, BufferUsageHint.DynamicDraw);
+
+            GL.EnableClientState(ArrayCap.VertexArray);
+            GL.VertexPointer(2, VertexPointerType.Float, 0, IntPtr.Zero);
+
+            GL.Color4(1.0f, 1.0f, 1.0f, 1.0f); // 흰색
+            for (int i = 0; i < circles.Count; i++)
+            {
+                GL.DrawArrays(PrimitiveType.TriangleFan, i * vertsPerCircle, vertsPerCircle);
+            }
+
+            GL.DisableClientState(ArrayCap.VertexArray);
+            GL.BindBuffer(BufferTarget.ArrayBuffer, 0);
+        }
+
+        public static void DrawCircleOutline(double cx, double cy, double r, int segments = 64)
+        {
+            GL.Begin(PrimitiveType.LineLoop);
+            for (int i = 0; i < segments; i++)
+            {
+                double angle = 2.0 * Math.PI * i / segments;
+                double x = cx + r * Math.Cos(angle);
+                double y = cy + r * Math.Sin(angle);
+                GL.Vertex2(x, y);
+            }
+            GL.End();
+        }
+
+        public static void DrawLinkedPointsWithCircles(double x1, double y1, double x2, double y2, double radius = 10.0, int segments = 12)
+        {
+            GL.Color4(0.0f, 0.0f, 0.0f, 1.0f); // 검은색
+            // 점1 원
+            DrawCircleOutline(x1, y1, radius, segments);
+
+            // 점2 원
+            DrawCircleOutline(x2, y2, radius, segments);
+            GL.Color4(1.0f, 0.0f, 0.0f, 1.0f); // 빨간색
+            // 선 연결
+            GL.Begin(PrimitiveType.Lines);
+            GL.Vertex2(x1, y1);
+            GL.Vertex2(x2, y2);
             GL.End();
         }
     }
