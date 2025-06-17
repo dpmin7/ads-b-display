@@ -18,7 +18,7 @@ namespace AdsBDecoder
         private const int MODES_MAX_SBS_SIZE = 256;
         private const uint MODES_NON_ICAO_ADDRESS = 0x800000; // 예시 플래그
 
-        private static bool VALID_POS(TADS_B_Aircraft pos) =>
+        private static bool VALID_POS(Aircraft pos) =>
             Math.Abs(pos.Longitude) >= SMALL_VAL && Math.Abs(pos.Longitude) < 180.0 &&
             Math.Abs(pos.Latitude) >= SMALL_VAL && Math.Abs(pos.Latitude) < 90.0;
 
@@ -78,7 +78,7 @@ namespace AdsBDecoder
         /// <summary>
         /// modeS_message와 Aircraft 객체를 바탕으로 SBS 형식 문자열을 생성
         /// </summary>
-        public static bool ModeS_Build_SBS_Message(ModeSMessage mm, TADS_B_Aircraft a, out string sbs)
+        public static bool ModeS_Build_SBS_Message(ModeSMessage mm, Aircraft a, out string sbs)
         {
             // 출력 버퍼를 StringBuilder로 처리
             var sb = new StringBuilder(MODES_MAX_SBS_SIZE);
@@ -238,7 +238,7 @@ namespace AdsBDecoder
             if (nonIcao) addr |= MODES_NON_ICAO_ADDRESS;
 
             // 전역 해시 테이블(ght_get)에서 Aircraft 검색/생성
-            TADS_B_Aircraft aircraft = GlobalHashTable.GetOrAdd(addr);
+            Aircraft aircraft = GlobalHashTable.GetOrAdd(addr);
             long currentTime = TimeFunctions.GetCurrentTimeInMsec();
             aircraft.LastSeen = currentTime;
             aircraft.NumMessagesSBS++;
@@ -321,13 +321,13 @@ namespace AdsBDecoder
     /// </summary>
     public static class GlobalHashTable
     {
-        private static readonly System.Collections.Generic.Dictionary<uint, TADS_B_Aircraft> _dict
-            = new System.Collections.Generic.Dictionary<uint, TADS_B_Aircraft>();
+        private static readonly System.Collections.Generic.Dictionary<uint, Aircraft> _dict
+            = new System.Collections.Generic.Dictionary<uint, Aircraft>();
 
-        public static TADS_B_Aircraft GetOrAdd(uint icao)
+        public static Aircraft GetOrAdd(uint icao)
         {
             if (!_dict.TryGetValue(icao, out var aircraft)) {
-                aircraft = new TADS_B_Aircraft {
+                aircraft = new Aircraft {
                     ICAO = icao,
                     HexAddr = icao.ToString("X6"),
                     NumMessagesSBS = 0,
@@ -344,12 +344,12 @@ namespace AdsBDecoder
             return aircraft;
         }
 
-        public static bool TryGet(uint icao, out TADS_B_Aircraft aircraft)
+        public static bool TryGet(uint icao, out Aircraft aircraft)
         {
             return _dict.TryGetValue(icao, out aircraft);
         }
 
-        public static IEnumerable<TADS_B_Aircraft> GetAll()
+        public static IEnumerable<Aircraft> GetAll()
             => _dict.Values.ToList();
     }
 

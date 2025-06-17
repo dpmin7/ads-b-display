@@ -6,7 +6,7 @@ namespace ADS_B_Display
 {
     public class AircraftForUI : NotifyPropertyChangedBase
     {
-        public void UpdateAircraftForUI(TADS_B_Aircraft aircraft)
+        public void UpdateAircraftForUI(Aircraft aircraft)
         {
             ICAO = aircraft.ICAO;
             HexAddr = aircraft.HexAddr;

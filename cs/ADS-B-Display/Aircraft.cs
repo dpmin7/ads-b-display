@@ -5,7 +5,7 @@ namespace AdsBDecoder
     /// <summary>
     /// TADS_B_Aircraft 구조체를 C# 클래스로 변환 (char[] → string 적용)
     /// </summary>
-    public class TADS_B_Aircraft
+    public class Aircraft
     {
         public uint ICAO { get; set; }
         public string HexAddr { get; set; } = new string('\0', 6); // 6자리 문자열
@@ -120,7 +120,7 @@ namespace AdsBDecoder
             return 360.0 / cprNFunction(lat, isodd);
         }
 
-        private static void decodeCPR(TADS_B_Aircraft a)
+        private static void decodeCPR(Aircraft a)
         {
             const double AirDlat0 = 360.0 / 60.0;
             const double AirDlat1 = 360.0 / 59.0;
@@ -158,7 +158,7 @@ namespace AdsBDecoder
                 a.Longitude -= 360.0;
         }
 
-        public static void RawToAircraft(ModeSMessage mm, TADS_B_Aircraft a)
+        public static void RawToAircraft(ModeSMessage mm, Aircraft a)
         {
             long currentTime = TimeFunctions.GetCurrentTimeInMsec();
             a.LastSeen = currentTime;
