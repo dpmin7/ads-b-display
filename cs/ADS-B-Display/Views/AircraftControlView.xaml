@@ -1,0 +1,260 @@
+﻿<UserControl x:Class="ADS_B_Display.Views.AircraftControlView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             xmlns:local="clr-namespace:ADS_B_Display.Views"
+             mc:Ignorable="d" 
+             d:DesignHeight="450" d:DesignWidth="300">
+    <ScrollViewer Grid.Column="1"
+              VerticalScrollBarVisibility="Auto"
+              Background="{DynamicResource {x:Static SystemColors.WindowBrushKey}}">
+        <StackPanel Margin="8" x:Name="RightPanelStack" Width="284">
+
+            <!-- ─── 1) System Info ─── -->
+            <Grid>
+                <TextBlock Text="System Time:" FontWeight="Bold" HorizontalAlignment="Left"/>
+                <TextBlock x:Name="SystemTimeText" Text="{Binding SystemTime, FallbackValue=21:24:17:362}" Margin="0,0,10,0" HorizontalAlignment="Right"/>
+            </Grid>
+            <Grid>
+                <TextBlock Text="Lat Lon:" FontWeight="Bold" HorizontalAlignment="Left"/>
+                <TextBlock x:Name="LatText" Text="40°25'57.34&quot; N" Margin="0,0,10,0" HorizontalAlignment="Right"/>
+            </Grid>
+
+            
+
+            <TextBlock Text="Lon:" FontWeight="Bold"/>
+            <TextBlock x:Name="LonText" Text="079°22'19.93&quot; W" Margin="8,0,0,8"/>
+
+            <StackPanel Orientation="Horizontal">
+                <TextBlock Text="# Aircraft:" FontWeight="Bold"/>
+                <TextBlock x:Name="NumAircraftText" Text="66" Margin="4,0,0,0"/>
+                <TextBlock Text="  Viewable:" FontWeight="Bold" Margin="16,0,0,0"/>
+                <TextBlock x:Name="ViewableText" Text="33" Margin="4,0,0,0"/>
+            </StackPanel>
+
+            <!-- Close Control -->
+            <TextBlock Margin="0,8,0,12" Text="Close Control"/>
+
+            <Separator/>
+
+            <!-- ─── 2) 선택된 항공기 상세 정보 ─── -->
+            <UniformGrid Columns="2">
+                <TextBlock Text="ICAO:" FontWeight="Bold" Margin="0,8,0,0"/>
+                <TextBlock x:Name="IcaoText" Text="A1E946" Margin="8,0,4,0"/>
+
+                <TextBlock Text="FLIGHT #:" FontWeight="Bold"/>
+                <TextBlock x:Name="FlightText" Text="RPA5678" Margin="8,0,4,0"/>
+
+                <TextBlock Text="LAT:" FontWeight="Bold"/>
+                <TextBlock x:Name="SelLatText" Text="40°38'07.13&quot; N" Margin="8,0,4,0"/>
+
+                <TextBlock Text="LON:" FontWeight="Bold"/>
+                <TextBlock x:Name="SelLonText" Text="080°01'07.02&quot; W" Margin="8,0,4,0"/>
+
+                <TextBlock Text="SPD:" FontWeight="Bold"/>
+                <TextBlock x:Name="SpeedText" Text="273.00 KTS  VRATE:-64.00" Margin="8,0,4,0"/>
+
+                <TextBlock Text="HDG:" FontWeight="Bold"/>
+                <TextBlock x:Name="HdgText" Text="227.00 DEG" Margin="8,0,4,0"/>
+
+                <TextBlock Text="ALT:" FontWeight="Bold"/>
+                <TextBlock x:Name="AltText" Text="5800.00 FT" Margin="8,0,4,0"/>
+
+                <TextBlock Text="MSG CNT :" FontWeight="Bold"/>
+                <!--<TextBlock x:Name="MsgCntText" Text="Raw: 322  SBS: 0" Margin="8,0,4,0"/>-->
+                <TextBlock x:Name="MsgCntText" Margin="8,0,4,0">
+                <Run  Text="Raw: "/>
+                <Run x:Name="RawCnt"/>
+                <Run  Text="  SBS: "/>
+                <Run x:Name="SbsCnt"/>
+                </TextBlock>
+
+                <TextBlock Text="LAST UPDATE TIME:" FontWeight="Bold"/>
+                <TextBlock x:Name="LastUpdateText" Text="21:24:16:709" Margin="8,0,4,0"/>
+
+            </UniformGrid>
+
+            <Separator Margin="0,8,0,8"/>
+
+            <!-- ─── 3) Display Map / Purge ─── -->
+            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                <CheckBox x:Name="cboxDrawMap" IsChecked="True" Content="Display Map:" VerticalAlignment="Center" FontWeight="Bold"/>
+                <TextBox x:Name="DisplayMapTextBox"
+                     Text="90"
+                     Width="40"
+                     Margin="4,0,0,0"
+                     VerticalContentAlignment="Center"
+                     HorizontalContentAlignment="Center"/>
+                <Button Content="Purge"
+                    Width="60"
+                    Margin="8,0,0,0"/>
+            </StackPanel>
+            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                <CheckBox x:Name="PurgeStaleCheckBox"
+                      Content="Purge Stale"
+                      Margin="0,4,0,0"/>
+                <CheckBox x:Name="CycleImagesCheckBox"
+                      Content="Cycle Images"
+                      Margin="20,4,0,0"/>
+            </StackPanel>
+
+
+            <Separator Margin="0,8,0,8"/>
+
+            <!-- ─── 4) Raw Connect (TextBox + Connect 버튼) ─── -->
+            <TextBlock Text="Raw Connect:" FontWeight="Bold" Margin="0,4,0,0"/>
+            <StackPanel Orientation="Horizontal" Margin="0,4,0,0">
+                <TextBox x:Name="RawConnectTextBox"
+                     Text="127.0.0.1"
+                     Width="120"
+                     VerticalContentAlignment="Center"
+                     HorizontalContentAlignment="Center"/>
+                <Button x:Name="RawConnectButton"
+                    Content="Connect"
+                    Width="80"
+                    Margin="8,0,0,0"/>
+            </StackPanel>
+
+            <!-- ─── 5) Raw Record / Stop Raw Playback ─── -->
+            <StackPanel Orientation="Horizontal" Margin="0,8,0,0">
+                <Button x:Name="RawRecordButton"
+                    Content="Raw Record"
+                    Width="80"/>
+                <Button x:Name="StopRawPlaybackButton"
+                    Content="Stop Raw Playback"
+                    Width="100"
+                    Margin="8,0,0,0"/>
+            </StackPanel>
+
+            <Separator Margin="0,8,0,8"/>
+
+            <!-- ─── 6) SBS Connect (TextBox + Connect 버튼) ─── -->
+            <TextBlock Text="SBS Connect:" FontWeight="Bold" Margin="0,4,0,0"/>
+            <StackPanel Orientation="Horizontal" Margin="0,4,0,0">
+                <TextBox x:Name="SbsConnectTextBox"
+                     Text="data.adsbhub.org"
+                     Width="120"
+                     VerticalContentAlignment="Center"
+                     HorizontalContentAlignment="Center"/>
+                <Button x:Name="SbsConnectButton"
+                    Content="Connect"
+                    Width="80"
+                    Margin="8,0,0,0"/>
+            </StackPanel>
+
+            <!-- ─── 7) SBS Record / SBS Playback ─── -->
+            <StackPanel Orientation="Horizontal" Margin="0,8,0,0">
+                <Button x:Name="SbsRecordButton"
+                    Content="SBS Record"
+                    Width="80"/>
+                <Button x:Name="SbsPlaybackButton"
+                    Content="SBS Playback"
+                    Width="80"
+                    Margin="8,0,0,0"/>
+            </StackPanel>
+
+            <Separator Margin="0,8,0,8"/>
+
+            <!-- ─── 8) Areas Of Interest ─── -->
+            <TextBlock Text="Areas Of Interest" FontWeight="Bold" Margin="0,4,0,8"/>
+            <ListView x:Name="AreaListView"
+                  Height="100"
+                  SelectionMode="Single"
+                  BorderBrush="Gray"
+                  BorderThickness="1">
+                <ListView.View>
+                    <GridView>
+                        <GridViewColumn Header="Area" Width="160" DisplayMemberBinding="{Binding AreaName}" />
+                        <GridViewColumn Header="Color" Width="80">
+                            <GridViewColumn.CellTemplate>
+                                <DataTemplate>
+                                    <Rectangle Width="20" Height="16"
+                                           Fill="{Binding AreaColorBrush}"
+                                           Stroke="Black" StrokeThickness="0.5"/>
+                                </DataTemplate>
+                            </GridViewColumn.CellTemplate>
+                        </GridViewColumn>
+                    </GridView>
+                </ListView.View>
+            </ListView>
+
+            <!-- Insert / Complete / Cancel / Delete 버튼 -->
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Left" Margin="0,4,0,0">
+                <Button x:Name="InsertAreaButton"
+                    Content="Insert"
+                    Width="60"/>
+                <Button x:Name="CompleteAreaButton"
+                    Content="Complete"
+                    Width="70"
+                    Margin="4,0,0,0"/>
+                <Button x:Name="CancelAreaButton"
+                    Content="Cancel"
+                    Width="60"
+                    Margin="4,0,0,0"/>
+                <Button x:Name="DeleteAreaButton"
+                    Content="Delete"
+                    Width="60"
+                    Margin="4,0,0,0"/>
+            </StackPanel>
+
+            <Separator Margin="0,8,0,8"/>
+
+            <!-- ─── 9) 지도 공급자 선택 콤보박스 ─── -->
+            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                <TextBlock Text="Map Provider:" VerticalAlignment="Center" FontWeight="Bold"/>
+                <ComboBox x:Name="MapProviderComboBox"
+                      Width="150"
+                      Margin="8,0,0,0"
+                      SelectedIndex="0">
+                    <ComboBoxItem Content="Google Maps"/>
+                    <ComboBoxItem Content="Bing Maps"/>
+                    <ComboBoxItem Content="OpenStreetMap"/>
+                </ComboBox>
+            </StackPanel>
+
+            <Separator Margin="0,8,0,8"/>
+
+            <!-- ─── 10) CPA 정보 / Time-To-Go / Zoom In·Zoom Out ─── -->
+            <StackPanel Orientation="Horizontal">
+                <TextBlock Text="CPA TIME:" FontWeight="Bold"/>
+                <TextBlock x:Name="CpaTimeText" Text="NONE" Margin="8,0,0,0"/>
+            </StackPanel>
+            <StackPanel Orientation="Horizontal" Margin="0,2,0,0">
+                <TextBlock Text="CPA DISTANCE:" FontWeight="Bold"/>
+                <TextBlock x:Name="CpaDistanceText" Text="None" Margin="8,0,0,0"/>
+            </StackPanel>
+
+            <!-- Time-To-Go 슬라이더 + 값 표시 -->
+            <StackPanel Orientation="Horizontal" Margin="0,8,0,0" VerticalAlignment="Center">
+                <CheckBox x:Name="TimeToGoCheckBox"
+                      Content="Time-To-Go"/>
+                <TextBlock x:Name="TimeToGoValueText"
+                       Text="00:02:00.000"
+                       FontWeight="Bold"
+                       Margin="8,0,0,0"/>
+            </StackPanel>
+            <Slider x:Name="TimeToGoSlider"
+                Minimum="0"
+                Maximum="3600"
+                Value="120"
+                SmallChange="1"
+                LargeChange="60"
+                Margin="0,2,0,0"/>
+
+            <Separator Margin="0,8,0,8"/>
+
+            <!-- Zoom In / Zoom Out 버튼 -->
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,8,0,8">
+                <Button x:Name="ZoomInButton"
+                    Content="Zoom In"
+                    Width="100"/>
+                <Button x:Name="ZoomOutButton"
+                    Content="Zoom Out"
+                    Width="100"
+                    Margin="8,0,0,0"/>
+            </StackPanel>
+
+        </StackPanel>
+    </ScrollViewer>
+</UserControl>
