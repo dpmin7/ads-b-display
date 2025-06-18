@@ -1,4 +1,5 @@
-﻿using System;
+﻿using ADS_B_Display;
+using System;
 
 namespace AdsBDecoder
 {
@@ -158,7 +159,7 @@ namespace AdsBDecoder
                 a.Longitude -= 360.0;
         }
 
-        public static void RawToAircraft(ModeSMessage mm, Aircraft a)
+        public static void RawToAircraft(ModeSMessage mm, ref Aircraft a)
         {
             long currentTime = TimeFunctions.GetCurrentTimeInMsec();
             a.LastSeen = currentTime;

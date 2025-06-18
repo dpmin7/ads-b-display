@@ -255,9 +255,14 @@ namespace ADS_B_Display
         /// <summary>
         /// 트랙 훅 심볼 그리기
         /// </summary>
-        public static void DrawTrackHook(double x, double y)
+        public static void DrawTrackHook(double x, double y, double scale = 1)
         {
-            GL.PushMatrix(); GL.Translate(x, y, 0f); GL.CallList(TrackHookList); GL.PopMatrix();
+            GL.PushMatrix();
+            GL.Translate(x, y, 0f);
+            GL.Scale(scale, scale, 1f); // 크기 조절 추가
+            GL.LineWidth((float)(1.5 * scale)); // 기본 두께 1.5를 scale에 따라 조절
+            GL.CallList(TrackHookList);
+            GL.PopMatrix();
         }
 
         /// <summary>

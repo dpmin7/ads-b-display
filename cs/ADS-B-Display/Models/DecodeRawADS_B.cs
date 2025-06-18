@@ -130,16 +130,7 @@ namespace AdsBDecoder
     public static class DecodeRawAdsB
     {
         // ICAO 캐시 (모든 인스턴스가 공유)
-        private static uint[] ICAO_cache = null;
-
-        /// <summary>
-        /// 초기화: ICAO 캐시 메모리 할당
-        /// </summary>
-        public static void InitDecodeRawADS_B()
-        {
-            ICAO_cache = new uint[2 * DecodeRawAdsBConstants.MODES_ICAO_CACHE_LEN];
-            // 기본값은 0으로 초기화됨.
-        }
+        private static uint[] ICAO_cache = new uint[2 * DecodeRawAdsBConstants.MODES_ICAO_CACHE_LEN];
 
         /// <summary>
         /// hex 문자(0~F) 하나를 정수 값으로 변환. 실패 시 -1 반환
@@ -509,7 +500,7 @@ namespace AdsBDecoder
         /// <summary>
         /// RAW SBS-1 메시지(AnsiString) 입력 받아 modeS_message로 디코딩
         /// </summary>
-        public static TDecodeStatus Decode_RAW_message(string MsgIn, ModeSMessage mm)
+        public static TDecodeStatus Decode_RAW_message(string MsgIn, ref ModeSMessage mm)
         {
             // 1) 입력 문자열을 바이트 배열로 복사하고 '\n' 추가
             byte[] raw = System.Text.Encoding.ASCII.GetBytes(MsgIn + "\n");

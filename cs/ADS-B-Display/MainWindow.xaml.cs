@@ -79,6 +79,7 @@ namespace ADS_B_Display
 
         private TrackHookStruct _trackHook = new TrackHookStruct();
         private SbsWorker _sbsWorker = null;
+        private SbsWorker _rawWorker = null;
         public MainWindow()
         {
             InitializeComponent();
@@ -100,6 +101,7 @@ namespace ADS_B_Display
             //dg.ItemsSource = Aircrafts;
 
             _sbsWorker = new SbsWorker(OnSbsMessageReceived);
+            _rawWorker = new SbsWorker(OnRawMessageReceived);
 
             _updateTimer.Interval = TimeSpan.FromMilliseconds(500);
             _updateTimer.Tick += _updateTimer_Tick;
@@ -312,23 +314,8 @@ namespace ADS_B_Display
                         MessageBox.Show($"Raw feed에 연결되었습니다: {host}:{port}", "Info", MessageBoxButton.OK, MessageBoxImage.Information);
                     });
 
-                    // 연결 후, 스트림에서 한 줄씩 읽어서 처리 (예시: OnRawMessageReceived(rawLine))
-                    using (var reader = new StreamReader(_rawClient.GetStream(), Encoding.ASCII)) {
-                        while (_isRawConnected) {
-                            string rawLine = reader.ReadLine();
-                            if (string.IsNullOrEmpty(rawLine))
-                                continue;
+                    _rawWorker.Start(_rawClient);
 
-                            // 필요하다면 Dispatcher.Invoke를 통해 UI 업데이트
-                            Dispatcher.Invoke(() =>
-                            {
-                                // 예: RawLogListBox.Items.Add(rawLine);
-                            });
-
-                            // rawLine을 OnRawMessageReceived(rawLine) 같은 메서드로 넘겨서 파싱/화면 갱신
-                            OnRawMessageReceived(rawLine);
-                        }
-                    }
                 } catch (Exception ex) {
                     Dispatcher.Invoke(() =>
                     {
@@ -341,15 +328,7 @@ namespace ADS_B_Display
             });
         }
 
-        /// <summary>
-        /// Raw feed에서 들어오는 한 줄짜리 메시지를 처리하는 메서드(예시).
-        /// </summary>
-        private void OnRawMessageReceived(string rawLine)
-        {
-            //SBSMessage.SBS_Message_Decode(rawLine, out uint icao);
-            // TODO: rawLine을 파싱하거나, 지도에 나타내는 로직을 여기에 구현하세요.
-            // 예: DisplayRawOnMap(rawLine);
-        }
+        
 
         /// <summary>
         /// SBS Connect 버튼 클릭 시 호출.
@@ -429,37 +408,27 @@ namespace ADS_B_Display
         private FlatEarthView _earthView;
 
         /// <summary>
+        /// Raw feed에서 들어오는 한 줄짜리 메시지를 처리하는 메서드(예시).
+        /// </summary>
+        private void OnRawMessageReceived(string rawLine)
+        {
+            var icao = AircraftManager.ReceiveRawMessage(rawLine);
+            lock (lockObj) {
+                updated.Add(icao);
+            }
+        }
+
+
+        /// <summary>
         /// SBS 허브에서 들어오는 한 줄짜리 메시지를 처리하는 메서드(예시).
         /// 여기서는 “SBS Record” 기능과 연동하도록 구현.
         /// </summary>
         private void OnSbsMessageReceived(string rawLine)
         {
-            
             var icao = AircraftManager.ReceiveSBSMessage(rawLine);
             lock (lockObj) {
                 updated.Add(icao);
             }
-            
-            // 1) 화면에 rawLine을 표시하고 싶다면 Dispatcher.Invoke(...) 로 UI 업데이트
-
-            // 2) “SBS Record” 버튼이 활성화되어 있다면 파일에 기록
-            if (_isRecordingSbs && _sbsRecordWriter != null) {
-                try {
-                    _sbsRecordWriter.WriteLine(rawLine);
-                } catch {
-                    Dispatcher.Invoke(() =>
-                    {
-                        MessageBox.Show("SBS 기록 중 오류가 발생하여 녹화를 중단합니다.",
-                                        "Error", MessageBoxButton.OK, MessageBoxImage.Error);
-                        _isRecordingSbs = false;
-                        SbsRecordButton.Content = "SBS Record";
-                    });
-                    try { _sbsRecordWriter.Close(); } catch { }
-                    _sbsRecordWriter = null;
-                }
-            }
-
-            // 3) rawLine을 파싱하여 지도에 표시하거나, 다른 로직에 넘기고 싶다면 여기에 구현
         }
 
         private void UseSbsLocal_Click(object sender, RoutedEventArgs e)
@@ -1006,7 +975,7 @@ namespace ADS_B_Display
                     // 시각화용 OpenGL 또는 DrawingContext에서 호출해야 할 부분
                     // 예: glColor4f 대신 내부 렌더링에 맞춰 구현
                     LatLon2XY(data.Latitude, data.Longitude, out scrX, out scrY);
-                    Ntds2d.DrawTrackHook(scrX, scrY);
+                    Ntds2d.DrawTrackHook(scrX, scrY, airplaneScale*0.5);
                 } else {
                     _trackHook.Valid_CC = false;
                     IcaoText.Text = "N/A";
