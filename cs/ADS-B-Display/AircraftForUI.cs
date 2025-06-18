@@ -1,5 +1,4 @@
-﻿using AdsBDecoder;
-using System.ComponentModel;
+﻿using System.ComponentModel;
 using System.Runtime.CompilerServices;
 
 namespace ADS_B_Display

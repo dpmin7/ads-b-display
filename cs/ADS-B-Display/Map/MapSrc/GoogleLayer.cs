@@ -5,7 +5,7 @@ using System;
 using System.Collections.Generic;
 using System.Numerics;
 
-namespace ADS_B_Display_NET.Map.MapSrc
+namespace ADS_B_Display.Map.MapSrc
 {
     /// <summary>
     /// GoogleLayer: MasterLayer implementation fetching and rendering map tiles.

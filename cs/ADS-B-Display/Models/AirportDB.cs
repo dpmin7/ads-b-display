@@ -1,15 +1,7 @@
-﻿using ADS_B_Display_NET.Map.MapSrc;
-using System;
+﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics;
-using System.IO;
-using System.Linq;
 using System.Net.Http;
-using System.Net.Sockets;
-using System.Security.Policy;
-using System.Text;
 using System.Threading.Tasks;
-using System.Windows.Threading;
 
 namespace ADS_B_Display
 {

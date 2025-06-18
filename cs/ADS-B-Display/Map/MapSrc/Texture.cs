@@ -4,7 +4,7 @@ using System.IO;
 using System.Windows.Media.Imaging;
 using OpenTK.Graphics.OpenGL;
 
-namespace ADS_B_Display_NET.Map.MapSrc
+namespace ADS_B_Display.Map.MapSrc
 {
     /// <summary>
     /// Texture Container. Handles loading textures from files or memory and OpenGL binding.

@@ -5,7 +5,7 @@ using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace ADS_B_Display_NET.Map.MapSrc
+namespace ADS_B_Display.Map.MapSrc
 {
     /// <summary>
     /// Defines available tile server types.

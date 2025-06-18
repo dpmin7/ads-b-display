@@ -1,7 +1,7 @@
 ﻿
 using System.Collections.Generic;
 
-namespace ADS_B_Display_NET.Map.MapSrc
+namespace ADS_B_Display.Map.MapSrc
 {
     /// <summary>
     /// Base class for core geographical data handlers.

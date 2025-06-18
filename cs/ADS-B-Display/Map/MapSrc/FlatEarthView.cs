@@ -7,7 +7,7 @@ using System;
 using System.Numerics;
 using System.Windows;
 
-namespace ADS_B_Display_NET.Map.MapSrc
+namespace ADS_B_Display.Map.MapSrc
 {
     /// <summary>
     /// Flat representation of Earth.

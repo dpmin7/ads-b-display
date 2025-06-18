@@ -2,7 +2,7 @@
 using System;
 using System.Runtime.InteropServices;
 
-namespace AdsBDecoder
+namespace ADS_B_Display
 {
     /// <summary>
     /// 상수 및 매크로 정의

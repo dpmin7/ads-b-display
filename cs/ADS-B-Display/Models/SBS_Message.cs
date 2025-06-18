@@ -7,7 +7,7 @@ using System.Linq;
 using System.Text;
 using System.Windows.Documents;
 
-namespace AdsBDecoder
+namespace ADS_B_Display
 {
     /// <summary>
     /// SBS_Message 관련 상수 및 메서드를 C#으로 변환한 버전

@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace ADS_B_Display_NET.Map.MapSrc
+namespace ADS_B_Display.Map.MapSrc
 {
     /// <summary>
     /// Abstract class for earth view (C++에서 포팅).

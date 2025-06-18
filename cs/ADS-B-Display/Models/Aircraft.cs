@@ -1,7 +1,7 @@
 ﻿using ADS_B_Display;
 using System;
 
-namespace AdsBDecoder
+namespace ADS_B_Display
 {
     /// <summary>
     /// TADS_B_Aircraft 구조체를 C# 클래스로 변환 (char[] → string 적용)

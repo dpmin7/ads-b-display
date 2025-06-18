@@ -1,4 +1,4 @@
-﻿namespace ADS_B_Display_NET.Map.MapSrc
+﻿namespace ADS_B_Display.Map.MapSrc
 {
     /// <summary>
     /// Base interface for all geo-bound data
