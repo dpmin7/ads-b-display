@@ -599,8 +599,8 @@ namespace ADS_B_Display
                 double VLon = (Map_w[1].X - (xf * (Map_v[1].X - X1))) * 360.0;
 
                 // 위도/경도 표시 (예: Label 컨트롤 사용)
-                //LatLabel.Content = DMS.DegreesMinutesSecondsLat(VLat);
-                //LonLabel.Content = DMS.DegreesMinutesSecondsLon(VLon);
+                LatText.Text = DMS.DegreesMinutesSecondsLat(VLat);
+                LonText.Text = DMS.DegreesMinutesSecondsLon(VLon);
 
                 // PointInPolygon 등 영역 판정 (Areas 컬렉션 필요)
                 //double[] point = new double[3] { VLon, VLat, 0.0 };
