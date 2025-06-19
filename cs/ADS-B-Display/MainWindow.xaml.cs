@@ -250,6 +250,15 @@ namespace ADS_B_Display
             }
         }
 
+        // Playback 속도
+        private void PlaybackSpeedSlider_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
+        {
+            PlaybackSpeedValueText.Text = "PlayBack Speed: " + e.NewValue + "x";
+            if (_sbsWorker != null)
+            {
+                _sbsWorker.setPlayBackSpeed((int)e.NewValue);
+            }
+        }
         /// <summary>
         /// Raw Connect 버튼 클릭 시 호출.
         /// 연결/해제를 토글(toggle) 방식으로 처리.
@@ -1014,7 +1023,7 @@ namespace ADS_B_Display
                     {
                         double cLat, cLon;
                         LatLon2XY(lat, lon, out cLat, out cLon);
-                        circles.Add((cLat, cLon, 3f));
+                        circles.Add((cLat, cLon, 5f));
                     }
 
                 }

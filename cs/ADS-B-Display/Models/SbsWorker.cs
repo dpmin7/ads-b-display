@@ -20,6 +20,7 @@ namespace ADS_B_Display
         private volatile bool _running;
         private bool _first = true;
         private long _lastTime;
+        private int _playBackSpeed = 1;
 
         private Action<string> OnMessageReceived;
         private Action OnFinished;
@@ -59,6 +60,10 @@ namespace ADS_B_Display
             _running = false;
             _thread?.Join();
         }
+        public void setPlayBackSpeed(int speed)
+        {
+            _playBackSpeed = speed;
+        }
 
         private void Run()
         {
@@ -83,7 +88,7 @@ namespace ADS_B_Display
                         }
                         var _sleepTime = (int)(time - _lastTime);
                         _lastTime = time;
-                        Thread.Sleep(_sleepTime);
+                        Thread.Sleep(_sleepTime / _playBackSpeed);
 
                         rawLine = reader.ReadLine();
                         if (string.IsNullOrEmpty(rawLine))

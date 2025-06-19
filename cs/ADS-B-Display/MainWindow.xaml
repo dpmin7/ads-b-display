@@ -201,6 +201,20 @@
                                 Margin="8,0,0,0"
                                 Click="SbsPlaybackButton_Click"/>
                     </StackPanel>
+                    <StackPanel Orientation="Horizontal" Margin="0,8,0,0" VerticalAlignment="Center">
+                        <TextBlock x:Name="PlaybackSpeedValueText"
+                                   Text="PlayBack Speed: 1x"
+                                   FontWeight="Bold"
+                                   Margin="0,0,0,0"/>
+                    </StackPanel>
+                    <Slider x:Name="PlaybackSpeedSlider"
+                            Minimum="1"
+                            Maximum="5"
+                            Value="1"
+                            TickFrequency="1"
+                            IsSnapToTickEnabled="True"
+                            Margin="0,2,20,0"
+                            ValueChanged="PlaybackSpeedSlider_ValueChanged"/>
 
                     <Separator Margin="0,8,0,8"/>
 
