@@ -1022,9 +1022,12 @@ namespace ADS_B_Display
 
                     if (uniqueAirports.Contains(icao) && double.TryParse(latitude, out double lat) && double.TryParse(longitude, out double lon))
                     {
-                        double cLat, cLon;
-                        LatLon2XY(lat, lon, out cLat, out cLon);
+                        if (lat > 85.0511 || lat < -85.0511)
+                            continue;
+
+                        LatLon2XY(lat, lon, out double cLat, out double cLon);
                         //circles.Add((cLat, cLon, 5f));
+                        
                         Ntds2d.DrawAirportVBO(cLat, cLon, 1.0f);
                     }
 
