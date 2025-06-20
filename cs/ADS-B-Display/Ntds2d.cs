@@ -28,6 +28,11 @@ namespace ADS_B_Display
 
         private static int circleVbo = 0;
         private static int circleCount = 0;
+        private static int airportVbo = 0;
+        private static int airportVao = 0;
+        private static int airportEbo = 0;
+        private static int airportTextId = 0;
+        private static bool airportVboInitialized = false;
 
         /// <summary>
         /// 비행기 스프라이트 시트에서 개별 이미지를 분할하여 텍스처로 생성합니다.
@@ -383,6 +388,92 @@ namespace ADS_B_Display
             GL.Vertex2(x1, y1);
             GL.Vertex2(x2, y2);
             GL.End();
+        }
+
+        public static int LoadTextureFromFile(string filePath)
+        {
+            var decoder = new PngBitmapDecoder(new Uri(filePath), BitmapCreateOptions.PreservePixelFormat, BitmapCacheOption.OnLoad);
+            var bitmap = decoder.Frames[0];
+            int width = bitmap.PixelWidth;
+            int height = bitmap.PixelHeight;
+            int stride = width * 4;
+
+            byte[] pixels = new byte[height * stride];
+            bitmap.CopyPixels(pixels, stride, 0);
+
+            int textureId = GL.GenTexture();
+            GL.BindTexture(TextureTarget.Texture2D, textureId);
+            GL.TexImage2D(TextureTarget.Texture2D, 0, PixelInternalFormat.Rgba, width, height, 0,
+                          PixelFormat.Bgra, PixelType.UnsignedByte, pixels);
+
+            GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMinFilter, (int)TextureMinFilter.Linear);
+            GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMagFilter, (int)TextureMagFilter.Linear);
+            GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureWrapS, (int)TextureWrapMode.ClampToEdge);
+            GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureWrapT, (int)TextureWrapMode.ClampToEdge);
+            GL.BindTexture(TextureTarget.Texture2D, 0);
+
+            return textureId;
+        }
+        private static void InitAirportVBO()
+        {
+            if (airportVboInitialized) return;
+
+            float[] quadVertices = {
+        // x, y, u, v
+        +1f, +1f, 1f, 1f,
+        -1f, +1f, 0f, 1f,
+        -1f, -1f, 0f, 0f,
+        +1f, -1f, 1f, 0f
+    };
+
+            uint[] indices = { 0, 1, 2, 0, 2, 3 };
+
+            airportVao = GL.GenVertexArray();
+            airportVbo = GL.GenBuffer();
+            airportEbo = GL.GenBuffer();
+
+            GL.BindVertexArray(airportVao);
+
+            GL.BindBuffer(BufferTarget.ArrayBuffer, airportVbo);
+            GL.BufferData(BufferTarget.ArrayBuffer, quadVertices.Length * sizeof(float), quadVertices, BufferUsageHint.StaticDraw);
+
+            GL.BindBuffer(BufferTarget.ElementArrayBuffer, airportEbo);
+            GL.BufferData(BufferTarget.ElementArrayBuffer, indices.Length * sizeof(uint), indices, BufferUsageHint.StaticDraw);
+
+            GL.EnableVertexAttribArray(0); // vertex.xy
+            GL.VertexAttribPointer(0, 2, VertexAttribPointerType.Float, false, 4 * sizeof(float), 0);
+
+            GL.EnableVertexAttribArray(1); // texcoord.uv
+            GL.VertexAttribPointer(1, 2, VertexAttribPointerType.Float, false, 4 * sizeof(float), 2 * sizeof(float));
+
+            GL.BindVertexArray(0);
+
+            airportTextId = LoadTextureFromFile(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Symbols", "tower-64.png"));
+            airportVboInitialized = true;
+        }
+
+        public static void DrawAirportVBO(double x, double y, double scale)
+        {
+            InitAirportVBO(); // 텍스처는 여기서 이미 로딩되어 있음
+
+            GL.PushMatrix();
+            GL.Translate(x, y, 0f);
+            GL.Scale(24f * scale, 24f * scale, 1f);
+
+            GL.Enable(EnableCap.Texture2D);
+            GL.BindTexture(TextureTarget.Texture2D, airportTextId);
+
+            // VAO/VBO 제거하고 고전 방식으로 그리기
+            GL.Begin(PrimitiveType.Quads);
+            GL.TexCoord2(1f, 0f); GL.Vertex2(+1f, +1f);
+            GL.TexCoord2(0f, 0f); GL.Vertex2(-1f, +1f);
+            GL.TexCoord2(0f, 1f); GL.Vertex2(-1f, -1f);
+            GL.TexCoord2(1f, 1f); GL.Vertex2(+1f, -1f);
+            GL.End();
+
+            GL.BindTexture(TextureTarget.Texture2D, 0);
+            GL.Disable(EnableCap.Texture2D);
+            GL.PopMatrix();
         }
     }
 }

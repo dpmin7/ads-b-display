@@ -1003,6 +1003,7 @@ namespace ADS_B_Display
                     LatLon2XY(daLat, daLon, out double aLat, out double aLon);
 
                     Ntds2d.DrawLinkedPointsWithCircles(dLat, dLon, aLat, aLon);
+
                 }
             }
 
@@ -1023,12 +1024,13 @@ namespace ADS_B_Display
                     {
                         double cLat, cLon;
                         LatLon2XY(lat, lon, out cLat, out cLon);
-                        circles.Add((cLat, cLon, 5f));
+                        //circles.Add((cLat, cLon, 5f));
+                        Ntds2d.DrawAirportVBO(cLat, cLon, 1.0f);
                     }
 
                 }
 
-                Ntds2d.DrawCirclesVBO(circles);
+                //Ntds2d.DrawCirclesVBO(circles);
             }
 
             // 화면에 항공기 카운트 표시
