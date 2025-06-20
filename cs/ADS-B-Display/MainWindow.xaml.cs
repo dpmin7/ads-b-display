@@ -911,6 +911,31 @@ namespace ADS_B_Display
             //    }
             //}
 
+            // 공항 정보 표시
+            List<Dictionary<string, string>> airportsInfo = AirportDB.GetAirPortsInfo();
+            HashSet<String> uniqueAirports = AirportDB.GetUniqueAirportCodes();
+
+            if (airportsInfo != null)
+            {
+                foreach (var row in airportsInfo)
+                {
+                    string icao = row["ICAO"];
+                    string latitude = row["Latitude"];
+                    string longitude = row["Longitude"];
+
+                    if (uniqueAirports.Contains(icao) && double.TryParse(latitude, out double lat) && double.TryParse(longitude, out double lon))
+                    {
+                        if (lat > 85.0511 || lat < -85.0511)
+                            continue;
+
+                        LatLon2XY(lat, lon, out double cLat, out double cLon);
+
+                        Ntds2d.DrawAirportVBO(cLat, cLon, airplaneScale);
+                    }
+
+                }
+            }
+
             // 항공기 정보 그리기
             var aircraftTable = AircraftManager.GetAll();
             foreach (var data in aircraftTable) {
@@ -1005,35 +1030,6 @@ namespace ADS_B_Display
                     Ntds2d.DrawLinkedPointsWithCircles(dLat, dLon, aLat, aLon);
 
                 }
-            }
-
-            // 공항 정보 표시
-            var circles = new List<(double, double, double)>();
-            List<Dictionary<string, string>> airportsInfo = AirportDB.GetAirPortsInfo();
-            HashSet<String> uniqueAirports = AirportDB.GetUniqueAirportCodes();
-
-            if (airportsInfo != null)
-            {
-                foreach (var row in airportsInfo)
-                {
-                    string icao = row["ICAO"];
-                    string latitude = row["Latitude"];
-                    string longitude = row["Longitude"];
-
-                    if (uniqueAirports.Contains(icao) && double.TryParse(latitude, out double lat) && double.TryParse(longitude, out double lon))
-                    {
-                        if (lat > 85.0511 || lat < -85.0511)
-                            continue;
-
-                        LatLon2XY(lat, lon, out double cLat, out double cLon);
-                        //circles.Add((cLat, cLon, 5f));
-                        
-                        Ntds2d.DrawAirportVBO(cLat, cLon, 1.0f);
-                    }
-
-                }
-
-                //Ntds2d.DrawCirclesVBO(circles);
             }
 
             // 화면에 항공기 카운트 표시

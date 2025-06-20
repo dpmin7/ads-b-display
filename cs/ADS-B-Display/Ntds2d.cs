@@ -374,7 +374,7 @@ namespace ADS_B_Display
             GL.End();
         }
 
-        public static void DrawLinkedPointsWithCircles(double x1, double y1, double x2, double y2, double radius = 10.0, int segments = 12)
+        public static void DrawLinkedPointsWithCircles(double x1, double y1, double x2, double y2, double radius = 40.0, int segments = 50)
         {
             GL.Color4(0.0f, 0.0f, 0.0f, 1.0f); // 검은색
             // 점1 원
@@ -419,12 +419,12 @@ namespace ADS_B_Display
             if (airportVboInitialized) return;
 
             float[] quadVertices = {
-        // x, y, u, v
-        +1f, +1f, 1f, 1f,
-        -1f, +1f, 0f, 1f,
-        -1f, -1f, 0f, 0f,
-        +1f, -1f, 1f, 0f
-    };
+                // x, y, u, v
+                +1f, +1f, 1f, 1f,
+                -1f, +1f, 0f, 1f,
+                -1f, -1f, 0f, 0f,
+                +1f, -1f, 1f, 0f
+            };
 
             uint[] indices = { 0, 1, 2, 0, 2, 3 };
 
@@ -462,6 +462,8 @@ namespace ADS_B_Display
 
             GL.Enable(EnableCap.Texture2D);
             GL.BindTexture(TextureTarget.Texture2D, airportTextId);
+
+            GL.Color4(1f, 1f, 1f, 1f);
 
             // VAO/VBO 제거하고 고전 방식으로 그리기
             GL.Begin(PrimitiveType.Quads);
