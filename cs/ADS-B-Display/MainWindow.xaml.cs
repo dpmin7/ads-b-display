@@ -60,6 +60,11 @@ namespace ADS_B_Display
         // ─── 4) Raw Record 관련 필드 ───
         private bool _isRecordingRaw = false;
 
+#if 0 // PingEcho 테스트용 코드 (필요시 활성화)    
+        // Ping 관련 필드
+        private PingEcho pingEcho = new PingEcho();
+#endif
+
         // Map 관련 필드
         double Mw1, Mw2, Mh1, Mh2, xf, yf;
         public Vector3d[] Map_v = new Vector3d[4];
@@ -312,7 +317,6 @@ namespace ADS_B_Display
                 _isRawConnected = false;
                 RawConnectButton.Content = "Connect";
                 MessageBox.Show("Raw feed 연결을 해제했습니다.", "Info", MessageBoxButton.OK, MessageBoxImage.Information);
-
                 return;
             }
 
@@ -380,6 +384,9 @@ namespace ADS_B_Display
                 _isSbsConnected = false;
                 SbsConnectButton.Content = "Connect";
                 MessageBox.Show("SBS Hub 연결을 해제했습니다.", "Info", MessageBoxButton.OK, MessageBoxImage.Information);
+#if 0 // PingEcho 테스트용 코드 (필요시 활성화)           
+                pingEcho.Stop();
+#endif
                 return;
             }
 
@@ -417,7 +424,25 @@ namespace ADS_B_Display
                     popup.Close();
                     _isSbsConnected = true;
                     SbsConnectButton.Content = "Disconnect";
-                } else {
+
+#if 0 // PingEcho 테스트용 코드 (필요시 활성화)
+                    Console.WriteLine($"Ping 시작");
+
+                    // Ping Echo 시작
+                    pingEcho.Start(host, port, 2000, (pingHost, ex) => // 'host' 이름을 'pingHost'로 변경하여 충돌 방지
+                    {
+                        if (ex != null)
+                        {
+                            Console.WriteLine($"Ping 예외 발생: {pingHost} - {ex.Message}");
+                        }
+                        else
+                        {
+                            Console.WriteLine($"Ping 실패: {pingHost}");
+                        }
+                    });
+#endif
+                }
+                else {
                     
                 }
             } catch (Exception ex) {
