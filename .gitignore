@@ -39,4 +39,4 @@ resources
 /cs/packages
 
 # BigQuery Json Key
-/cs/BigQuery/YourJsonFile.json
+/cs/ADS-B-Display/Utils/BigQuery/YourJsonFile.json
