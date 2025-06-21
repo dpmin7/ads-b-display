@@ -87,8 +87,15 @@
     <Compile Include="Models\AirportDB.cs" />
     <Compile Include="Models\Area.cs" />
     <Compile Include="Controllers\MVVM.cs" />
+    <Compile Include="Models\CPA\CollisionRiskWorker.cs" />
+    <Compile Include="Models\CPA\CPAInterop.cs" />
+    <Compile Include="Models\CPA\CPAProcessor.cs" />
     <Compile Include="Models\PingEcho.cs" />
     <Compile Include="Models\PointPolygonFilter.cs" />
+    <Compile Include="Models\RangeFilter\CompositeFilter.cs" />
+    <Compile Include="Models\RangeFilter\HorizontalRangeFilter.cs" />
+    <Compile Include="Models\RangeFilter\IRangeFilter.cs" />
+    <Compile Include="Models\RangeFilter\VerticalRangeFilter.cs" />
     <Compile Include="Utils\csv.cs" />
     <Compile Include="Models\DecodeRawADS_B.cs" />
     <Compile Include="Utils\Dms.cs" />
