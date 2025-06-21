@@ -1038,10 +1038,18 @@ namespace ADS_B_Display
 
         private void LatLon2XY(double lat, double lon, out double x, out double y)
         {
+            // 경도를 -180~180 기준으로 wrap-around
+            lon = WrapLongitude(lon);
+
             x = (Map_v[1].X - ((Map_w[1].X - (lon / 360.0)) / xf));
             y = Map_v[3].Y - (Map_w[1].Y / yf) + (MathExt.Asinh(Math.Tan(lat * Math.PI / 180.0)) / (2 * Math.PI * yf));
-            //double y = 0.5 - Math.Log(Math.Tan(Math.PI / 4 + lat * Math.PI / 360)) / (2 * Math.PI);
+        }
 
+        private double WrapLongitude(double lon)
+        {
+            lon = (lon + 180) % 360;
+            if (lon < 0) lon += 360;
+            return lon - 180;
         }
 
         // 화면 좌표를 위도/경도로 변환

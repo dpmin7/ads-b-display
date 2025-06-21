@@ -33,14 +33,16 @@ namespace ADS_B_Display.Map.MapSrc
             );
 
             double step = 1.0 / (1 << level);
+            int numTiles = 1 << level;
 
             int x0 = (int)((rgn.W[0].X + 0.5) / step);
             int x1 = (int)(((rgn.W[1].X + 0.5) / step) - EPSILON);
             int y0 = (int)((rgn.W[0].Y + 0.5) / step);
             int y1 = (int)(((rgn.W[1].Y + 0.5) / step) - EPSILON);
-
+            //Debug.WriteLine($"x1:{x1}, numTiles:{numTiles}");
             GL.Color3(1.0, 1.0, 1.0);
-            for (int x = x0; x <= x1; x++)
+            //Debug.WriteLine($"Rendering region: x0={x0}, x1={x1}, y0={y0}, y1={y1}, level={level}");
+            for (int x = x0-1; x <= x1+1; x++)
                 for (int y = y0; y <= y1; y++) {
                     // Compute tile bounds in normalized region space
                     double tileX0 = x * step - 0.5;
@@ -89,7 +91,11 @@ namespace ADS_B_Display.Map.MapSrc
                     yk1 = MathExt.Clamp(yk1, 0.0, 1.0);
 
                     // Determine tile indices for LOD
-                    int realLevel = level, realX = x, realY = y;
+                    int realLevel = level;
+                    int realX = x % numTiles;
+                    if (realX < 0) realX += numTiles;
+                    int realY = y;
+
                     TextureTile tex = _tileManager.GetTexture(realX, realY, realLevel);
 
                     // Select best available texture

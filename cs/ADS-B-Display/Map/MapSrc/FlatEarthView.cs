@@ -4,6 +4,7 @@ using Microsoft.SqlServer.Server;
 using OpenTK;
 using OpenTK.Graphics.OpenGL;
 using System;
+using System.Diagnostics;
 using System.Numerics;
 using System.Windows;
 
@@ -56,16 +57,16 @@ namespace ADS_B_Display.Map.MapSrc
             );
 
             // tune coords for the cases where earth bounds appear on screen
-            if (worldLeftVirtual > 0.0) {
-                rgn.V[0].X = rgn.V[3].X = (float)worldLeftVirtual;
-                rgn.P[0].X = rgn.P[3].X = (float)worldLeftVirtual;
-                rgn.W[0].X = -0.5f;
-            }
-            if (worldRightVirtual < _viewportWidth) {
-                rgn.V[1].X = rgn.V[2].X = (float)worldRightVirtual;
-                rgn.P[1].X = rgn.P[2].X = (float)worldRightVirtual;
-                rgn.W[1].X = 0.5f;
-            }
+            //if (worldLeftVirtual > 0.0) {
+            //    rgn.V[0].X = rgn.V[3].X = (float)worldLeftVirtual;
+            //    rgn.P[0].X = rgn.P[3].X = (float)worldLeftVirtual;
+            //    rgn.W[0].X = -0.5f;
+            //}
+            //if (worldRightVirtual < _viewportWidth) {
+            //    rgn.V[1].X = rgn.V[2].X = (float)worldRightVirtual;
+            //    rgn.P[1].X = rgn.P[2].X = (float)worldRightVirtual;
+            //    rgn.W[1].X = 0.5f;
+            //}
             if (worldBottomVirtual > 0.0) {
                 rgn.V[0].Y = rgn.V[1].Y = (float)worldBottomVirtual;
                 rgn.P[0].Y = rgn.P[1].Y = (float)worldBottomVirtual;
@@ -116,8 +117,13 @@ namespace ADS_B_Display.Map.MapSrc
             double xspan = Eye.XSpan(aspect);
 
             if ((flags & NAV_DRAG_PAN) != 0) {
-                Eye.Y = _savedPanEye.Y + (double)(y - fromY) / _viewportHeight * yspan;
-                Eye.X = _savedPanEye.X - (double)(x - fromX) / _viewportWidth * xspan;
+                double newY = _savedPanEye.Y + (double)(y - fromY) / _viewportHeight * yspan;
+                double newX = _savedPanEye.X - (double)(x - fromX) / _viewportWidth * xspan;
+                double MinLatitude = -85;
+                double MaxLatitude = 85;
+                Eye.Y = Math.Max(MinLatitude, Math.Min(newY, MaxLatitude));
+                Eye.X = newX; // WrapLongitude(newX);
+                //Debug.WriteLine($"Pan X: {Eye.X}, Y: {Eye.Y}");
             }
             if ((flags & NAV_DRAG_ZOOM) != 0) {
                 if (y - fromY < 0)
@@ -126,6 +132,14 @@ namespace ADS_B_Display.Map.MapSrc
                     Eye.H = _savedZoomEye.H / (1.0 - (double)(y - fromY) / _viewportHeight);
             }
             return 1;
+        }
+
+        private double WrapLongitude(double lon)
+        {
+            // 경도 -180~180 기준으로 wrap
+            lon = (lon + 180) % 360;
+            if (lon < 0) lon += 360;
+            return lon - 180;
         }
 
         public override int StartMovement(int flags)
@@ -140,12 +154,19 @@ namespace ADS_B_Display.Map.MapSrc
             return 1;
         }
 
+        const double MaxZoomOut = 0.4;  // 줌 아웃 최대값 (더 크면 더 멀리서 보는 것)
         public override int SingleMovement(int flags)
         {
             if ((flags & NAV_ZOOM_IN) != 0)
                 Eye.H /= 1.3;
-            if ((flags & NAV_ZOOM_OUT) != 0)
-                Eye.H *= 1.3;
+
+            if ((flags & NAV_ZOOM_OUT) != 0) {
+                // 줌 아웃 최대값 초과하지 않도록 제한
+                double newZoom = Eye.H * 1.3;
+                Eye.H = Math.Min(newZoom, 0.769230769230769);
+                //Debug.WriteLine($"H : {Eye.H}");
+            }
+
             NormalizeEye();
             return 1;
         }
@@ -157,8 +178,8 @@ namespace ADS_B_Display.Map.MapSrc
         /// </summary>
         private void NormalizeEye()
         {
-            if (Eye.X < -0.5) Eye.X = -0.5;
-            if (Eye.X > 0.5) Eye.X = 0.5;
+            //if (Eye.X < -0.5) Eye.X = -0.5;
+            //if (Eye.X > 0.5) Eye.X = 0.5;
             if (Eye.Y < -0.5) Eye.Y = -0.5;
             if (Eye.Y > 0.5) Eye.Y = 0.5;
             
