@@ -60,7 +60,7 @@ namespace ADS_B_Display
         // ─── 4) Raw Record 관련 필드 ───
         private bool _isRecordingRaw = false;
 
-#if 0 // PingEcho 테스트용 코드 (필요시 활성화)    
+#if false // PingEcho 테스트용 코드 (필요시 활성화)    
         // Ping 관련 필드
         private PingEcho pingEcho = new PingEcho();
 #endif
@@ -384,7 +384,7 @@ namespace ADS_B_Display
                 _isSbsConnected = false;
                 SbsConnectButton.Content = "Connect";
                 MessageBox.Show("SBS Hub 연결을 해제했습니다.", "Info", MessageBoxButton.OK, MessageBoxImage.Information);
-#if 0 // PingEcho 테스트용 코드 (필요시 활성화)           
+#if false // PingEcho 테스트용 코드 (필요시 활성화)           
                 pingEcho.Stop();
 #endif
                 return;
@@ -425,7 +425,7 @@ namespace ADS_B_Display
                     _isSbsConnected = true;
                     SbsConnectButton.Content = "Disconnect";
 
-#if 0 // PingEcho 테스트용 코드 (필요시 활성화)
+#if false // PingEcho 테스트용 코드 (필요시 활성화)
                     Console.WriteLine($"Ping 시작");
 
                     // Ping Echo 시작

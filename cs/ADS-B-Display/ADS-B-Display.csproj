@@ -193,11 +193,15 @@
       <Generator>SettingsSingleFileGenerator</Generator>
       <LastGenOutput>Settings.Designer.cs</LastGenOutput>
     </None>
+    <None Include="Utils\BigQuery\YourJsonFile.json" />
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />
   </ItemGroup>
-  <ItemGroup />
+  <ItemGroup>
+    <Content Include="Utils\BigQuery\SimpleCSVtoBigQuery.py" />
+    <Content Include="Utils\BigQuery\SimpleCSVtoBigQuery_x.py" />
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
     <PostBuildEvent>xcopy /s /d /y $(ProjectDir)Resources\ $(TargetDir)</PostBuildEvent>
