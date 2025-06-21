@@ -35,7 +35,7 @@ namespace ADS_B_Display.Map.MapSrc
             // setup projection (OpenGL 관련 부분은 실제 구현에 맞게 대체 필요)
             GL.MatrixMode(MatrixMode.Projection);
             GlUtil.Projection2D(0, 0, _viewportWidth, _viewportHeight);
-            
+
             // calculate virtual coordinates for sides of world rectangle
             double worldLeftVirtual = ((-0.5 - Eye.X) * _viewportWidth / xspan) + _viewportWidth / 2.0;
             double worldRightVirtual = ((0.5 - Eye.X) * _viewportWidth / xspan) + _viewportWidth / 2.0;
@@ -90,7 +90,7 @@ namespace ADS_B_Display.Map.MapSrc
             ((MainWindow)Application.Current.MainWindow).Map_p[1] = rgn.P[1];
             ((MainWindow)Application.Current.MainWindow).Map_p[2] = rgn.P[2];
             ((MainWindow)Application.Current.MainWindow).Map_p[3] = rgn.P[3];
-            
+
             // call master layer
             if (drawMap)
                 _masterLayer.RenderRegion(rgn);
@@ -112,18 +112,28 @@ namespace ADS_B_Display.Map.MapSrc
 
         public override int Drag(int fromX, int fromY, int x, int y, int flags)
         {
+            const double MaxLat = 85.0;
+            const double MinLat = -85.0;
+
             double aspect = (double)_viewportWidth / (double)_viewportHeight;
             double yspan = Eye.YSpan(aspect);
             double xspan = Eye.XSpan(aspect);
 
             if ((flags & NAV_DRAG_PAN) != 0) {
+                double halfSpan = yspan / 2.0;
                 double newY = _savedPanEye.Y + (double)(y - fromY) / _viewportHeight * yspan;
-                double newX = _savedPanEye.X - (double)(x - fromX) / _viewportWidth * xspan;
-                double MinLatitude = -85;
-                double MaxLatitude = 85;
-                Eye.Y = Math.Max(MinLatitude, Math.Min(newY, MaxLatitude));
-                Eye.X = newX; // WrapLongitude(newX);
-                //Debug.WriteLine($"Pan X: {Eye.X}, Y: {Eye.Y}");
+                // 위도 제한: 화면 위/아래가 85도를 넘지 않도록 Eye.Y 제한
+                double latTop = (newY + halfSpan) * 180.0;
+                double latBottom = (newY - halfSpan) * 180.0;
+                if (latTop > MaxLat) {
+                    newY = MaxLat / 180.0 - halfSpan;
+                } else if (latBottom < MinLat) {
+                    newY = MinLat / 180.0 + halfSpan;
+                }
+
+                Eye.Y = newY;// _savedPanEye.Y + (double)(y - fromY) / _viewportHeight * yspan;
+                Eye.X = _savedPanEye.X - (double)(x - fromX) / _viewportWidth * xspan;
+                Debug.WriteLine($"Pan X: {Eye.X}, Y: {Eye.Y}");
             }
             if ((flags & NAV_DRAG_ZOOM) != 0) {
                 if (y - fromY < 0)
@@ -134,13 +144,6 @@ namespace ADS_B_Display.Map.MapSrc
             return 1;
         }
 
-        private double WrapLongitude(double lon)
-        {
-            // 경도 -180~180 기준으로 wrap
-            lon = (lon + 180) % 360;
-            if (lon < 0) lon += 360;
-            return lon - 180;
-        }
 
         public override int StartMovement(int flags)
         {
@@ -173,16 +176,18 @@ namespace ADS_B_Display.Map.MapSrc
 
         const double MIN_HEIGHT = 10.0 / 40000000.0;
         const double MAX_HEIGHT = 1.0;
+
         /// <summary>
         /// Fix eye coordinates after movements
         /// </summary>
         private void NormalizeEye()
         {
+
             //if (Eye.X < -0.5) Eye.X = -0.5;
             //if (Eye.X > 0.5) Eye.X = 0.5;
             if (Eye.Y < -0.5) Eye.Y = -0.5;
             if (Eye.Y > 0.5) Eye.Y = 0.5;
-            
+
             if (Eye.H < MIN_HEIGHT) Eye.H = MIN_HEIGHT;
             if (Eye.H > MAX_HEIGHT) Eye.H = MAX_HEIGHT;
         }

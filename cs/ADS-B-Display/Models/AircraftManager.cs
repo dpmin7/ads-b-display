@@ -8,6 +8,8 @@ namespace ADS_B_Display.Models
         private static readonly Dictionary<uint, Aircraft> _aircraftTable
             = new Dictionary<uint, Aircraft>();
 
+        private static object lockObj = new object();
+
         internal static Aircraft GetOrAdd(uint icao)
         {
             if (!_aircraftTable.TryGetValue(icao, out var aircraft)) {
@@ -23,7 +25,9 @@ namespace ADS_B_Display.Models
                     HaveFlightNum = false,
                     // SpriteImage 및 CycleImages 로직은 UI 쪽에서 설정
                 };
-                _aircraftTable[icao] = aircraft;
+                lock (lockObj) {
+                    _aircraftTable.Add(icao, aircraft);
+                }
             }
             return aircraft;
         }
@@ -34,7 +38,11 @@ namespace ADS_B_Display.Models
         }
 
         internal static IEnumerable<Aircraft> GetAll()
-            => _aircraftTable.Values.ToList();
+        {
+            lock (lockObj) {
+                return _aircraftTable.Values.ToList();
+            }
+        }
 
         internal static uint ReceiveSBSMessage(string msgLine)
         {
@@ -63,7 +71,7 @@ namespace ADS_B_Display.Models
             uint addr = (uint)((modeSMessage.AA[0] << 16) | (modeSMessage.AA[1] << 8) | modeSMessage.AA[2]);
             var aircraft = GetOrAdd(addr); // Aircraft 객체를 가져오거나 생성
             AircraftDecoder.RawToAircraft(modeSMessage, ref aircraft);
-            
+
             return addr; // Raw 메시지 처리는 아직 구현되지 않음
         }
     }
