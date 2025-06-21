@@ -1,5 +1,6 @@
 ﻿using ADS_B_Display.Map.MapSrc;
 using ADS_B_Display.Models;
+using ADS_B_Display.Views.Popup;
 using Microsoft.Win32;
 using OpenTK;
 using OpenTK.Graphics.OpenGL;
@@ -10,6 +11,7 @@ using System.Collections.ObjectModel;
 using System.IO;
 using System.Linq;
 using System.Net.Sockets;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Input;
@@ -47,16 +49,16 @@ namespace ADS_B_Display
         private const float MAP_CENTER_LON = -80.33158f; // 지도 중심 경도
 
         // ─── 1) Raw Connect 관련 필드 ───
-        private TcpClient _rawClient = null;
         private bool _isRawConnected = false;
 
         // ─── 2) SBS Connect 관련 필드 ───
-        private TcpClient _sbsClient = null;
         private bool _isSbsConnected = false;
 
         // ─── 3) SBS Record 관련 필드 ───
-        private StreamWriter _sbsRecordWriter = null;
         private bool _isRecordingSbs = false;
+
+        // ─── 4) Raw Record 관련 필드 ───
+        private bool _isRecordingRaw = false;
 
         // Map 관련 필드
         double Mw1, Mw2, Mh1, Mh2, xf, yf;
@@ -136,7 +138,51 @@ namespace ADS_B_Display
 
         private void RawRecordButton_Click(object sender, RoutedEventArgs e)
         {
-            // Raw 레코드 시작 로직
+            // 1) 이미 기록 중이면 중단하고 리소스 해제
+            if (_isRecordingRaw) {
+                try {
+                    _rawWorker.RecordOff();
+                } catch (Exception ex) {
+                    MessageBox.Show($"Error occur while Raw record file is closing.:\n{ex.Message}",
+                                    "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                }
+
+                _isRecordingRaw = false;
+                RawRecordButton.Content = "Raw Record";  // 버튼 텍스트 원복
+                MessageBox.Show("Raw record is stopped.", "Info", MessageBoxButton.OK, MessageBoxImage.Information);
+                return;
+            }
+
+            // 2) 기록 중이 아니면, SaveFileDialog 띄워서 파일 경로 선택
+            var dlg = new SaveFileDialog {
+                Title = "Raw Record file save",
+                Filter = "Raw Log (*.raw)|*.raw|모든 파일 (*.*)|*.*",
+                FileName = $"RawLog_{DateTime.Now:yyyyMMdd_HHmmss}.raw", // 기본 파일명 예시
+                DefaultExt = ".raw"
+            };
+
+            bool? result = dlg.ShowDialog();
+            if (result != true) {
+                // 사용자가 취소했으면 아무 동작 없이 종료
+                return;
+            }
+
+            string path = dlg.FileName;
+            try {
+                _rawWorker.RecordOn(path);
+            } catch (Exception ex) {
+                MessageBox.Show($"Can not open the recorded file.:\n{ex.Message}",
+                                "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                _rawWorker.RecordOff();
+                return;
+            }
+
+            // 3) 기록 플래그 켜고 버튼 텍스트 변경
+            _isRecordingRaw = true;
+            RawRecordButton.Content = "Stop RAW Record";
+
+            // 4) 녹화를 시작했다는 안내 메시지 (선택 사항)
+            MessageBox.Show($"Start Raw record:\n{path}", "Info", MessageBoxButton.OK, MessageBoxImage.Information);
         }
 
         private void StopRawPlaybackButton_Click(object sender, RoutedEventArgs e)
@@ -171,9 +217,7 @@ namespace ADS_B_Display
             // 1) 이미 기록 중이면 중단하고 리소스 해제
             if (_isRecordingSbs) {
                 try {
-                    _sbsRecordWriter?.Flush();
-                    _sbsRecordWriter?.Close();
-                    _sbsRecordWriter = null;
+                    _sbsWorker.RecordOff();
                 } catch (Exception ex) {
                     MessageBox.Show($"SBS 기록 파일을 닫는 동안 오류가 발생했습니다:\n{ex.Message}",
                                     "Error", MessageBoxButton.OK, MessageBoxImage.Error);
@@ -181,16 +225,16 @@ namespace ADS_B_Display
 
                 _isRecordingSbs = false;
                 SbsRecordButton.Content = "SBS Record";  // 버튼 텍스트 원복
-                MessageBox.Show("SBS 기록을 중단했습니다.", "Info", MessageBoxButton.OK, MessageBoxImage.Information);
+                MessageBox.Show("SBS record is stopped.", "Info", MessageBoxButton.OK, MessageBoxImage.Information);
                 return;
             }
 
             // 2) 기록 중이 아니면, SaveFileDialog 띄워서 파일 경로 선택
             var dlg = new SaveFileDialog {
-                Title = "SBS Record 파일 저장",
-                Filter = "SBS Log (*.txt;*.csv)|*.txt;*.csv|모든 파일 (*.*)|*.*",
-                FileName = $"SbsLog_{DateTime.Now:yyyyMMdd_HHmmss}.txt", // 기본 파일명 예시
-                DefaultExt = ".txt"
+                Title = "SBS Record file save",
+                Filter = "SBS Log (*.sbs)|*.sbs|모든 파일 (*.*)|*.*",
+                FileName = $"SbsLog_{DateTime.Now:yyyyMMdd_HHmmss}.sbs", // 기본 파일명 예시
+                DefaultExt = ".sbs"
             };
 
             bool? result = dlg.ShowDialog();
@@ -201,13 +245,11 @@ namespace ADS_B_Display
 
             string path = dlg.FileName;
             try {
-                // append 모드로 StreamWriter 생성
-                _sbsRecordWriter = new StreamWriter(path, append: true) {
-                    AutoFlush = true
-                };
+                _sbsWorker.RecordOn(path);
             } catch (Exception ex) {
-                MessageBox.Show($"SBS 기록 파일을 열 수 없습니다:\n{ex.Message}",
+                MessageBox.Show($"Can not open the recorded file.:\n{ex.Message}",
                                 "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                _sbsWorker.RecordOff();
                 return;
             }
 
@@ -216,11 +258,7 @@ namespace ADS_B_Display
             SbsRecordButton.Content = "Stop SBS Record";
 
             // 4) 녹화를 시작했다는 안내 메시지 (선택 사항)
-            MessageBox.Show($"SBS 기록을 시작합니다:\n{path}", "Info", MessageBoxButton.OK, MessageBoxImage.Information);
-
-            // 5) 이후 수신되는 메시지를 기록하려면, 
-            //    실제 ADS-B 수신 모듈이나 파서 쪽에서 받은 "SBS 메시지 문자열"을 
-            //    OnSbsMessageReceived(string rawLine) 같은 메서드를 통해 전달하도록 해야 합니다.
+            MessageBox.Show($"Start SBS record:\n{path}", "Info", MessageBoxButton.OK, MessageBoxImage.Information);
         }
 
         private void SbsPlaybackButton_Click(object sender, RoutedEventArgs e)
@@ -264,14 +302,13 @@ namespace ADS_B_Display
         /// 연결/해제를 토글(toggle) 방식으로 처리.
         /// RawConnectTextBox에 입력된 주소(예: "127.0.0.1:30002") 형태로 파싱해서 TcpClient 연결.
         /// </summary>
-        private void RawConnectButton_Click(object sender, RoutedEventArgs e)
+        private async void RawConnectButton_Click(object sender, RoutedEventArgs e)
         {
             // 이미 연결 중이면 연결 해제
             if (_isRawConnected) {
                 try {
-                    _rawClient?.Close();
+                    _rawWorker.Stop();
                 } catch { }
-                _rawClient = null;
                 _isRawConnected = false;
                 RawConnectButton.Content = "Connect";
                 MessageBox.Show("Raw feed 연결을 해제했습니다.", "Info", MessageBoxButton.OK, MessageBoxImage.Information);
@@ -303,31 +340,27 @@ namespace ADS_B_Display
             }
 
             // 비동기로 TCP 연결 시도
-            Task.Run(() =>
-            {
-                try {
-                    _rawClient = new TcpClient(host, port);
+            try {
+                CancellationTokenSource cts = new CancellationTokenSource();
+                var popup = new LoadingPopup() { WindowStartupLocation = WindowStartupLocation.CenterOwner, Owner = this };
+                popup.Closed += (s, e2) => { if (popup.IsCancelled) cts.Cancel(); };
+                popup.Show();
+                var res = await _rawWorker.Start(host, port, cts.Token);
+                if (res) {
+                    popup.Close();
                     _isRawConnected = true;
+                    RawConnectButton.Content = "Disconnect";
+                } else {
 
-                    // UI 스레드로 버튼 텍스트 갱신
-                    Dispatcher.Invoke(() =>
-                    {
-                        RawConnectButton.Content = "Disconnect";
-                        MessageBox.Show($"Raw feed에 연결되었습니다: {host}:{port}", "Info", MessageBoxButton.OK, MessageBoxImage.Information);
-                    });
-
-                    _rawWorker.Start(_rawClient);
-
-                } catch (Exception ex) {
-                    Dispatcher.Invoke(() =>
-                    {
-                        MessageBox.Show($"Raw feed 연결 중 오류가 발생했습니다:\n{ex.Message}",
-                                        "Error", MessageBoxButton.OK, MessageBoxImage.Error);
-                        _isRawConnected = false;
-                        RawConnectButton.Content = "Connect";
-                    });
                 }
-            });
+
+            } catch (Exception ex) {
+                MessageBox.Show($"Raw feed 연결 중 오류가 발생했습니다:\n{ex.Message}",
+                                "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                _rawWorker.Stop();
+                _isRawConnected = false;
+                RawConnectButton.Content = "Connect";
+            }
         }
 
         
@@ -337,14 +370,13 @@ namespace ADS_B_Display
         /// 연결/해제를 토글(toggle) 방식으로 처리.
         /// SbsConnectTextBox에 입력된 주소(예: "data.adsbhub.org:30003") 형태로 파싱해서 TcpClient 연결.
         /// </summary>
-        private void SbsConnectButton_Click(object sender, RoutedEventArgs e)
+        private async void SbsConnectButton_Click(object sender, RoutedEventArgs e)
         {
             // 이미 연결 중이면 연결 해제
             if (_isSbsConnected) {
                 try {
-                    _sbsClient?.Close();
+                    _sbsWorker.Stop();
                 } catch { }
-                _sbsClient = null;
                 _isSbsConnected = false;
                 SbsConnectButton.Content = "Connect";
                 MessageBox.Show("SBS Hub 연결을 해제했습니다.", "Info", MessageBoxButton.OK, MessageBoxImage.Information);
@@ -373,32 +405,30 @@ namespace ADS_B_Display
                 host = input;
                 port = 5002;
             }
-
-            // 비동기로 TCP 연결 시도
-            Task.Run(() =>
-            {
-                try {
-                    _sbsClient = new TcpClient(host, port);
+            
+            try {
+                // 연결 후, 스트림에서 한 줄씩 읽어서 처리 (예시: OnSbsMessageReceived(rawLine))
+                CancellationTokenSource cts = new CancellationTokenSource();
+                var popup = new LoadingPopup() { WindowStartupLocation = WindowStartupLocation.CenterOwner, Owner = this };
+                popup.Closed += (s, e2) => { if (popup.IsCancelled) cts.Cancel(); };
+                popup.Show();
+                var res = await _sbsWorker.Start(host, port, cts.Token);
+                if (res) {
+                    popup.Close();
                     _isSbsConnected = true;
-
-                    Dispatcher.Invoke(() =>
-                    {
-                        SbsConnectButton.Content = "Disconnect";
-                        MessageBox.Show($"SBS Hub에 연결되었습니다: {host}:{port}", "Info", MessageBoxButton.OK, MessageBoxImage.Information);
-                    });
-
-                    // 연결 후, 스트림에서 한 줄씩 읽어서 처리 (예시: OnSbsMessageReceived(rawLine))
-                    _sbsWorker.Start(_sbsClient);
-                } catch (Exception ex) {
-                    Dispatcher.Invoke(() =>
-                    {
-                        MessageBox.Show($"SBS Hub 연결 중 오류가 발생했습니다:\n{ex.Message}",
-                                        "Error", MessageBoxButton.OK, MessageBoxImage.Error);
-                        _isSbsConnected = false;
-                        SbsConnectButton.Content = "Connect";
-                    });
+                    SbsConnectButton.Content = "Disconnect";
+                } else {
+                    
                 }
-            });
+            } catch (Exception ex) {
+                Dispatcher.Invoke(() =>
+                {
+                    MessageBox.Show($"Error occur while SBS Hub is connecting.:\n{ex.Message}",
+                                    "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                    _isSbsConnected = false;
+                    SbsConnectButton.Content = "Connect";
+                });
+            }
         }
 
 

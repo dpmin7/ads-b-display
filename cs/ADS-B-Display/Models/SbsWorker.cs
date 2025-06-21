@@ -25,7 +25,7 @@ namespace ADS_B_Display
         private Action<string> OnMessageReceived;
         private Action OnFinished;
 
-        public StreamWriter RecordSbsStream;
+        public StreamWriter RecordStream;
         public StreamWriter BigQueryCsv;
         public int BigQueryRowCount = 0;
         public int BigQueryUploadThreshold = 1000;
@@ -38,26 +38,72 @@ namespace ADS_B_Display
             OnMessageReceived = onMessageReceived;
         }
 
-        public void Start(string path)
+        public bool Start(string path)
         {
-            _first = true;
-            _running = true;
-            _filePath = path;
-            _thread = new Thread(Run) { IsBackground = true };
-            _thread.Start();
+            try {
+                _first = true;
+                _running = true;
+                _filePath = path;
+                _thread = new Thread(Run) { IsBackground = true };
+                _thread.Start();
+
+                return true;
+            } catch (Exception ex) {
+                return false;
+            }
         }
 
-        public void Start(TcpClient tcpClient)
+        public async Task<bool> Start(string host, int port, CancellationToken ct)
         {
             _running = true;
-            _tcpClient = tcpClient ?? throw new ArgumentNullException(nameof(tcpClient));
-            _thread = new Thread(Run) { IsBackground = true };
-            _thread.Start();
+            _tcpClient = new TcpClient();
+            using (ct.Register(() => {
+                try { _tcpClient.Close(); } catch { }
+            })) {
+                try {
+                    await _tcpClient.ConnectAsync(host, port);
+                    _thread = new Thread(Run) { IsBackground = true };
+                    _thread.Start();
+                    return true;
+                } catch (OperationCanceledException) {
+                    throw new TimeoutException("TCP 연결이 취소되었거나 타임아웃되었습니다.");
+                } catch (TimeoutException) {
+                    MessageBox.Show("Connection timeout. Please check your network.");
+                    _running = false;
+                    return false;
+                }
+                catch (Exception) {
+                    _tcpClient.Dispose();
+                    _running = false;
+                    return false;
+                }
+            }
+        }
+
+        public void RecordOn(string path)
+        {
+            RecordStream = new StreamWriter(path, append: true) {
+                AutoFlush = true
+            };
+        }
+
+        public void RecordOff()
+        {
+            try {
+                RecordStream?.Flush();
+                RecordStream?.Close();
+                RecordStream = null;
+            } catch (Exception ex) {
+                MessageBox.Show($"SBS 기록 파일을 닫는 동안 오류가 발생했습니다:\n{ex.Message}",
+                                "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
         }
 
         public void Stop()
-        {
+        {   
+            RecordOff(); // 레코딩 중에 멈추면 레코딩 종료부터 하자.
             _running = false;
+            _tcpClient.Close();
             _thread?.Join();
         }
         public void setPlayBackSpeed(int speed)
@@ -123,8 +169,8 @@ namespace ADS_B_Display
 
         private void ProcessMessage(string msg, long timestamp)
         {
-            RecordSbsStream?.WriteLine(timestamp);
-            RecordSbsStream?.WriteLine(msg);
+            RecordStream?.WriteLine(timestamp);
+            RecordStream?.WriteLine(msg);
 
             if (BigQueryCsv != null) {
                 BigQueryCsv.WriteLine(msg);
