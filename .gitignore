@@ -37,3 +37,6 @@ bin
 obj
 resources
 /cs/packages
+
+# BigQuery Json Key
+/cs/BigQuery/YourJsonFile.json
