@@ -15,7 +15,8 @@ namespace ADS_B_Display.Map.MapSrc
         GoogleMaps = 0,
         SkyVector_VFR = 1,
         SkyVector_IFR_Low = 2,
-        SkyVector_IFR_High = 3
+        SkyVector_IFR_High = 3,
+        OpenStreet = 4,
     }
 
     /// <summary>
@@ -34,6 +35,7 @@ namespace ADS_B_Display.Map.MapSrc
         private const string SkyVectorUrl = "http://t.skyvector.com";
         private const string SkyVectorKey = "V7pMh4xRihf1nr61";
         private const string SkyVectorEdition = "2504";
+        private const string OpenStreetUrl = "https://tile.openstreetmap.org";
 
         public KeyholeConnection(TileServerType serverType) : base()
         {
@@ -42,7 +44,7 @@ namespace ADS_B_Display.Map.MapSrc
             _serverType = serverType;
 
             // SkyVector 모드에서만 key/chart/edition 설정
-            if (serverType != TileServerType.GoogleMaps) {
+            if (serverType != TileServerType.GoogleMaps && serverType != TileServerType.OpenStreet) {
                 _key = SkyVectorKey;
                 _edition = SkyVectorEdition;
                 switch (serverType) {
@@ -65,13 +67,26 @@ namespace ADS_B_Display.Map.MapSrc
         /// <summary>
         /// Download and process a tile.
         /// </summary>
-        protected override async void Process(Tile tile)
+        protected override async Task Process(Tile tile)
         {
             string url;
             if (_serverType == TileServerType.GoogleMaps)
-                url = $"{GoogleUrl}/vt/lyrs=s&x={tile.X}&y={tile.Y}&z={tile.Level}";
-            else
+            {
+                int correct = (int)Math.Pow(2, tile.Level) - 1;
+                int y = correct - tile.Y;
+                url = $"{GoogleUrl}/vt/lyrs=s&x={tile.X}&y={y}&z={tile.Level}";
+            } else if (_serverType ==TileServerType.OpenStreet)
+            {
+                int x = tile.X;
+                int z = tile.Level;
+                int maxY = (1 << z) - 1;
+                int y = maxY - tile.Y;  // Y 반전
+
+                url = $"{OpenStreetUrl}/{z}/{x}/{y}.png"; // %s/%d/%d/%d.png
+            } else 
+            {
                 url = $"{SkyVectorUrl}/tiles.aspx?x={tile.X}&y={tile.Y}&z={tile.Level}&k={_key}&c={_chart}&e={_edition}";
+            }
 
             //var response = _httpClient.GetAsync(url).Result;
             var response = await _httpClient.GetAsync(url);
@@ -81,7 +96,17 @@ namespace ADS_B_Display.Map.MapSrc
             }
 
             var data = await response.Content.ReadAsByteArrayAsync();
-            tile.Load(data, SaveStorage != null);
+
+            try
+            {
+                tile.Load(data, SaveStorage != null);
+                if (!tile.IsLoaded)
+                    Console.WriteLine($"⚠️ 타일 로드 실패: z={tile.Level}, x={tile.X}, y={tile.Y}");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"❌ 예외 발생: {ex.Message}");
+            }
         }
     }
 }

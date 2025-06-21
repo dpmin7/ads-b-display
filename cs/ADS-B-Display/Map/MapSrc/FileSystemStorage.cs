@@ -23,7 +23,7 @@ namespace ADS_B_Display.Map.MapSrc
             Directory.CreateDirectory(_storageRoot);
         }
 
-        protected override void Process(Tile tile)
+        protected override async Task Process(Tile tile)
         {
             if (!tile.IsLoaded) {
                 // loading from disk
@@ -50,7 +50,10 @@ namespace ADS_B_Display.Map.MapSrc
                     Directory.CreateDirectory(dir);
                 byte[] raw = tile.ReleaseRawData();
                 try {
-                    File.WriteAllBytes(fullPath, raw);
+                    if (!File.Exists(fullPath))
+                    {
+                        File.WriteAllBytes(fullPath, raw);
+                    }
                 } catch (IOException) {
                     // on write error, remove partial
                     try { File.Delete(fullPath); } catch { }

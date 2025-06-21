@@ -71,7 +71,7 @@ namespace ADS_B_Display
         public Vector3d[] Map_p = new Vector3d[4];
         public Vector2d[] Map_w = new Vector2d[2];
         double MapCenterLat, MapCenterLon;
-        private bool _loadMapFromInternet = false;//true;
+        private bool _loadMapFromInternet = true;
 
         public ObservableCollection<AircraftForUI> Aircrafts { get; set; } = new ObservableCollection<AircraftForUI>();
         private List<uint> updated = new List<uint>();
@@ -1127,6 +1127,33 @@ namespace ADS_B_Display
             return 0;
         }
 
+        private void MapProviderComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            var comboBox = sender as ComboBox;
+            var selectedItem = comboBox.SelectedItem as ComboBoxItem;
+            string selectedText = selectedItem?.Content.ToString();
+
+            Console.WriteLine($"선택된 맵: {selectedText}");
+
+            // 여기에 map provider 변경 로직을 작성하세요
+                switch(selectedText)
+            {
+                case "Google Maps":
+                    LoadMap(TileServerType.GoogleMaps);
+                    break;
+                case "Bing Maps":
+                    LoadMap(TileServerType.SkyVector_VFR);
+                    break;
+                case "OpenStreetMap":
+                    LoadMap(TileServerType.OpenStreet);
+                    break;
+                default:
+                    LoadMap(TileServerType.GoogleMaps);
+                    break;
+
+            }
+        }
+
         /// <summary>
         /// Initializes map storage and layers based on the selected server type.
         /// Mirrors TForm1::LoadMap(int Type).
@@ -1141,12 +1168,15 @@ namespace ADS_B_Display
                 case TileServerType.SkyVector_VFR: subfolder = "VFR_Map"; break;
                 case TileServerType.SkyVector_IFR_Low: subfolder = "IFR_Low_Map"; break;
                 case TileServerType.SkyVector_IFR_High: subfolder = "IFR_High_Map"; break;
+                case TileServerType.OpenStreet: subfolder = "OpenStreetMap"; break;
                 default: throw new ArgumentOutOfRangeException(nameof(type));
             }
 
+            /*
             // Append Live suffix if needed
             if (_loadMapFromInternet)
                 subfolder += "_Live";
+            */
 
             var cacheDir = Path.Combine(homeDir, subfolder);
             Directory.CreateDirectory(cacheDir);

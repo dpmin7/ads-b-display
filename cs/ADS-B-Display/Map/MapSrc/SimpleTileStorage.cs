@@ -19,14 +19,16 @@ namespace ADS_B_Display.Map.MapSrc
             _worker = Task.Run(() => WorkerLoop(_cts.Token));
         }
 
-        private void WorkerLoop(CancellationToken token)
+        private async Task WorkerLoop(CancellationToken token)
         {
             try {
                 foreach (var tile in _queue.GetConsumingEnumerable(token)) {
                     if (token.IsCancellationRequested) break;
                     if (!tile.IsOld) {
-                        try { Process(tile); } catch (Exception e) { Console.Error.WriteLine($"Error: {e}"); }
-                        if (tile.IsLoaded && tile.IsSaveable)
+                        try { 
+                            await Process(tile);
+                        } catch (Exception e) { Console.Error.WriteLine($"Error: {e}"); }
+                         if (tile.IsLoaded && tile.IsSaveable)
                             SaveStorage?.Enqueue(tile);
                         else
                             NextLoadStorage?.Enqueue(tile);
@@ -35,7 +37,7 @@ namespace ADS_B_Display.Map.MapSrc
             } catch (OperationCanceledException) { }
         }
 
-        protected abstract void Process(Tile tile);
+        protected abstract Task Process(Tile tile);
 
         public void Enqueue(Tile tile) => _queue.Add(tile);
         protected ITileStorage NextLoadStorage { get; private set; }

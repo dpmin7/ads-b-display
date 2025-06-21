@@ -272,7 +272,8 @@
                         <ComboBox x:Name="MapProviderComboBox"
                                   Width="150"
                                   Margin="8,0,0,0"
-                                  SelectedIndex="0">
+                                  SelectedIndex="0"
+                                  SelectionChanged="MapProviderComboBox_SelectionChanged">
                             <ComboBoxItem Content="Google Maps"/>
                             <ComboBoxItem Content="Bing Maps"/>
                             <ComboBoxItem Content="OpenStreetMap"/>

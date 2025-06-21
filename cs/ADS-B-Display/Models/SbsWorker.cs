@@ -103,7 +103,11 @@ namespace ADS_B_Display
         {   
             RecordOff(); // 레코딩 중에 멈추면 레코딩 종료부터 하자.
             _running = false;
-            _tcpClient.Close();
+            if (_tcpClient != null)
+            {
+                _tcpClient.Close();
+            }
+            
             _thread?.Join();
         }
         public void setPlayBackSpeed(int speed)
