@@ -66,8 +66,14 @@ namespace ADS_B_Display.Map.MapSrc
         public void LoadJpeg(byte[] data)
         {
             using (var ms = new MemoryStream(data)) {
-                var decoder = new JpegBitmapDecoder(ms, BitmapCreateOptions.PreservePixelFormat, BitmapCacheOption.OnLoad);
-                UploadBitmap(decoder.Frames[0]);
+                var image = new BitmapImage();
+                image.BeginInit();
+                image.StreamSource = ms;
+                image.CacheOption = BitmapCacheOption.OnLoad;
+                image.CreateOptions = BitmapCreateOptions.PreservePixelFormat;
+                image.EndInit();
+                image.Freeze(); // optional: make it cross-thread safe
+                UploadBitmap(image);
             }
         }
 

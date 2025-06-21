@@ -64,7 +64,7 @@ namespace ADS_B_Display
         public Vector3d[] Map_p = new Vector3d[4];
         public Vector2d[] Map_w = new Vector2d[2];
         double MapCenterLat, MapCenterLon;
-        private bool _loadMapFromInternet = false;
+        private bool _loadMapFromInternet = false;//true;
 
         public ObservableCollection<AircraftForUI> Aircrafts { get; set; } = new ObservableCollection<AircraftForUI>();
         private List<uint> updated = new List<uint>();

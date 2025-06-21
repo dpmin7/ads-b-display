@@ -38,6 +38,7 @@ namespace ADS_B_Display.Map.MapSrc
         public KeyholeConnection(TileServerType serverType) : base()
         {
             _httpClient = new HttpClient();
+            _httpClient.DefaultRequestHeaders.UserAgent.ParseAdd("Mozilla/5.0 (Windows NT 10.0; Win64; x64)");
             _serverType = serverType;
 
             // SkyVector 모드에서만 key/chart/edition 설정
@@ -64,21 +65,22 @@ namespace ADS_B_Display.Map.MapSrc
         /// <summary>
         /// Download and process a tile.
         /// </summary>
-        protected override void Process(Tile tile)
+        protected override async void Process(Tile tile)
         {
             string url;
             if (_serverType == TileServerType.GoogleMaps)
-                url = $"{GoogleUrl}/vt/lyrs=m&x={tile.X}&y={tile.Y}&z={tile.Level}";
+                url = $"{GoogleUrl}/vt/lyrs=s&x={tile.X}&y={tile.Y}&z={tile.Level}";
             else
                 url = $"{SkyVectorUrl}/tiles.aspx?x={tile.X}&y={tile.Y}&z={tile.Level}&k={_key}&c={_chart}&e={_edition}";
 
-            var response = _httpClient.GetAsync(url).Result;
+            //var response = _httpClient.GetAsync(url).Result;
+            var response = await _httpClient.GetAsync(url);
             if (!response.IsSuccessStatusCode) {
                 tile.Null();
                 return;
             }
 
-            var data = response.Content.ReadAsByteArrayAsync().Result;
+            var data = await response.Content.ReadAsByteArrayAsync();
             tile.Load(data, SaveStorage != null);
         }
     }
