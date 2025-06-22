@@ -74,7 +74,7 @@ namespace ADS_B_Display.Map.MapSrc
             {
                 int correct = (int)Math.Pow(2, tile.Level) - 1;
                 int y = correct - tile.Y;
-                url = $"{GoogleUrl}/vt/lyrs=s&x={tile.X}&y={y}&z={tile.Level}";
+                url = $"{GoogleUrl}/vt/lyrs=y&x={tile.X}&y={y}&z={tile.Level}";
             } else if (_serverType ==TileServerType.OpenStreet)
             {
                 int x = tile.X;
