@@ -56,7 +56,7 @@ namespace ADS_B_Display.Map.MapSrc
         /// <summary>
         /// True if tile has not been used in last two frames (approx).
         /// </summary>
-        public bool IsOld => GetAge() > TimeSpan.FromMilliseconds(16 * 2).Ticks;
+        public bool IsOld => GetAge() > TimeSpan.FromSeconds(1).Ticks;
 
         /// <summary>
         /// Type of tile; override in derived.
