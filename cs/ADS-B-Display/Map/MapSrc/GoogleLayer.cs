@@ -80,16 +80,16 @@ namespace ADS_B_Display.Map.MapSrc
                              Vector3d.Multiply(rgn.P[2], (float)(xk0 * yk1)) +
                              Vector3d.Multiply(rgn.P[3], (float)((1 - xk0) * yk1));
 
+                    xk0 = MathExt.Clamp(xk0, 0.0, 1.0);
+                    xk1 = MathExt.Clamp(xk1, 0.0, 1.0);
+                    yk0 = MathExt.Clamp(yk0, 0.0, 1.0);
+                    yk1 = MathExt.Clamp(yk1, 0.0, 1.0);
+
                     // Clip texture coordinates
                     if (xk0 < 0) textureX0 = -xk0 / (xk1 - xk0);
                     if (xk1 > 1) textureX1 = 1 - (xk1 - 1) / (xk1 - xk0);
                     if (yk0 < 0) textureY0 = 1 - (-yk0) / (yk1 - yk0);
                     if (yk1 > 1) textureY1 = (yk1 - 1) / (yk1 - yk0);
-
-                    xk0 = MathExt.Clamp(xk0, 0.0, 1.0);
-                    xk1 = MathExt.Clamp(xk1, 0.0, 1.0);
-                    yk0 = MathExt.Clamp(yk0, 0.0, 1.0);
-                    yk1 = MathExt.Clamp(yk1, 0.0, 1.0);
 
                     // Determine tile indices for LOD
                     int realLevel = level;
