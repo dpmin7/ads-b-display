@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reactive.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Input;
@@ -11,6 +12,8 @@ namespace ADS_B_Display.Views
     internal class AircraftListViewModel : NotifyPropertyChangedBase
     {
         public ICommand CMD_VisibleChanged { get; }
+
+        private IDisposable _eventVisibleAircraftListUpdated;
 
 
         private System.Collections.IEnumerable visibleAircraftList;
@@ -29,13 +32,12 @@ namespace ADS_B_Display.Views
             {
                 if (isVisible)
                 {
-                    // Logic to execute when the view becomes visible
-                    EventBus.Publish("AircraftListViewVisible", true);
+                    _eventVisibleAircraftListUpdated = EventBus.Observe(EventIds.EvtAircraftListViewUpdated).ObserveOnDispatcher()
+                                                               .Subscribe(e => UpdateList(e));
                 }
                 else
                 {
-                    // Logic to execute when the view becomes invisible
-                    EventBus.Publish("AircraftListViewVisible", false);
+                    _eventVisibleAircraftListUpdated.Dispose();
                 }
             }
             else
@@ -44,6 +46,9 @@ namespace ADS_B_Display.Views
             }
         }
 
-        
+        private void UpdateList(object e)
+        {
+            
+        }
     }
 }

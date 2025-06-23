@@ -1,0 +1,123 @@
+﻿<ResourceDictionary
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:local="clr-namespace:ADS_B_Display.Views.Style.Controls"
+    xmlns:system="clr-namespace:System;assembly=mscorlib"
+    xmlns:converters="clr-namespace:ADS_B_Display.Views.Converters">
+
+    <!--<ResourceDictionary.MergedDictionaries>
+        <ResourceDictionary Source="pack://application:,,,/MahApps.Metro;component/Styles/VS/GroupBox.xaml"/>
+    </ResourceDictionary.MergedDictionaries>-->
+
+    <Style
+        x:Key="MahApps.Styles.GroupBox.Aurora"
+        TargetType="{x:Type GroupBox}"
+        BasedOn="{StaticResource MahApps.Styles.GroupBox.VisualStudio}"/>
+
+    <!-- HeaderTemplate 정의 -->
+    <DataTemplate x:Key="GroupBoxHeaderTemplate">
+        <ContentPresenter Content="{Binding}">
+            <ContentPresenter.Resources>
+                <Style TargetType="TextBlock">
+                    <Setter Property="FontSize" Value="12"/>
+                    <Setter Property="FontWeight" Value="Bold"/>
+                </Style>
+            </ContentPresenter.Resources>
+        </ContentPresenter>
+    </DataTemplate>
+
+    <!-- IsTextConverter 등록 -->
+    <converters:IsTextConverter x:Key="IsTextConverter"/>
+
+    <Style x:Key="StGroupBox21" TargetType="GroupBox">
+        <Setter Property="HeaderTemplate" Value="{StaticResource GroupBoxHeaderTemplate}"/>
+        <Setter Property="Background" Value="{DynamicResource Aurora.Brushes.GroupBox.GroupBox21}"/>
+        <Setter Property="BorderThickness" Value="0"/>
+        <Setter Property="BorderBrush" Value="#141516"/>
+        <Setter Property="Padding" Value="10"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="GroupBox">
+                    <Grid>
+                        <Border Background="{DynamicResource Aurora.Brushes.GroupBox.Shadow}" Margin="0" CornerRadius="4" Padding="15" Grid.ColumnSpan="2">
+                            <Border.Effect>
+                                <DropShadowEffect BlurRadius="5" Direction="320" RenderingBias="Quality" ShadowDepth="8" Color="{DynamicResource Aurora.Colors.GroupBox.Shadow}"/>
+                            </Border.Effect>
+                        </Border>
+                        <Border Background="{TemplateBinding Background}" Margin="0" CornerRadius="4" Padding="1" Grid.ColumnSpan="2">
+                            <Grid>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition/>
+                                </Grid.RowDefinitions>
+                                <Border x:Name="HeaderContent" BorderBrush="{TemplateBinding BorderBrush}" Margin="0" Padding="11 0" MinHeight="30" BorderThickness="{TemplateBinding BorderThickness}">
+                                    <ContentPresenter ContentSource="Header" VerticalAlignment="Center"/>
+                                </Border>
+                                <ContentPresenter Grid.Row="1" Margin="{TemplateBinding Padding}" />
+                            </Grid>
+                        </Border>
+                    </Grid>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="Header" Value="{x:Null}">
+                            <Setter TargetName="HeaderContent" Property="Visibility" Value="Collapsed"/>
+                        </Trigger>
+                        <Trigger Property="Header" Value="">
+                            <Setter TargetName="HeaderContent" Property="Visibility" Value="Collapsed"/>
+                        </Trigger>
+                        <DataTrigger Binding="{Binding Header, RelativeSource={RelativeSource Self}, Converter={StaticResource IsTextConverter}}" Value="False">
+                            <Setter TargetName="HeaderContent" Property="Height" Value="Auto"/>
+                        </DataTrigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <Style x:Key="StGroupBox22" TargetType="GroupBox" BasedOn="{StaticResource StGroupBox21}">
+        <Setter Property="Background" Value="{DynamicResource Aurora.Brushes.GroupBox.GroupBox22}"/>
+    </Style>
+
+    <Style x:Key="StGroupBox23" TargetType="GroupBox" BasedOn="{StaticResource StGroupBox21}">
+        <Setter Property="Background" Value="{DynamicResource Aurora.Brushes.GroupBox.GroupBox23}"/>
+    </Style>
+
+    <Style x:Key="StGroupBox24" TargetType="GroupBox" BasedOn="{StaticResource StGroupBox21}">
+        <Setter Property="Background" Value="{DynamicResource Aurora.Brushes.GroupBox.GroupBox24}"/>
+    </Style>
+
+    <Style x:Key="StGroupBox20" TargetType="GroupBox">
+        <Setter Property="HeaderTemplate" Value="{StaticResource GroupBoxHeaderTemplate}"/>
+        <Setter Property="Background" Value="{DynamicResource Aurora.Brushes.GroupBox.GroupBox20}"/>
+        <Setter Property="Margin" Value="0 0 10 5"/>
+        <Setter Property="Padding" Value="10"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="GroupBox">
+                    <Border Background="{TemplateBinding Background}" Margin="{TemplateBinding Margin}" CornerRadius="8" Padding="1" Grid.ColumnSpan="2">
+                        <Grid Margin="5">
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition/>
+                            </Grid.RowDefinitions>
+                            <Border x:Name="HeaderContent" BorderBrush="Black" BorderThickness="0 0 0 0" Margin="0" Height="30" Padding="10 0">
+                                <ContentPresenter ContentSource="Header" VerticalAlignment="Center"/>
+                            </Border>
+                            <ContentPresenter Grid.Row="1" Margin="{TemplateBinding Padding}"/>
+                        </Grid>
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="Header" Value="{x:Null}">
+                            <Setter TargetName="HeaderContent" Property="Visibility" Value="Collapsed"/>
+                        </Trigger>
+                        <Trigger Property="Header" Value="">
+                            <Setter TargetName="HeaderContent" Property="Visibility" Value="Collapsed"/>
+                        </Trigger>
+                        <DataTrigger Binding="{Binding Header, RelativeSource={RelativeSource Self}, Converter={StaticResource IsTextConverter}}" Value="False">
+                            <Setter TargetName="HeaderContent" Property="Height" Value="Auto"/>
+                        </DataTrigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+</ResourceDictionary>

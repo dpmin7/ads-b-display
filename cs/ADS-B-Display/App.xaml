@@ -4,6 +4,11 @@
              xmlns:local="clr-namespace:ADS_B_Display"
              StartupUri="MainWindow.xaml">
     <Application.Resources>
-         
+        <!--<ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="/Views/Style/Light.Default.xaml"/>
+                <ResourceDictionary Source="/Views/Style/Generic.xaml"/>
+            </ResourceDictionary.MergedDictionaries>
+        </ResourceDictionary>-->
     </Application.Resources>
 </Application>

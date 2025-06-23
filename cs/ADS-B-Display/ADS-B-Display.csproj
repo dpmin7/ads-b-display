@@ -39,8 +39,17 @@
     <Reference Include="GLWpfControl, Version=3.3.0.0, Culture=neutral, processorArchitecture=MSIL">
       <HintPath>..\packages\OpenTK.GLWpfControl.3.3.0\lib\net452\GLWpfControl.dll</HintPath>
     </Reference>
+    <Reference Include="MahApps.Metro.IconPacks.Core, Version=5.0.0.0, Culture=neutral, PublicKeyToken=0c0d510f9915137a, processorArchitecture=MSIL">
+      <HintPath>..\packages\MahApps.Metro.IconPacks.Core.5.1.0\lib\net47\MahApps.Metro.IconPacks.Core.dll</HintPath>
+    </Reference>
+    <Reference Include="MahApps.Metro.IconPacks.Material, Version=5.0.0.0, Culture=neutral, PublicKeyToken=0c0d510f9915137a, processorArchitecture=MSIL">
+      <HintPath>..\packages\MahApps.Metro.IconPacks.Material.5.1.0\lib\net47\MahApps.Metro.IconPacks.Material.dll</HintPath>
+    </Reference>
     <Reference Include="Microsoft.Xaml.Behaviors, Version=1.1.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
       <HintPath>..\packages\Microsoft.Xaml.Behaviors.Wpf.1.1.135\lib\net462\Microsoft.Xaml.Behaviors.dll</HintPath>
+    </Reference>
+    <Reference Include="Newtonsoft.Json, Version=13.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
+      <HintPath>..\packages\Newtonsoft.Json.13.0.3\lib\net45\Newtonsoft.Json.dll</HintPath>
     </Reference>
     <Reference Include="NLog, Version=6.0.0.0, Culture=neutral, PublicKeyToken=5120e14c03d0593c, processorArchitecture=MSIL">
       <HintPath>..\packages\NLog.6.0.0\lib\net46\NLog.dll</HintPath>
@@ -81,6 +90,7 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </ApplicationDefinition>
+    <Compile Include="Map\MapManager.cs" />
     <Compile Include="Models\Aircraft.cs" />
     <Compile Include="Models\AircraftDB.cs" />
     <Compile Include="AircraftForUI.cs" />
@@ -92,14 +102,17 @@
     <Compile Include="Models\CPA\CPAProcessor.cs" />
     <Compile Include="Models\PingEcho.cs" />
     <Compile Include="Models\PointPolygonFilter.cs" />
+    <Compile Include="Models\Settings\Setting.cs" />
     <Compile Include="Models\RangeFilter\CompositeFilter.cs" />
     <Compile Include="Models\RangeFilter\HorizontalRangeFilter.cs" />
     <Compile Include="Models\RangeFilter\IRangeFilter.cs" />
     <Compile Include="Models\RangeFilter\VerticalRangeFilter.cs" />
+    <Compile Include="StringDefinitions.cs" />
     <Compile Include="Utils\csv.cs" />
     <Compile Include="Models\DecodeRawADS_B.cs" />
     <Compile Include="Utils\Dms.cs" />
     <Compile Include="Utils\EventBus.cs" />
+    <Compile Include="Utils\JsonUtil.cs" />
     <Compile Include="Utils\LatLonConv.cs" />
     <Compile Include="Map\MapSrc\DMS.cs" />
     <Compile Include="Map\MapSrc\EarthView.cs" />
@@ -126,7 +139,7 @@
     <Compile Include="Ntds2d.cs" />
     <Compile Include="Models\SbsWorker.cs" />
     <Compile Include="Models\SBS_Message.cs" />
-    <Compile Include="TriangulatPoly.cs" />
+    <Compile Include="Utils\TriangulatPoly.cs" />
     <Compile Include="Utils\MathExt.cs" />
     <Compile Include="Utils\Time.cs" />
     <Compile Include="Views\AircraftControlView.xaml.cs">
@@ -137,9 +150,16 @@
       <DependentUpon>AircraftListView.xaml</DependentUpon>
     </Compile>
     <Compile Include="Views\AircraftListViewModel.cs" />
+    <Compile Include="Views\AirScreenPanelView.xaml.cs">
+      <DependentUpon>AirScreenPanelView.xaml</DependentUpon>
+    </Compile>
     <Compile Include="Views\AreaPopup.xaml.cs">
       <DependentUpon>AreaPopup.xaml</DependentUpon>
     </Compile>
+    <Compile Include="Views\UserControls\ConnectionSignal.xaml.cs">
+      <DependentUpon>ConnectionSignal.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="Views\Converters\Converters.cs" />
     <Compile Include="Views\GLWpfControlExtensions.cs" />
     <Compile Include="Views\Popup\LoadingPopup.xaml.cs">
       <DependentUpon>LoadingPopup.xaml</DependentUpon>
@@ -156,6 +176,10 @@
       <DependentUpon>MainWindow.xaml</DependentUpon>
       <SubType>Code</SubType>
     </Compile>
+    <Page Include="Properties\DesignTimeResources.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
     <Page Include="Views\AircraftControlView.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
@@ -164,11 +188,35 @@
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
+    <Page Include="Views\AirScreenPanelView.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
     <Page Include="Views\AreaPopup.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
+    <Page Include="Views\UserControls\ConnectionSignal.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
     <Page Include="Views\Popup\LoadingPopup.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="Views\Style\Colors.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="Views\Style\Controls.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="Views\Style\Generic.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="Views\Style\Controls\GroupBox.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
@@ -201,6 +249,10 @@
       <LastGenOutput>Settings.Designer.cs</LastGenOutput>
     </None>
     <None Include="Utils\BigQuery\YourJsonFile.json" />
+    <Page Include="Views\Style\Light.Default.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />

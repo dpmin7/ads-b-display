@@ -1,4 +1,5 @@
-﻿using System;
+﻿using OpenTK;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -14,12 +15,14 @@ namespace ADS_B_Display.Models
         /// <param name="point">Tuple of latitude and longitude.</param>
         /// <param name="area">Polygon area defined by a list of points.</param>
         /// <returns>True if the point is inside the area; otherwise, false.</returns>
-        public static bool IsPointInArea((double lat, double lon) point, Area area)
+        public static bool IsPointInArea(double lat, double lon, Vector3d[] areaPoints)
         {
-            if (area.NumPoints < 3) return false;
+            int n = areaPoints.Length;
+            if (n < 3) return false;
 
-            var pts = area.Points;
-            int n = area.NumPoints;
+            var pts = areaPoints;
+            
+            
 
             // 평균 경도 계산 및 shift 결정
             double avgLon = 0;
@@ -29,8 +32,8 @@ namespace ADS_B_Display.Models
 
             double shift = (avgLon > 90) ? -360 : (avgLon < -90) ? 360 : 0;
 
-            double px = point.lon + shift;
-            double py = point.lat;
+            double px = lon + shift;
+            double py = lat;
 
             bool inside = false;
             int j = n - 1;
