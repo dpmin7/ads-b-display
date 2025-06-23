@@ -25,25 +25,19 @@ namespace ADS_B_Display.Map.MapSrc
             _currentMovementFlags = 0;
         }
 
-        public override void Render(bool drawMap)
+        private double aspect;
+        private double yspan;
+        private double xspan;
+        private Region rgn;
+        public override Region PreRender()
         {
             // x and y span of viewable size in global coords
-            double aspect = (double)_viewportWidth / (double)_viewportHeight;
-            double yspan = Eye.YSpan(aspect);
-            double xspan = Eye.XSpan(aspect);
-
-            // setup projection (OpenGL 관련 부분은 실제 구현에 맞게 대체 필요)
-            GL.MatrixMode(MatrixMode.Projection);
-            GlUtil.Projection2D(0, 0, _viewportWidth, _viewportHeight);
-
-            // calculate virtual coordinates for sides of world rectangle
-            double worldLeftVirtual = ((-0.5 - Eye.X) * _viewportWidth / xspan) + _viewportWidth / 2.0;
-            double worldRightVirtual = ((0.5 - Eye.X) * _viewportWidth / xspan) + _viewportWidth / 2.0;
-            double worldTopVirtual = ((0.5 - Eye.Y) * _viewportHeight / yspan) + _viewportHeight / 2.0;
-            double worldBottomVirtual = ((-0.5 - Eye.Y) * _viewportHeight / yspan) + _viewportHeight / 2.0;
+            aspect = (double)_viewportWidth / _viewportHeight;
+            yspan = Eye.YSpan(aspect);
+            xspan = Eye.XSpan(aspect);
 
             // Region 생성
-            Region rgn = new Region(
+            rgn = new Region(
                 new Vector3d(0, 0, 0),
                 new Vector3d((float)_viewportWidth, 0, 0),
                 new Vector3d((float)_viewportWidth, (float)_viewportHeight, 0),
@@ -56,17 +50,12 @@ namespace ADS_B_Display.Map.MapSrc
                 new Vector3d(0, (float)_viewportHeight, 0)
             );
 
-            // tune coords for the cases where earth bounds appear on screen
-            //if (worldLeftVirtual > 0.0) {
-            //    rgn.V[0].X = rgn.V[3].X = (float)worldLeftVirtual;
-            //    rgn.P[0].X = rgn.P[3].X = (float)worldLeftVirtual;
-            //    rgn.W[0].X = -0.5f;
-            //}
-            //if (worldRightVirtual < _viewportWidth) {
-            //    rgn.V[1].X = rgn.V[2].X = (float)worldRightVirtual;
-            //    rgn.P[1].X = rgn.P[2].X = (float)worldRightVirtual;
-            //    rgn.W[1].X = 0.5f;
-            //}
+            // calculate virtual coordinates for sides of world rectangle
+            double worldLeftVirtual = ((-0.5 - Eye.X) * _viewportWidth / xspan) + _viewportWidth / 2.0;
+            double worldRightVirtual = ((0.5 - Eye.X) * _viewportWidth / xspan) + _viewportWidth / 2.0;
+            double worldTopVirtual = ((0.5 - Eye.Y) * _viewportHeight / yspan) + _viewportHeight / 2.0;
+            double worldBottomVirtual = ((-0.5 - Eye.Y) * _viewportHeight / yspan) + _viewportHeight / 2.0;
+
             if (worldBottomVirtual > 0.0) {
                 rgn.V[0].Y = rgn.V[1].Y = (float)worldBottomVirtual;
                 rgn.P[0].Y = rgn.P[1].Y = (float)worldBottomVirtual;
@@ -78,18 +67,14 @@ namespace ADS_B_Display.Map.MapSrc
                 rgn.W[1].Y = 0.5f;
             }
 
-            // (Form1->Map_v 등은 WPF에서는 필요시 ViewModel 등으로 전달)
-            // 예시: MapViewModel.UpdateMapRegion(rgn);
-            ((MainWindow)Application.Current.MainWindow).Map_v[0] = rgn.V[0];
-            ((MainWindow)Application.Current.MainWindow).Map_v[1] = rgn.V[1];
-            ((MainWindow)Application.Current.MainWindow).Map_v[2] = rgn.V[2];
-            ((MainWindow)Application.Current.MainWindow).Map_v[3] = rgn.V[3];
-            ((MainWindow)Application.Current.MainWindow).Map_w[0] = rgn.W[0];
-            ((MainWindow)Application.Current.MainWindow).Map_w[1] = rgn.W[1];
-            ((MainWindow)Application.Current.MainWindow).Map_p[0] = rgn.P[0];
-            ((MainWindow)Application.Current.MainWindow).Map_p[1] = rgn.P[1];
-            ((MainWindow)Application.Current.MainWindow).Map_p[2] = rgn.P[2];
-            ((MainWindow)Application.Current.MainWindow).Map_p[3] = rgn.P[3];
+            return rgn;
+        }
+
+        public override void Render(bool drawMap)
+        {
+            // setup projection (OpenGL 관련 부분은 실제 구현에 맞게 대체 필요)
+            GL.MatrixMode(MatrixMode.Projection);
+            GlUtil.Projection2D(0, 0, _viewportWidth, _viewportHeight);
 
             // call master layer
             if (drawMap)
@@ -133,7 +118,7 @@ namespace ADS_B_Display.Map.MapSrc
 
                 Eye.Y = newY;// _savedPanEye.Y + (double)(y - fromY) / _viewportHeight * yspan;
                 Eye.X = _savedPanEye.X - (double)(x - fromX) / _viewportWidth * xspan;
-                Debug.WriteLine($"Pan X: {Eye.X}, Y: {Eye.Y}");
+                //Debug.WriteLine($"Pan X: {Eye.X}, Y: {Eye.Y}");
             }
             if ((flags & NAV_DRAG_ZOOM) != 0) {
                 if (y - fromY < 0)
@@ -182,7 +167,6 @@ namespace ADS_B_Display.Map.MapSrc
         /// </summary>
         private void NormalizeEye()
         {
-
             //if (Eye.X < -0.5) Eye.X = -0.5;
             //if (Eye.X > 0.5) Eye.X = 0.5;
             if (Eye.Y < -0.5) Eye.Y = -0.5;
@@ -190,6 +174,21 @@ namespace ADS_B_Display.Map.MapSrc
 
             if (Eye.H < MIN_HEIGHT) Eye.H = MIN_HEIGHT;
             if (Eye.H > MAX_HEIGHT) Eye.H = MAX_HEIGHT;
+        }
+
+        public override Region GetCurrentRegion()
+        {
+            double aspect = (double)_viewportWidth / (double)_viewportHeight;
+            double yspan = Eye.YSpan(aspect);
+            double xspan = Eye.XSpan(aspect);
+            return new Region(
+                new Vector3d(0, 0, 0),
+                new Vector3d((float)_viewportWidth, 0, 0),
+                new Vector3d((float)_viewportWidth, (float)_viewportHeight, 0),
+                new Vector3d(0, (float)_viewportHeight, 0),
+                new Vector2d((float)(Eye.X - xspan / 2.0), (float)(Eye.Y - yspan / 2.0)),
+                new Vector2d((float)(Eye.X + xspan / 2.0), (float)(Eye.Y + yspan / 2.0))
+            );
         }
     }
 }

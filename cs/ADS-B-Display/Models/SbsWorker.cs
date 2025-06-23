@@ -1,4 +1,5 @@
-﻿using System;
+﻿using ADS_B_Display.Models;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -14,6 +15,7 @@ namespace ADS_B_Display
 {
     public class SbsWorker
     {
+        enum MsgType { SbsMsg, RawMsg }
         private string _filePath;
         private TcpClient _tcpClient;
         private Thread _thread;
@@ -22,7 +24,7 @@ namespace ADS_B_Display
         private long _lastTime;
         private int _playBackSpeed = 1;
 
-        private Action<string> OnMessageReceived;
+        private readonly Func<string, uint> OnMessageReceived;
         private Action OnFinished;
 
         public StreamWriter RecordStream;
@@ -33,7 +35,7 @@ namespace ADS_B_Display
         public string BigQueryCsvFileName;
         public string BigQueryUploadArgs;
 
-        public SbsWorker(Action<string> onMessageReceived)
+        public SbsWorker(Func<string, uint> onMessageReceived)
         {
             OnMessageReceived = onMessageReceived;
         }
@@ -117,6 +119,7 @@ namespace ADS_B_Display
 
         private void Run()
         {
+            AircraftManager.PurgeAll();
             if (_filePath != null)
                 RunFileMode();
             else if (_tcpClient != null)
@@ -143,6 +146,7 @@ namespace ADS_B_Display
                         rawLine = reader.ReadLine();
                         if (string.IsNullOrEmpty(rawLine))
                             continue;
+
                         OnMessageReceived?.Invoke(rawLine);
                     }
                 }
@@ -159,7 +163,7 @@ namespace ADS_B_Display
                 using (var reader = new StreamReader(_tcpClient.GetStream())) {
                     while (_running && _tcpClient.Connected) {
                         string msg = reader.ReadLine();
-                        if (msg == null) break;
+                        if (msg == null) continue;
                         long time = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
                         ProcessMessage(msg, time);
                     }

@@ -39,6 +39,7 @@ namespace ADS_B_Display.Map.MapSrc
         // 소멸자(Dispose 패턴 등 필요시 구현)
         //~EarthView() { }
 
+        public abstract Region PreRender();
         public abstract void Render(bool drawMap);
         public abstract void Animate();
 
@@ -97,6 +98,11 @@ namespace ADS_B_Display.Map.MapSrc
         public virtual int SingleMovement(int flags)
         {
             return 0;
+        }
+
+        public virtual Region GetCurrentRegion()
+        {
+            return new Region();
         }
     }
 }

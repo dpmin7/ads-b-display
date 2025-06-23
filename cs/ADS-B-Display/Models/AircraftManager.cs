@@ -70,9 +70,16 @@ namespace ADS_B_Display.Models
 
             uint addr = (uint)((modeSMessage.AA[0] << 16) | (modeSMessage.AA[1] << 8) | modeSMessage.AA[2]);
             var aircraft = GetOrAdd(addr); // Aircraft 객체를 가져오거나 생성
-            AircraftDecoder.RawToAircraft(modeSMessage, ref aircraft);
+            DecodeRawAdsB.RawToAircraft(modeSMessage, ref aircraft);
 
             return addr; // Raw 메시지 처리는 아직 구현되지 않음
+        }
+
+        internal static void PurgeAll()
+        {
+            lock (lockObj) {
+                _aircraftTable.Clear();
+            }
         }
     }
 }

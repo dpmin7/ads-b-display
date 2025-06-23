@@ -468,26 +468,30 @@ namespace ADS_B_Display
         /// <summary>
         /// Raw feed에서 들어오는 한 줄짜리 메시지를 처리하는 메서드(예시).
         /// </summary>
-        private void OnRawMessageReceived(string rawLine)
+        private uint OnRawMessageReceived(string rawLine)
         {
             var icao = AircraftManager.ReceiveRawMessage(rawLine);
             lock (lockObj) {
                 updated.Add(icao);
             }
-        }
 
+            return icao;
+        }
 
         /// <summary>
         /// SBS 허브에서 들어오는 한 줄짜리 메시지를 처리하는 메서드(예시).
         /// 여기서는 “SBS Record” 기능과 연동하도록 구현.
         /// </summary>
-        private void OnSbsMessageReceived(string rawLine)
+        private uint OnSbsMessageReceived(string rawLine)
         {
             var icao = AircraftManager.ReceiveSBSMessage(rawLine);
             lock (lockObj) {
                 updated.Add(icao);
             }
+
+            return icao;
         }
+
 
         private void UseSbsLocal_Click(object sender, RoutedEventArgs e)
         {
@@ -633,7 +637,8 @@ namespace ADS_B_Display
                 _earthView.SingleMovement(EarthView.NAV_ZOOM_IN);
             else _earthView.SingleMovement(EarthView.NAV_ZOOM_OUT);
             airplaneScale = (double)Math.Min((0.05 / _earthView.Eye.H), 1.5); // 스케일 계산
-            
+
+            UpdateRegion(); // 현재 지역 업데이트
             glControl.InvalidateVisual(); // 마우스 휠 이벤트 후 강제 갱신
         }
 
@@ -674,6 +679,7 @@ namespace ADS_B_Display
 
             // 드래그 중이면 EarthView에 Drag 이벤트 전달
             if ((_MouseDownMask & LEFT_MOUSE_DOWN) != 0) {
+                UpdateRegion(); // 현재 지역 업데이트
                 _earthView.Drag(_MouseLeftDownX, _MouseLeftDownY, x, y, EarthView.NAV_DRAG_PAN);
                 glControl.InvalidateVisual(); // 화면 갱신
             }
@@ -802,6 +808,8 @@ namespace ADS_B_Display
             GL.Enable(EnableCap.LineStipple); // 선 생략 기능 활성화
             GL.BlendFunc(BlendingFactor.SrcAlpha, BlendingFactor.One); // 알파 블렌딩 함수 설정
             _earthView.Resize((int)e.NewSize.Width, (int)e.NewSize.Height);
+
+            UpdateRegion(); // 현재 지역 업데이트
         }
 
         private bool _isLoaded = false;
@@ -821,26 +829,6 @@ namespace ADS_B_Display
             if (!_isLoaded)
                 return;
 
-            // 1. 뷰포트 설정
-            //GL.Viewport(0, 0, (int)glControl.ActualWidth, (int)glControl.ActualHeight);
-
-            //// 2. 상태 초기화
-            //GL.ClearColor(0.1f, 0.1f, 0.1f, 1.0f);
-            //GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
-            //GL.Disable(EnableCap.DepthTest);
-
-            //// 3. 삼각형 그리기
-            //GL.Begin(PrimitiveType.Triangles);
-            //GL.Color3(1.0f, 0.0f, 0.0f);
-            //GL.Vertex3(-0.5f, -0.5f, 0.0f);
-            //GL.Color3(0.0f, 1.0f, 0.0f);
-            //GL.Vertex3(0.5f, -0.5f, 0.0f);
-            //GL.Color3(0.0f, 0.0f, 1.0f);
-            //GL.Vertex3(0.0f, 0.5f, 0.0f);
-            //GL.End();
-
-
-
             if ((bool)cboxDrawMap.IsChecked)
                 GL.ClearColor(0.0f, 0.0f, 0.0f, 0.0f); // 검은색 배경
             else
@@ -851,6 +839,25 @@ namespace ADS_B_Display
             _earthView.Animate(); // 애니메이션 업데이트
             _earthView.Render((bool)cboxDrawMap.IsChecked); // 지도 렌더링
             _tileManager.Cleanup(); // 타일 매니저 정리
+
+            DrawObject(); // OpenGL 객체 그리기
+        }
+
+        private void UpdateRegion()
+        {
+            var rgn = _earthView.PreRender(); // 렌더링 전 준비 작업
+
+            Map_v[0] = rgn.V[0];
+            Map_v[1] = rgn.V[1];
+            Map_v[2] = rgn.V[2];
+            Map_v[3] = rgn.V[3];
+            Map_w[0] = rgn.W[0];
+            Map_w[1] = rgn.W[1];
+            Map_p[0] = rgn.P[0];
+            Map_p[1] = rgn.P[1];
+            Map_p[2] = rgn.P[2];
+            Map_p[3] = rgn.P[3];
+
             Mw1 = Map_w[1].X - Map_w[0].X; // 지도 너비 계산
             Mw2 = Map_v[1].X - Map_v[0].X; // 지도 높이 계산
             Mh1 = Map_w[1].Y - Map_w[0].Y; // 가상 좌표 높이 계산
@@ -858,28 +865,6 @@ namespace ADS_B_Display
 
             xf = Mw1 / Mw2; // 가상 좌표 너비 대비 지도 너비 비율
             yf = Mh1 / Mh2; // 가상 좌표 높이 대비 지도 높이 비율
-
-            DrawObject(); // OpenGL 객체 그리기
-
-            //_x = (_x + 0.01f) % 1;
-            //_y = (_y + 0.01f) % 1;
-            //_z = (_z + 0.01f) % 1;
-            //// Clear the screen
-            //GL.ClearColor(1f, 0.1f, 0.1f, 1.0f); // Dark gray background
-            //GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
-            //// Set up the viewport
-            ////GL.Viewport(0, 0, OpenTkControl.ActualWidth, OpenTkControl.ActualHeight);
-            //// Set up projection and modelview matrices here if needed
-            //// Render your OpenGL content here
-            //// For example, draw a simple triangle
-            //GL.Begin(PrimitiveType.Triangles);
-            //GL.Color3(_x, 0.0f, 0.0f); // Red vertex
-            //GL.Vertex3(-0.5f, -0.5f, 0.0f); // Bottom left vertex
-            //GL.Color3(0.0f, _y, 0.0f); // Green vertex
-            //GL.Vertex3(0.5f, -0.5f, 0.0f); // Bottom right vertex
-            //GL.Color3(0.0f, 0.0f, _z); // Blue vertex
-            //GL.Vertex3(0.0f, 0.5f, 0.0f); // Top vertex
-            //GL.End();
         }
 
         private void DrawObject()
@@ -1137,8 +1122,7 @@ namespace ADS_B_Display
             Console.WriteLine($"선택된 맵: {selectedText}");
 
             // 여기에 map provider 변경 로직을 작성하세요
-                switch(selectedText)
-            {
+            switch (selectedText) {
                 case "Google Maps":
                     LoadMap(TileServerType.GoogleMaps);
                     break;
@@ -1151,8 +1135,8 @@ namespace ADS_B_Display
                 default:
                     LoadMap(TileServerType.GoogleMaps);
                     break;
-
             }
+            UpdateRegion(); // 현재 지역 업데이트
         }
 
         /// <summary>
