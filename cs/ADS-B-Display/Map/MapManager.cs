@@ -18,7 +18,8 @@ namespace ADS_B_Display.Map
         private TileManager _tileManager;
         private MasterLayer _masterLayer;
         //private FlatEarthView _earthView; // 뷰는 뷰가
-        
+        private Action<MasterLayer> _loadMapCallback;
+
         private static readonly string[] Folders = new string[] {
             "GoogleMap",
             "VFR_Map",
@@ -35,7 +36,12 @@ namespace ADS_B_Display.Map
             
         }
 
-        private bool _loadMapFromInternet = false;
+        private bool _loadMapFromInternet = true;
+
+        public void RegisterLoadMapCallback(Action<MasterLayer> callback)
+        {
+            _loadMapCallback = callback;
+        }
 
         public void LoadMap(TileServerType type)
         {
@@ -67,7 +73,8 @@ namespace ADS_B_Display.Map
             // Resize view to current control size
             //_earthView.Resize((int)glControl.ActualWidth, (int)glControl.ActualHeight);
 
-            EventBus.Publish(EventIds.EvtMapLoaded, _masterLayer);
+            _loadMapCallback?.Invoke(_masterLayer);
+            //EventBus.Publish(EventIds.EvtMapLoaded, _masterLayer);
         }
 
         internal void ClearTitleManager()

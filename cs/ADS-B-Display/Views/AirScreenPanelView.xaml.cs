@@ -5,6 +5,7 @@ using ADS_B_Display.Models.Settings;
 using ADS_B_Display.Utils;
 using OpenTK;
 using OpenTK.Graphics.OpenGL;
+using OpenTK.Wpf;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -19,13 +20,14 @@ using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Shapes;
+using System.Windows.Threading;
 
 namespace ADS_B_Display.Views
 {
     /// <summary>
     /// AirScreenPanelView.xaml에 대한 상호 작용 논리
     /// </summary>
-    public partial class AirScreenPanelView : Window
+    public partial class AirScreenPanelView : UserControl
     {
         private int _MouseLeftDownX;
         private int _MouseLeftDownY;
@@ -51,13 +53,42 @@ namespace ADS_B_Display.Views
 
         private int _numSpriteImages;
         private bool _isLoaded;
+        private object lockObj = new object();
 
         private FlatEarthView _earthView;
+
+        private DispatcherTimer _updateTimer = new DispatcherTimer();
+
 
         public AirScreenPanelView()
         {
             InitializeComponent();
-            EventBus.Observe(EventIds.EvtMapLoaded).ObserveOnDispatcher().Subscribe(msg => MapLoaded(msg));
+            
+            var settings = new GLWpfControlSettings() {
+                MajorVersion = 2, // OpenGL Major Version
+                MinorVersion = 1, // OpenGL Minor Version
+            };
+            glControl.Start(settings);
+
+            MapCenterLat = MAP_CENTER_LAT;
+            MapCenterLon = MAP_CENTER_LON;
+
+            MapManager.Instance.RegisterLoadMapCallback(MapLoaded);
+            MapManager.Instance.LoadMap(TileServerType.GoogleMaps);
+            //LoadMap(TileServerType.GoogleMaps);
+            SetMapCenter(out double x, out double y);
+            _earthView.Eye.X = x;
+            _earthView.Eye.Y = y;
+            _earthView.Eye.H /= Math.Pow(1.3, 18); // 높이(줌)도 필요시 조정
+
+            _updateTimer.Interval = TimeSpan.FromMilliseconds(500);
+            _updateTimer.Tick += _updateTimer_Tick;
+            _updateTimer.Start();
+        }
+
+        private void _updateTimer_Tick(object sender, EventArgs e)
+        {
+            glControl.InvalidateVisual(); // OpenGL 컨트롤 강제 갱신
         }
 
         public void UpdateSetting(bool useTimeTogo, double timeTogoValue)
@@ -66,12 +97,12 @@ namespace ADS_B_Display.Views
             _timeTogoValue = timeTogoValue;
         }
 
-        private void MapLoaded(object msg)
+        private void MapLoaded(MasterLayer masterLayer)
         {
-            if (msg is MasterLayer masterLayer) {
-                _earthView = new FlatEarthView(masterLayer);
-                _earthView.Resize((int)glControl.ActualWidth, (int)glControl.ActualHeight);
-            }
+            _earthView = new FlatEarthView(masterLayer);
+            _earthView.Resize((int)glControl.ActualWidth, (int)glControl.ActualHeight);
+
+            UpdateRegion();
         }
 
         private void glControl_PreviewMouseDown(object sender, MouseButtonEventArgs e)
@@ -500,6 +531,15 @@ namespace ADS_B_Display.Views
             lon = (lon + 180) % 360;
             if (lon < 0) lon += 360;
             return lon - 180;
+        }
+
+        private void SetMapCenter(out double x, out double y)
+        {
+            double siny;
+            x = (MapCenterLon + 0.0) / 360.0;
+            siny = Math.Sin((MapCenterLat * Math.PI) / 180.0);
+            siny = Math.Min(Math.Max(siny, -0.9999), 0.9999);
+            y = (Math.Log((1 + siny) / (1 - siny)) / (4 * Math.PI));
         }
     }
 }

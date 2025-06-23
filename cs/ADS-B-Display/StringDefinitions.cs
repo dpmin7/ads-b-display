@@ -12,6 +12,6 @@ namespace ADS_B_Display
         public const string EvtAircraftHooked = "EvtAircraftHooked";
         public const string EvtMouseMoved = "EvtMouseMoved";
         public const string EvtPurgeAll = "EvtPurgeAll";
-        public const string EvtMapLoaded = "EvtMapLoaded";
+        public const string EvtMapTypeSelected = "EvtMapTypeSelected";
     }
 }
