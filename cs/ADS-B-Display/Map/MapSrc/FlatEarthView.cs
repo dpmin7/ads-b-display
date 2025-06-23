@@ -72,11 +72,6 @@ namespace ADS_B_Display.Map.MapSrc
 
         public override void Render(bool drawMap)
         {
-            // x and y span of viewable size in global coords
-            double aspect = (double)_viewportWidth / (double)_viewportHeight;
-            double yspan = Eye.YSpan(aspect);
-            double xspan = Eye.XSpan(aspect);
-
             // setup projection
             GL.MatrixMode(MatrixMode.Projection);
             GlUtil.Projection2D(0, 0, _viewportWidth, _viewportHeight);
@@ -84,37 +79,6 @@ namespace ADS_B_Display.Map.MapSrc
             // calculate virtual coordinates for sides of world rectangle
             // 이 값은 화면상에서 360도 월드의 폭이 몇 픽셀인지를 계산합니다.
             double worldScreenWidth = _viewportWidth / xspan;
-
-            // Region 생성 (이 부분은 기존과 동일)
-            Region rgn = new Region(
-                new Vector3d(0, 0, 0),
-                new Vector3d((float)_viewportWidth, 0, 0),
-                new Vector3d((float)_viewportWidth, (float)_viewportHeight, 0),
-                new Vector3d(0, (float)_viewportHeight, 0),
-                new Vector2d((float)(Eye.X - xspan / 2.0), (float)(Eye.Y - yspan / 2.0)),
-                new Vector2d((float)(Eye.X + xspan / 2.0), (float)(Eye.Y + yspan / 2.0)),
-                new Vector3d(0, 0, 0),
-                new Vector3d((float)_viewportWidth, 0, 0),
-                new Vector3d((float)_viewportWidth, (float)_viewportHeight, 0),
-                new Vector3d(0, (float)_viewportHeight, 0)
-            );
-
-            // tune coords (Y축만 처리, X축은 아래에서 3번 그리므로 처리 불필요)
-            double worldTopVirtual = ((0.5 - Eye.Y) * _viewportHeight / yspan) + _viewportHeight / 2.0;
-            double worldBottomVirtual = ((-0.5 - Eye.Y) * _viewportHeight / yspan) + _viewportHeight / 2.0;
-
-            if (worldBottomVirtual > 0.0)
-            {
-                rgn.V[0].Y = rgn.V[1].Y = (float)worldBottomVirtual;
-                rgn.P[0].Y = rgn.P[1].Y = (float)worldBottomVirtual;
-                rgn.W[0].Y = -0.5f;
-            }
-            if (worldTopVirtual < _viewportHeight)
-            {
-                rgn.V[2].Y = rgn.V[3].Y = (float)worldTopVirtual;
-                rgn.P[2].Y = rgn.P[3].Y = (float)worldTopVirtual;
-                rgn.W[1].Y = 0.5f;
-            }
     
             // MainWindow의 Map_v, Map_w 업데이트 (기존과 동일)
     
