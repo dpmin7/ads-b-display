@@ -348,7 +348,6 @@ namespace ADS_B_Display.Views
                             _trackHook.ArrivalAirport = airportsInfo.FirstOrDefault(dict => dict.ContainsKey("ICAO") && dict["ICAO"] == airportCodes[1]);
                         }
                     }
-
                 } else {
                     _trackHook.Valid_CPA = true;
                     _trackHook.ICAO_CPA = selectedAircraft.ICAO;
@@ -464,7 +463,7 @@ namespace ADS_B_Display.Views
 
             // 공항 정보 표시
             List<Dictionary<string, string>> airportsInfo = AirportDB.GetAirPortsInfo();
-            HashSet<String> uniqueAirports = AirportDB.GetUniqueAirportCodes();
+            HashSet<string> uniqueAirports = AirportDB.GetUniqueAirportCodes();
 
             if (airportsInfo != null) {
                 foreach (var row in airportsInfo) {
@@ -478,9 +477,8 @@ namespace ADS_B_Display.Views
 
                         LatLon2XY(lat, lon, out double cLat, out double cLon);
 
-                        Ntds2d.DrawAirportVBO(cLat, cLon, airplaneScale);
+                        Ntds2d.DrawAirportVBO(cLat, cLon, airplaneScale * 0.6);
                     }
-
                 }
             }
 
@@ -499,7 +497,7 @@ namespace ADS_B_Display.Views
                     GL.Color4(1f, 0f, 0f, 1f);
                 }
 
-                Ntds2d.DrawAirplaneImage(scrX, scrY, airplaneScale, data.Heading, data.SpriteImage);
+                Ntds2d.DrawAirplaneImage(scrX, scrY, airplaneScale * 0.5, data.Heading, data.SpriteImage);
                 //glControl.Draw2DText(data.HexAddr, scrX + 10, scrY - 10, System.Drawing.Color.Pink);
                 // TODO: Draw2DText 구현 필요
 
@@ -525,6 +523,19 @@ namespace ADS_B_Display.Views
                     Ntds2d.DrawTrackHook(scrX, scrY, airplaneScale * 0.5);
                 } else {
                     _trackHook.Valid_CC = false;
+                }
+            }
+
+            // --- 5. 선택된 항공기의 출발/도착 공항 정보 그리기 ---
+            if (_trackHook.DepartureAirport != null && _trackHook.ArrivalAirport != null)
+            {
+                if (double.TryParse(_trackHook.DepartureAirport["Latitude"], out double ddLat) && double.TryParse(_trackHook.DepartureAirport["Longitude"], out double ddLon) &&
+                    double.TryParse(_trackHook.ArrivalAirport["Latitude"], out double daLat) && double.TryParse(_trackHook.ArrivalAirport["Longitude"], out double daLon))
+                {
+                    LatLon2XY(ddLat, ddLon, out double dScrX, out double dScrY);
+                    LatLon2XY(daLat, daLon, out double aScrX, out double aScrY);
+
+                    Ntds2d.DrawLinkedPointsWithCircles(dScrX, dScrY, aScrX, aScrY);
                 }
             }
         }

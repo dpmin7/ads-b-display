@@ -25,11 +25,6 @@ namespace ADS_B_Display.Map.MapSrc
                 _children[i] = null;
         }
 
-        ~TextureTile()
-        {
-            
-        }
-
         /// <summary>
         /// Tile type identifier.
         /// </summary>
