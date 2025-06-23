@@ -72,13 +72,75 @@ namespace ADS_B_Display.Map.MapSrc
 
         public override void Render(bool drawMap)
         {
-            // setup projection (OpenGL 관련 부분은 실제 구현에 맞게 대체 필요)
+            // x and y span of viewable size in global coords
+            double aspect = (double)_viewportWidth / (double)_viewportHeight;
+            double yspan = Eye.YSpan(aspect);
+            double xspan = Eye.XSpan(aspect);
+
+            // setup projection
             GL.MatrixMode(MatrixMode.Projection);
             GlUtil.Projection2D(0, 0, _viewportWidth, _viewportHeight);
 
-            // call master layer
+            // calculate virtual coordinates for sides of world rectangle
+            // 이 값은 화면상에서 360도 월드의 폭이 몇 픽셀인지를 계산합니다.
+            double worldScreenWidth = _viewportWidth / xspan;
+
+            // Region 생성 (이 부분은 기존과 동일)
+            Region rgn = new Region(
+                new Vector3d(0, 0, 0),
+                new Vector3d((float)_viewportWidth, 0, 0),
+                new Vector3d((float)_viewportWidth, (float)_viewportHeight, 0),
+                new Vector3d(0, (float)_viewportHeight, 0),
+                new Vector2d((float)(Eye.X - xspan / 2.0), (float)(Eye.Y - yspan / 2.0)),
+                new Vector2d((float)(Eye.X + xspan / 2.0), (float)(Eye.Y + yspan / 2.0)),
+                new Vector3d(0, 0, 0),
+                new Vector3d((float)_viewportWidth, 0, 0),
+                new Vector3d((float)_viewportWidth, (float)_viewportHeight, 0),
+                new Vector3d(0, (float)_viewportHeight, 0)
+            );
+
+            // tune coords (Y축만 처리, X축은 아래에서 3번 그리므로 처리 불필요)
+            double worldTopVirtual = ((0.5 - Eye.Y) * _viewportHeight / yspan) + _viewportHeight / 2.0;
+            double worldBottomVirtual = ((-0.5 - Eye.Y) * _viewportHeight / yspan) + _viewportHeight / 2.0;
+
+            if (worldBottomVirtual > 0.0)
+            {
+                rgn.V[0].Y = rgn.V[1].Y = (float)worldBottomVirtual;
+                rgn.P[0].Y = rgn.P[1].Y = (float)worldBottomVirtual;
+                rgn.W[0].Y = -0.5f;
+            }
+            if (worldTopVirtual < _viewportHeight)
+            {
+                rgn.V[2].Y = rgn.V[3].Y = (float)worldTopVirtual;
+                rgn.P[2].Y = rgn.P[3].Y = (float)worldTopVirtual;
+                rgn.W[1].Y = 0.5f;
+            }
+    
+            // MainWindow의 Map_v, Map_w 업데이트 (기존과 동일)
+    
+            ((MainWindow)Application.Current.MainWindow).Map_v[0] = rgn.V[0];
+            // ... (나머지 Map_v, Map_w, Map_p 업데이트 코드) ...
+            ((MainWindow)Application.Current.MainWindow).Map_w[1] = rgn.W[1];
+
+
+            // --- 맵 3번 그리기 로직 ---
             if (drawMap)
+            {
+                // 1. 중앙 맵 그리기
                 _masterLayer.RenderRegion(rgn);
+
+                // 2. 오른쪽 맵 그리기
+                GL.PushMatrix();
+                GL.Translate(worldScreenWidth, 0, 0); // 월드의 너비만큼 오른쪽으로 이동
+                _masterLayer.RenderRegion(rgn);
+                GL.PopMatrix();
+
+                // 3. 왼쪽 맵 그리기
+                GL.PushMatrix();
+                GL.Translate(-worldScreenWidth, 0, 0); // 월드의 너비만큼 왼쪽으로 이동
+                _masterLayer.RenderRegion(rgn);
+                GL.PopMatrix();
+            }
         }
 
         public override void Animate()
@@ -167,8 +229,16 @@ namespace ADS_B_Display.Map.MapSrc
         /// </summary>
         private void NormalizeEye()
         {
-            //if (Eye.X < -0.5) Eye.X = -0.5;
-            //if (Eye.X > 0.5) Eye.X = 0.5;
+            // Eye.X (경도)가 1.0 (360도) 범위를 넘어가면 wrap-around 되도록 수정
+            // (예: 0.6은 -0.4로, -0.6은 0.4로)
+            if (Eye.X >= 0.5)
+            {
+                Eye.X -= 1.0;
+            }
+            if (Eye.X < -0.5)
+            {
+                Eye.X += 1.0;
+            }
             if (Eye.Y < -0.5) Eye.Y = -0.5;
             if (Eye.Y > 0.5) Eye.Y = 0.5;
 

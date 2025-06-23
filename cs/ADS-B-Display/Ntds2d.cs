@@ -392,19 +392,32 @@ namespace ADS_B_Display
 
         public static int LoadTextureFromFile(string filePath)
         {
+            // PngBitmapDecoder를 사용하여 이미지 로드
             var decoder = new PngBitmapDecoder(new Uri(filePath), BitmapCreateOptions.PreservePixelFormat, BitmapCacheOption.OnLoad);
             var bitmap = decoder.Frames[0];
             int width = bitmap.PixelWidth;
             int height = bitmap.PixelHeight;
-            int stride = width * 4;
+            int stride = width * 4; // 픽셀당 4바이트 (RGBA)
 
             byte[] pixels = new byte[height * stride];
             bitmap.CopyPixels(pixels, stride, 0);
 
+            // --- OpenGL 표준에 맞게 이미지 데이터를 상하로 뒤집는 로직 (핵심!) ---
+            byte[] flippedPixels = new byte[height * stride];
+            for (int y = 0; y < height; y++)
+            {
+                int srcIndex = y * stride;
+                int dstIndex = (height - 1 - y) * stride;
+                Array.Copy(pixels, srcIndex, flippedPixels, dstIndex, stride);
+            }
+            // --- 뒤집기 완료 ---
+
             int textureId = GL.GenTexture();
             GL.BindTexture(TextureTarget.Texture2D, textureId);
+
+            // 뒤집힌 픽셀 데이터(flippedPixels)를 사용
             GL.TexImage2D(TextureTarget.Texture2D, 0, PixelInternalFormat.Rgba, width, height, 0,
-                          PixelFormat.Bgra, PixelType.UnsignedByte, pixels);
+                            PixelFormat.Bgra, PixelType.UnsignedByte, flippedPixels);
 
             GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMinFilter, (int)TextureMinFilter.Linear);
             GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMagFilter, (int)TextureMagFilter.Linear);
@@ -418,21 +431,23 @@ namespace ADS_B_Display
         {
             if (airportVboInitialized) return;
 
+            // 텍스처 데이터가 이제 정상이므로, 좌표도 표준으로 사용합니다.
+            // (좌하단: 0,0), (우상단: 1,1)
             float[] quadVertices = {
-                // x, y, u, v
-                +1f, +1f, 1f, 1f,
-                -1f, +1f, 0f, 1f,
-                -1f, -1f, 0f, 0f,
-                +1f, -1f, 1f, 0f
+                +1f, +1f,   1f, 1f,
+                -1f, +1f,   0f, 1f,
+                -1f, -1f,   0f, 0f,
+                +1f, -1f,   1f, 0f
             };
 
-            uint[] indices = { 0, 1, 2, 0, 2, 3 };
+            // 인덱스는 삼각형 2개를 올바르게 정의하도록 수정
+            uint[] indices = {
+                2, 3, 0,
+                2, 0, 1 
+            };
 
-            airportVao = GL.GenVertexArray();
             airportVbo = GL.GenBuffer();
             airportEbo = GL.GenBuffer();
-
-            GL.BindVertexArray(airportVao);
 
             GL.BindBuffer(BufferTarget.ArrayBuffer, airportVbo);
             GL.BufferData(BufferTarget.ArrayBuffer, quadVertices.Length * sizeof(float), quadVertices, BufferUsageHint.StaticDraw);
@@ -440,21 +455,26 @@ namespace ADS_B_Display
             GL.BindBuffer(BufferTarget.ElementArrayBuffer, airportEbo);
             GL.BufferData(BufferTarget.ElementArrayBuffer, indices.Length * sizeof(uint), indices, BufferUsageHint.StaticDraw);
 
-            GL.EnableVertexAttribArray(0); // vertex.xy
-            GL.VertexAttribPointer(0, 2, VertexAttribPointerType.Float, false, 4 * sizeof(float), 0);
+            string texturePath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Symbols", "tower-64.png");
+            if (File.Exists(texturePath))
+            {
+                airportTextId = LoadTextureFromFile(texturePath); // 수정된 함수 호출
+            }
+            else
+            {
+                Console.WriteLine($"Error: Texture file not found at {texturePath}");
+                airportTextId = 0;
+            }
 
-            GL.EnableVertexAttribArray(1); // texcoord.uv
-            GL.VertexAttribPointer(1, 2, VertexAttribPointerType.Float, false, 4 * sizeof(float), 2 * sizeof(float));
-
-            GL.BindVertexArray(0);
-
-            airportTextId = LoadTextureFromFile(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Symbols", "tower-64.png"));
             airportVboInitialized = true;
         }
 
         public static void DrawAirportVBO(double x, double y, double scale)
         {
-            InitAirportVBO(); // 텍스처는 여기서 이미 로딩되어 있음
+            InitAirportVBO();
+
+            // 텍스처 로딩에 실패했다면 그리지 않음
+            if (airportTextId == 0) return;
 
             GL.PushMatrix();
             GL.Translate(x, y, 0f);
@@ -463,15 +483,37 @@ namespace ADS_B_Display
             GL.Enable(EnableCap.Texture2D);
             GL.BindTexture(TextureTarget.Texture2D, airportTextId);
 
-            GL.Color4(1f, 1f, 1f, 1f);
+            // GL.Color4(1f, 1f, 1f, 1f); // 흰색으로 설정하여 텍스처 본연의 색이 나오게 함
 
-            // VAO/VBO 제거하고 고전 방식으로 그리기
-            GL.Begin(PrimitiveType.Quads);
-            GL.TexCoord2(1f, 0f); GL.Vertex2(+1f, +1f);
-            GL.TexCoord2(0f, 0f); GL.Vertex2(-1f, +1f);
-            GL.TexCoord2(0f, 1f); GL.Vertex2(-1f, -1f);
-            GL.TexCoord2(1f, 1f); GL.Vertex2(+1f, -1f);
-            GL.End();
+            // --- 레거시 VBO 그리기를 위한 설정 ---
+
+            // 1. 필요한 ClientState 활성화
+            GL.EnableClientState(ArrayCap.VertexArray);
+            GL.EnableClientState(ArrayCap.TextureCoordArray);
+
+            // 2. VBO와 EBO 바인딩
+            GL.BindBuffer(BufferTarget.ArrayBuffer, airportVbo);
+            GL.BindBuffer(BufferTarget.ElementArrayBuffer, airportEbo);
+
+            // 3. 데이터 포인터 설정 (VBO 데이터의 구조를 OpenGL에 알려줌)
+            int stride = 4 * sizeof(float); // (x, y, u, v) 4개의 float
+                                            // 정점 위치 데이터는 VBO의 시작(offset 0)부터 2개의 float
+            GL.VertexPointer(2, VertexPointerType.Float, stride, 0);
+            // 텍스처 좌표 데이터는 정점 데이터 뒤(offset 2 * sizeof(float))부터 2개의 float
+            GL.TexCoordPointer(2, TexCoordPointerType.Float, stride, 2 * sizeof(float));
+
+            // 4. 그리기 호출
+            GL.DrawElements(PrimitiveType.Triangles, 6, DrawElementsType.UnsignedInt, 0);
+
+            // 5. 사용이 끝난 ClientState 비활성화
+            GL.DisableClientState(ArrayCap.VertexArray);
+            GL.DisableClientState(ArrayCap.TextureCoordArray);
+
+            // 6. 버퍼 바인딩 해제
+            GL.BindBuffer(BufferTarget.ArrayBuffer, 0);
+            GL.BindBuffer(BufferTarget.ElementArrayBuffer, 0);
+
+            // --- 설정 끝 ---
 
             GL.BindTexture(TextureTarget.Texture2D, 0);
             GL.Disable(EnableCap.Texture2D);

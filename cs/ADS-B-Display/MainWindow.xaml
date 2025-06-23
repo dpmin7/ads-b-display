@@ -50,14 +50,14 @@
                     SizeChanged="glControl_SizeChanged" />
             </Border>
 
-            <views:AircraftControlView x:Name="AircraftControlPanel" Grid.Column="1" />
+            <!--<views:AircraftControlView x:Name="AircraftControlPanel" Grid.Column="1" />-->
 
             <!--  ─── 우측 패널 전체: ScrollViewer 안에 StackPanel 배치 ───  -->
             <ScrollViewer
                 Grid.Column="1"
                 Background="{DynamicResource {x:Static SystemColors.WindowBrushKey}}"
                 VerticalScrollBarVisibility="Auto"
-                Visibility="Collapsed">
+                Visibility="Visible">
                 <StackPanel
                     x:Name="RightPanelStack"
                     Width="284"
