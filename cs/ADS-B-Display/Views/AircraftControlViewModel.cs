@@ -443,12 +443,27 @@ namespace ADS_B_Display.Views
         }
 
         private bool useTimeTogo;
-        public bool UseTimeTogo { get => useTimeTogo; set => SetProperty(ref useTimeTogo, value); }
+        public bool UseTimeTogo {
+            get => useTimeTogo;
+            set {
+                SetProperty(ref useTimeTogo, value);
+                OnChangeTimeToGo();
+            }
+        }
 
         private double timeTogoValue;
-        public double TimeTogoValue { get => timeTogoValue; set => SetProperty(ref timeTogoValue, value); }
+        public double TimeTogoValue {
+            get => timeTogoValue;
+            set {
+                SetProperty(ref timeTogoValue, value);
+                OnChangeTimeToGo();
+            }
+        }
 
-
+        private void OnChangeTimeToGo()
+        {
+            EventBus.Publish(EventIds.EvtTimeToGoChanged, (useTimeTogo, timeTogoValue));
+        }
 
         // Display
         //private string icaoText;

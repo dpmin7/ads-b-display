@@ -3,6 +3,7 @@ using ADS_B_Display.Map.MapSrc;
 using ADS_B_Display.Models;
 using ADS_B_Display.Models.Settings;
 using ADS_B_Display.Utils;
+using Microsoft.SqlServer.Server;
 using OpenTK;
 using OpenTK.Graphics.OpenGL;
 using OpenTK.Wpf;
@@ -29,6 +30,24 @@ namespace ADS_B_Display.Views
     /// </summary>
     public partial class AirScreenPanelView : UserControl
     {
+        private struct TrackHookStruct
+        {
+            public bool Valid_CC;
+            public uint ICAO_CC;
+            public bool Valid_CPA;
+            public uint ICAO_CPA;
+            public Dictionary<string, string> DepartureAirport;
+            public Dictionary<string, string> ArrivalAirport;
+        }
+
+        private class ADSBAircraft
+        {
+            public uint ICAO;
+            public bool HaveLatLon;
+            public double Latitude;
+            public double Longitude;
+        }
+
         private int _MouseLeftDownX;
         private int _MouseLeftDownY;
         private int _MouseDownMask;
@@ -43,6 +62,7 @@ namespace ADS_B_Display.Views
         public Vector3d[] Map_p = new Vector3d[4];
         public Vector2d[] Map_w = new Vector2d[2];
         double MapCenterLat, MapCenterLon;
+        private TrackHookStruct _trackHook = new TrackHookStruct();
 
         private const float BG_INTENSITY = 0.37f; // 배경색 강도 (0.0f ~ 1.0f)
         private const float MAP_CENTER_LAT = 40.73612f; // 지도 중심 위도
@@ -63,7 +83,8 @@ namespace ADS_B_Display.Views
         public AirScreenPanelView()
         {
             InitializeComponent();
-            
+            EventBus.Observe(EventIds.EvtTimeToGoChanged).Subscribe(msg => UpdateTimeToGo(msg));
+
             var settings = new GLWpfControlSettings() {
                 MajorVersion = 2, // OpenGL Major Version
                 MinorVersion = 1, // OpenGL Minor Version
@@ -84,6 +105,13 @@ namespace ADS_B_Display.Views
             _updateTimer.Interval = TimeSpan.FromMilliseconds(500);
             _updateTimer.Tick += _updateTimer_Tick;
             _updateTimer.Start();
+        }
+
+        private void UpdateTimeToGo(object msg)
+        {
+            var param = ((bool, double))msg;
+            _useTimeToGo = param.Item1;
+            _timeTogoValue = param.Item2;
         }
 
         private void _updateTimer_Tick(object sender, EventArgs e)
@@ -133,7 +161,7 @@ namespace ADS_B_Display.Views
                 //    }
                 //} else {
                 bool ctrl = Keyboard.Modifiers == ModifierKeys.Control;
-                //HookTrack(x, y, ctrl);
+                HookTrack(x, y, ctrl);
                 //}
             } else if (e.ChangedButton == MouseButton.Middle) {
                 //ResetXYOffset();
@@ -273,81 +301,81 @@ namespace ADS_B_Display.Views
             DrawObject(); // OpenGL 객체 그리기
         }
 
-        //private void HookTrack(int x, int y, bool cpaHook)
-        //{
-        //    int Y1 = ((int)glControl.ActualHeight - 1) - y;
-        //    int X1 = x;
+        private void HookTrack(int x, int y, bool cpaHook)
+        {
+            int Y1 = ((int)glControl.ActualHeight - 1) - y;
+            int X1 = x;
 
-        //    if ((X1 < Map_v[0].X) || (X1 > Map_v[1].X) ||
-        //        (Y1 < Map_v[0].Y) || (Y1 > Map_v[3].Y)) return;
+            if ((X1 < Map_v[0].X) || (X1 > Map_v[1].X) ||
+                (Y1 < Map_v[0].Y) || (Y1 > Map_v[3].Y)) return;
 
-        //    double vLat = Math.Atan(Math.Sinh(Math.PI * (2 * (Map_w[1].Y - (yf * (Map_v[3].Y - Y1)))))) * (180.0 / Math.PI);
-        //    double vLon = (Map_w[1].X - (xf * (Map_v[1].X - X1))) * 360.0;
+            double vLat = Math.Atan(Math.Sinh(Math.PI * (2 * (Map_w[1].Y - (yf * (Map_v[3].Y - Y1)))))) * (180.0 / Math.PI);
+            double vLon = (Map_w[1].X - (xf * (Map_v[1].X - X1))) * 360.0;
 
-        //    double minRange = 16.0;
-        //    uint currentICAO = 0;
+            double minRange = 16.0;
+            uint currentICAO = 0;
 
-        //    foreach (var data in AircraftManager.GetAll()) {
-        //        if (data.HaveLatLon) {
-        //            double dLat = vLat - data.Latitude;
-        //            double dLon = vLon - data.Longitude;
-        //            double range = Math.Sqrt(dLat * dLat + dLon * dLon);
-        //            if (range < minRange) {
-        //                currentICAO = data.ICAO;
-        //                minRange = range;
-        //            }
-        //        }
-        //    }
+            foreach (var data in AircraftManager.GetAll()) {
+                if (data.HaveLatLon) {
+                    double dLat = vLat - data.Latitude;
+                    double dLon = vLon - data.Longitude;
+                    double range = Math.Sqrt(dLat * dLat + dLon * dLon);
+                    if (range < minRange) {
+                        currentICAO = data.ICAO;
+                        minRange = range;
+                    }
+                }
+            }
 
-        //    if (minRange < 0.2) {
-        //        var selectedAircraft = AircraftManager.GetOrAdd(currentICAO);
-        //        if (!cpaHook) {
-        //            _trackHook.Valid_CC = true;
-        //            _trackHook.ICAO_CC = selectedAircraft.ICAO;
-        //            Console.WriteLine(AircraftDB.GetAircraftInfo(selectedAircraft.ICAO));
+            if (minRange < 0.2) {
+                var selectedAircraft = AircraftManager.GetOrAdd(currentICAO);
+                if (!cpaHook) {
+                    _trackHook.Valid_CC = true;
+                    _trackHook.ICAO_CC = selectedAircraft.ICAO;
+                    Console.WriteLine(AircraftDB.GetAircraftInfo(selectedAircraft.ICAO));
 
-        //            // 출발 - 도착 정보 저장
-        //            List<Dictionary<string, string>> airportsInfo = AirportDB.GetAirPortsInfo();
-        //            List<Dictionary<string, string>> routesInfo = AirportDB.GetRoutesInfo();
+                    // 출발 - 도착 정보 저장
+                    List<Dictionary<string, string>> airportsInfo = AirportDB.GetAirPortsInfo();
+                    List<Dictionary<string, string>> routesInfo = AirportDB.GetRoutesInfo();
 
-        //            // callSign
-        //            if (airportsInfo != null && routesInfo != null && selectedAircraft.FlightNum.Trim() != "") {
-        //                var selectedRoute = routesInfo.FirstOrDefault(dict => dict.ContainsKey("Callsign") && dict["Callsign"] == selectedAircraft.FlightNum.Trim());
+                    // callSign
+                    if (airportsInfo != null && routesInfo != null && selectedAircraft.FlightNum.Trim() != "") {
+                        var selectedRoute = routesInfo.FirstOrDefault(dict => dict.ContainsKey("Callsign") && dict["Callsign"] == selectedAircraft.FlightNum.Trim());
 
-        //                if (selectedRoute != null) {
-        //                    var airportCodes = selectedRoute["AirportCodes"].Split('-');
-        //                    _trackHook.DepartureAirport = airportsInfo.FirstOrDefault(dict => dict.ContainsKey("ICAO") && dict["ICAO"] == airportCodes[0]);
-        //                    _trackHook.ArrivalAirport = airportsInfo.FirstOrDefault(dict => dict.ContainsKey("ICAO") && dict["ICAO"] == airportCodes[1]);
-        //                }
-        //            }
+                        if (selectedRoute != null) {
+                            var airportCodes = selectedRoute["AirportCodes"].Split('-');
+                            _trackHook.DepartureAirport = airportsInfo.FirstOrDefault(dict => dict.ContainsKey("ICAO") && dict["ICAO"] == airportCodes[0]);
+                            _trackHook.ArrivalAirport = airportsInfo.FirstOrDefault(dict => dict.ContainsKey("ICAO") && dict["ICAO"] == airportCodes[1]);
+                        }
+                    }
 
-        //        } else {
-        //            _trackHook.Valid_CPA = true;
-        //            _trackHook.ICAO_CPA = selectedAircraft.ICAO;
-        //            _trackHook.DepartureAirport = null;
-        //            _trackHook.ArrivalAirport = null;
-        //        }
-        //    } else {
-        //        if (!cpaHook) {
-        //            _trackHook.Valid_CC = false;
-        //            //ICAOLabel.Text = "N/A";
-        //            //FlightNumLabel.Text = "N/A";
-        //            //CLatLabel.Text = "N/A";
-        //            //CLonLabel.Text = "N/A";
-        //            //SpdLabel.Text = "N/A";
-        //            //HdgLabel.Text = "N/A";
-        //            //AltLabel.Text = "N/A";
-        //            //MsgCntLabel.Text = "N/A";
-        //            //TrkLastUpdateTimeLabel.Text = "N/A";
-        //            _trackHook.DepartureAirport = null;
-        //            _trackHook.ArrivalAirport = null;
-        //        } else {
-        //            //TrackHook.Valid_CPA = false;
-        //            //CpaTimeValue.Text = "None";
-        //            //CpaDistanceValue.Text = "None";
-        //        }
-        //    }
-        //}
+                } else {
+                    _trackHook.Valid_CPA = true;
+                    _trackHook.ICAO_CPA = selectedAircraft.ICAO;
+                    _trackHook.DepartureAirport = null;
+                    _trackHook.ArrivalAirport = null;
+                }
+            } else {
+                if (!cpaHook) {
+                    _trackHook.Valid_CC = false;
+                    //ICAOLabel.Text = "N/A";
+                    //FlightNumLabel.Text = "N/A";
+                    //CLatLabel.Text = "N/A";
+                    //CLonLabel.Text = "N/A";
+                    //SpdLabel.Text = "N/A";
+                    //HdgLabel.Text = "N/A";
+                    //AltLabel.Text = "N/A";
+                    //MsgCntLabel.Text = "N/A";
+                    //TrkLastUpdateTimeLabel.Text = "N/A";
+                    _trackHook.DepartureAirport = null;
+                    _trackHook.ArrivalAirport = null;
+                } else {
+                    //TrackHook.Valid_CPA = false;
+                    //CpaTimeValue.Text = "None";
+                    //CpaDistanceValue.Text = "None";
+                }
+            }
+        }
 
         private void DrawObject()
         {
@@ -487,6 +515,16 @@ namespace ADS_B_Display.Views
                         GL.Vertex2(scrX2, scrY2);
                         GL.End();
                     }
+                }
+            }
+
+            // TrackHook 정보 그리기
+            if (_trackHook.Valid_CC) {
+                if (AircraftManager.TryGet(_trackHook.ICAO_CC, out var data)) {
+                    LatLon2XY(data.Latitude, data.Longitude, out scrX, out scrY);
+                    Ntds2d.DrawTrackHook(scrX, scrY, airplaneScale * 0.5);
+                } else {
+                    _trackHook.Valid_CC = false;
                 }
             }
         }

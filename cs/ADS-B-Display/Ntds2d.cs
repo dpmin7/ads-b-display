@@ -262,6 +262,7 @@ namespace ADS_B_Display
         /// </summary>
         public static void DrawTrackHook(double x, double y, double scale = 1)
         {
+            GL.Color4(1f, 1f, 0f, 1f);
             GL.PushMatrix();
             GL.Translate(x, y, 0f);
             GL.Scale(scale, scale, 1f); // 크기 조절 추가

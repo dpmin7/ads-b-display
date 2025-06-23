@@ -682,7 +682,7 @@
                     <Slider
                         Margin="0,2,0,0"
                         LargeChange="10"
-                        Maximum="100"
+                        Maximum="1000"
                         Minimum="0"
                         SmallChange="1"
                         Value="{Binding TimeTogoValue}" />

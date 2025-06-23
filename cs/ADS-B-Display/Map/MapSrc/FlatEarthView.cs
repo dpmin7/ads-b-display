@@ -82,11 +82,6 @@ namespace ADS_B_Display.Map.MapSrc
     
             // MainWindow의 Map_v, Map_w 업데이트 (기존과 동일)
     
-            ((MainWindow)Application.Current.MainWindow).Map_v[0] = rgn.V[0];
-            // ... (나머지 Map_v, Map_w, Map_p 업데이트 코드) ...
-            ((MainWindow)Application.Current.MainWindow).Map_w[1] = rgn.W[1];
-
-
             // --- 맵 3번 그리기 로직 ---
             if (drawMap)
             {
