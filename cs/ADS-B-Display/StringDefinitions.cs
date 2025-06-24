@@ -13,6 +13,6 @@ namespace ADS_B_Display
         public const string EvtMouseMoved = "EvtMouseMoved";
         public const string EvtPurgeAll = "EvtPurgeAll";
         public const string EvtMapTypeSelected = "EvtMapTypeSelected";
-        public const string EvtTimeToGoChanged = "EvtTimeToGoChanged";
+        public const string EvtControlSettingChanged = "EvtControlSettingChanged";
     }
 }

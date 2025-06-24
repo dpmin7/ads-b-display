@@ -1,4 +1,5 @@
 ﻿using ADS_B_Display.Views;
+using System;
 using System.IO;
 using System.Windows;
 //using System.Windows.Shapes;
@@ -27,7 +28,7 @@ namespace ADS_B_Display
 
         private void UseSbsLocal_Click(object sender, RoutedEventArgs e)
         {
-            //SbsConnectTextBox.Text = "128.237.96.41";
+            //SbsConnectTextBox.Text = "128.237.96.41"; // "data.adsbhub.org"
         }
 
         private void LoadArtccBoundaries_Click(object sender, RoutedEventArgs e)
@@ -43,6 +44,12 @@ namespace ADS_B_Display
         private void UseSbsRemote_Click(object sender, RoutedEventArgs e)
         {
 
+        }
+
+        private void Window_Closing(object sender, System.ComponentModel.CancelEventArgs e)
+        {
+            (airScreenPanelView as IDisposable)?.Dispose();
+            (AircraftControlPanel as IDisposable)?.Dispose();
         }
     }
 }

@@ -13,6 +13,7 @@
     d:DesignWidth="300"
     mc:Ignorable="d">
     <UserControl.Resources>
+        <converters:SecToDateTime x:Key="secToTime" />
         <!--  IsTextConverter 등록  -->
         <converters:IsTextConverter x:Key="IsTextConverter" />
         <!--  HeaderTemplate 정의  -->
@@ -96,7 +97,7 @@
         Background="{DynamicResource {x:Static SystemColors.WindowBrushKey}}"
         VerticalScrollBarVisibility="Auto">
 
-        <StackPanel x:Name="RightPanelStack" Margin="8,0,8,8">
+        <StackPanel Margin="8,0,8,8">
 
             <!--  ─── 1) System Info ───  -->
             <GroupBox Padding="10">
@@ -108,7 +109,6 @@
                             FontWeight="Bold"
                             Text="System Time:" />
                         <TextBlock
-                            x:Name="SystemTimeText"
                             Margin="0"
                             HorizontalAlignment="Right"
                             Text="{Binding SystemTime, FallbackValue=21:24:17:362}" />
@@ -141,18 +141,12 @@
                             Margin="0,0,0,0"
                             FontWeight="Bold"
                             Text="Num of Aircraft:" />
-                        <TextBlock
-                            x:Name="NumAircraftText"
-                            Margin="4,0,0,0"
-                            Text="66" />
+                        <TextBlock Margin="4,0,0,0" Text="66" />
                         <TextBlock
                             Margin="16,0,0,0"
                             FontWeight="Bold"
                             Text="  Viewable:" />
-                        <TextBlock
-                            x:Name="ViewableText"
-                            Margin="4,0,0,0"
-                            Text="33" />
+                        <TextBlock Margin="4,0,0,0" Text="33" />
                     </StackPanel>
                 </StackPanel>
             </GroupBox>
@@ -197,8 +191,7 @@
                         Grid.Row="1"
                         Grid.Column="0"
                         Style="{StaticResource ValueText}"
-                        Text="A1E946" />
-
+                        Text="{Binding Aircraft.ICAO, FallbackValue=A1E946}" />
                     <TextBlock
                         Grid.Row="0"
                         Grid.Column="1"
@@ -209,8 +202,7 @@
                         Grid.Row="1"
                         Grid.Column="1"
                         Style="{StaticResource ValueText}"
-                        Text="RPA5678" />
-
+                        Text="{Binding Aircraft.FlightNum, FallbackValue=RPA5678}" />
                     <TextBlock
                         Grid.Row="2"
                         Grid.Column="0"
@@ -221,8 +213,8 @@
                         Grid.Row="3"
                         Grid.Column="0"
                         Style="{StaticResource ValueText}"
-                        Text="40°38'07.13&quot; N" />
-
+                        Text="{Binding Aircraft.Latitude, FallbackValue=40°38`07 N}" />
+                    <!--  40°38'07.13&quot; N  -->
                     <TextBlock
                         Grid.Row="2"
                         Grid.Column="1"
@@ -233,8 +225,7 @@
                         Grid.Row="3"
                         Grid.Column="1"
                         Style="{StaticResource ValueText}"
-                        Text="080°01'07.02&quot; W" />
-
+                        Text="{Binding Aircraft.Longitude, FallbackValue=80°01`07.02 W}" />
                     <TextBlock
                         Grid.Row="4"
                         Grid.ColumnSpan="2"
@@ -245,8 +236,7 @@
                         Grid.Row="5"
                         Grid.ColumnSpan="2"
                         Style="{StaticResource ValueText}"
-                        Text="273.00 KTS  VRATE:-64.00" />
-
+                        Text="{Binding Aircraft.Speed, FallbackValue=273.00 KTS  VRATE:-64.00}" />
                     <TextBlock
                         Grid.Row="6"
                         Grid.Column="0"
@@ -254,12 +244,10 @@
                         Style="{StaticResource TitleText}"
                         Text="HDG:" />
                     <TextBlock
-                        x:Name="HdgText"
                         Grid.Row="7"
                         Grid.Column="0"
                         Style="{StaticResource ValueText}"
-                        Text="227.00 DEG" />
-
+                        Text="{Binding Aircraft.Speed, FallbackValue=227.00 DEG}" />
                     <TextBlock
                         Grid.Row="6"
                         Grid.Column="1"
@@ -267,12 +255,10 @@
                         Style="{StaticResource TitleText}"
                         Text="ALT:" />
                     <TextBlock
-                        x:Name="AltText"
                         Grid.Row="7"
                         Grid.Column="1"
                         Style="{StaticResource ValueText}"
-                        Text="5800.00 FT" />
-
+                        Text="{Binding Aircraft.Speed, FallbackValue=5800.00 FT}" />
                     <TextBlock
                         Grid.Row="8"
                         Grid.ColumnSpan="2"
@@ -281,11 +267,10 @@
                         Text="MSG CNT :" />
                     <StackPanel Grid.Row="9" Orientation="Horizontal">
                         <TextBlock Style="{StaticResource ValueText}" Text="Raw : " />
-                        <TextBlock Text="{Binding RawCnt, FallbackValue=88}" />
+                        <TextBlock Text="{Binding Aircraft.NumMessagesRaw, FallbackValue=88}" />
                         <TextBlock Style="{StaticResource ValueText}" Text="SBS : " />
-                        <TextBlock Text="{Binding SbsCnt, FallbackValue=120}" />
+                        <TextBlock Text="{Binding Aircraft.NumMessagesSBS, FallbackValue=120}" />
                     </StackPanel>
-
 
                     <TextBlock
                         Grid.Row="10"
@@ -308,29 +293,24 @@
                             VerticalAlignment="Center"
                             Content="Display Map:"
                             FontWeight="Bold"
-                            IsChecked="{Binding IsDisplayMap}" />
+                            IsChecked="{Binding DisplayMapEnabled}" />
+                    </StackPanel>
+                    <StackPanel VerticalAlignment="Center" Orientation="Horizontal">
+                        <CheckBox
+                            Margin="0,4,0,0"
+                            Content="Purge Stale"
+                            IsChecked="{Binding ControlSettings.PurgeStale}" />
                         <TextBox
-                            x:Name="DisplayMapTextBox"
                             Width="40"
                             Margin="4,0,0,0"
                             HorizontalContentAlignment="Center"
                             VerticalContentAlignment="Center"
-                            Text="90" />
+                            Text="{Binding ControlSettings.PurgeDuration}" />
                         <Button
-                            Width="60"
                             Margin="8,0,0,0"
+                            Padding="8,2"
                             Command="{Binding Cmd_Purge}"
-                            Content="Purge" />
-                    </StackPanel>
-                    <StackPanel VerticalAlignment="Center" Orientation="Horizontal">
-                        <CheckBox
-                            x:Name="PurgeStaleCheckBox"
-                            Margin="0,4,0,0"
-                            Content="Purge Stale" />
-                        <CheckBox
-                            x:Name="CycleImagesCheckBox"
-                            Margin="20,4,0,0"
-                            Content="Cycle Images" />
+                            Content="Purge Force" />
                     </StackPanel>
                 </StackPanel>
 
@@ -351,7 +331,7 @@
                             Padding="8,0"
                             HorizontalContentAlignment="Left"
                             VerticalContentAlignment="Center"
-                            Text="{Binding RawAddress, FallbackValue=127.0.0.1}" />
+                            Text="{Binding ControlSettings.RawAddress, FallbackValue=127.0.0.1}" />
                     </DockPanel>
 
                     <!--  SBS Host Input  -->
@@ -470,8 +450,7 @@
                             HorizontalContentAlignment="Left"
                             VerticalContentAlignment="Center"
                             IsEnabled="{Binding}"
-                            Text="{Binding SbsAddress}" />
-
+                            Text="{Binding ControlSettings.SbsAddress}" />
                     </DockPanel>
 
                     <!--  SBS Host Input  -->
@@ -491,86 +470,97 @@
                     </StackPanel>
 
                     <!--  Icon Buttons  -->
-                    <StackPanel HorizontalAlignment="Right" Orientation="Horizontal">
-                        <GroupBox
-                            Margin="10,10,0,0"
-                            Padding="4,2"
-                            Background="DarkGray"
-                            Header="Record"
-                            Style="{x:Null}">
-                            <StackPanel Orientation="Horizontal">
-                                <!--  Record  -->
-                                <Button
-                                    Margin="0,0,8,0"
-                                    Background="Transparent"
-                                    BorderBrush="Transparent"
-                                    Command="{Binding Cmd_SbsRecord}"
-                                    Cursor="Hand">
-                                    <StackPanel HorizontalAlignment="Center" Orientation="Vertical">
-                                        <iconPacks:PackIconMaterial
-                                            Width="24"
-                                            Height="24"
-                                            Foreground="#555555"
-                                            Kind="Record" />
-                                    </StackPanel>
-                                </Button>
+                    <StackPanel
+                        Margin="0,10,0,0"
+                        HorizontalAlignment="Right"
+                        Orientation="Vertical">
+                        <CheckBox
+                            Margin="10,0,0,0"
+                            Content="Use BigQuery"
+                            IsChecked="{Binding ControlSettings.UseBigQuery}" />
 
-                                <!--  Stop  -->
-                                <Button
-                                    Background="Transparent"
-                                    BorderBrush="Transparent"
-                                    Command="{Binding Cmd_SbsRecordStop}"
-                                    Cursor="Hand">
-                                    <StackPanel HorizontalAlignment="Center" Orientation="Vertical">
-                                        <iconPacks:PackIconMaterial
-                                            Width="24"
-                                            Height="24"
-                                            Foreground="#555555"
-                                            Kind="Stop" />
-                                    </StackPanel>
-                                </Button>
-                            </StackPanel>
-                        </GroupBox>
-                        <GroupBox
-                            Margin="10,10,0,0"
-                            Padding="4,2"
-                            Background="DarkGray"
-                            Header="Play"
-                            Style="{x:Null}">
-                            <StackPanel Orientation="Horizontal">
-                                <!--  Play  -->
-                                <Button
-                                    Margin="0,0,8,0"
-                                    Background="Transparent"
-                                    BorderBrush="Transparent"
-                                    Command="{Binding Cmd_SbsPlay}"
-                                    Cursor="Hand">
-                                    <StackPanel HorizontalAlignment="Center" Orientation="Vertical">
-                                        <iconPacks:PackIconMaterial
-                                            Width="24"
-                                            Height="24"
-                                            Foreground="#555555"
-                                            Kind="Play" />
-                                    </StackPanel>
-                                </Button>
+                        <StackPanel HorizontalAlignment="Right" Orientation="Horizontal">
+                            <GroupBox
+                                Margin="10,0,0,0"
+                                Padding="4,2"
+                                Background="DarkGray"
+                                Header="Record"
+                                Style="{x:Null}">
+                                <StackPanel Orientation="Horizontal">
+                                    <!--  Record  -->
+                                    <Button
+                                        Margin="0,0,8,0"
+                                        Background="Transparent"
+                                        BorderBrush="Transparent"
+                                        Command="{Binding Cmd_SbsRecord}"
+                                        Cursor="Hand">
+                                        <StackPanel HorizontalAlignment="Center" Orientation="Vertical">
+                                            <iconPacks:PackIconMaterial
+                                                Width="24"
+                                                Height="24"
+                                                Foreground="#555555"
+                                                Kind="Record" />
+                                        </StackPanel>
+                                    </Button>
 
-                                <!--  Stop  -->
-                                <Button
-                                    Background="Transparent"
-                                    BorderBrush="Transparent"
-                                    Command="{Binding Cmd_SbsPlayStop}"
-                                    Cursor="Hand">
-                                    <StackPanel HorizontalAlignment="Center" Orientation="Vertical">
-                                        <iconPacks:PackIconMaterial
-                                            Width="24"
-                                            Height="24"
-                                            Foreground="#555555"
-                                            Kind="Stop" />
-                                    </StackPanel>
-                                </Button>
-                            </StackPanel>
-                        </GroupBox>
+                                    <!--  Stop  -->
+                                    <Button
+                                        Background="Transparent"
+                                        BorderBrush="Transparent"
+                                        Command="{Binding Cmd_SbsRecordStop}"
+                                        Cursor="Hand">
+                                        <StackPanel HorizontalAlignment="Center" Orientation="Vertical">
+                                            <iconPacks:PackIconMaterial
+                                                Width="24"
+                                                Height="24"
+                                                Foreground="#555555"
+                                                Kind="Stop" />
+                                        </StackPanel>
+                                    </Button>
+                                </StackPanel>
+                            </GroupBox>
+                            <GroupBox
+                                Margin="10,0,0,0"
+                                Padding="4,2"
+                                Background="DarkGray"
+                                Header="Play"
+                                Style="{x:Null}">
+                                <StackPanel Orientation="Horizontal">
+                                    <!--  Play  -->
+                                    <Button
+                                        Margin="0,0,8,0"
+                                        Background="Transparent"
+                                        BorderBrush="Transparent"
+                                        Command="{Binding Cmd_SbsPlay}"
+                                        Cursor="Hand">
+                                        <StackPanel HorizontalAlignment="Center" Orientation="Vertical">
+                                            <iconPacks:PackIconMaterial
+                                                Width="24"
+                                                Height="24"
+                                                Foreground="#555555"
+                                                Kind="Play" />
+                                        </StackPanel>
+                                    </Button>
+
+                                    <!--  Stop  -->
+                                    <Button
+                                        Background="Transparent"
+                                        BorderBrush="Transparent"
+                                        Command="{Binding Cmd_SbsPlayStop}"
+                                        Cursor="Hand">
+                                        <StackPanel HorizontalAlignment="Center" Orientation="Vertical">
+                                            <iconPacks:PackIconMaterial
+                                                Width="24"
+                                                Height="24"
+                                                Foreground="#555555"
+                                                Kind="Stop" />
+                                        </StackPanel>
+                                    </Button>
+                                </StackPanel>
+                            </GroupBox>
+                        </StackPanel>
                     </StackPanel>
+
                 </StackPanel>
             </GroupBox>
 
@@ -579,7 +569,6 @@
             <GroupBox Margin="0,10,0,0" Header="Areas Of Interest">
                 <StackPanel Orientation="Vertical">
                     <ListView
-                        x:Name="AreaListView"
                         Height="100"
                         BorderBrush="Gray"
                         BorderThickness="1"
@@ -612,22 +601,16 @@
                         Margin="0,4,0,0"
                         HorizontalAlignment="Left"
                         Orientation="Horizontal">
+                        <Button Width="60" Content="Insert" />
                         <Button
-                            x:Name="InsertAreaButton"
-                            Width="60"
-                            Content="Insert" />
-                        <Button
-                            x:Name="CompleteAreaButton"
                             Width="70"
                             Margin="4,0,0,0"
                             Content="Complete" />
                         <Button
-                            x:Name="CancelAreaButton"
                             Width="60"
                             Margin="4,0,0,0"
                             Content="Cancel" />
                         <Button
-                            x:Name="DeleteAreaButton"
                             Width="60"
                             Margin="4,0,0,0"
                             Content="Delete" />
@@ -651,40 +634,36 @@
 
                     <StackPanel Orientation="Horizontal">
                         <TextBlock FontWeight="Bold" Text="CPA TIME:" />
-                        <TextBlock
-                            x:Name="CpaTimeText"
-                            Margin="8,0,0,0"
-                            Text="NONE" />
+                        <TextBlock Margin="8,0,0,0" Text="NONE" />
                     </StackPanel>
                     <StackPanel Margin="0,2,0,0" Orientation="Horizontal">
                         <TextBlock FontWeight="Bold" Text="CPA DISTANCE:" />
-                        <TextBlock
-                            x:Name="CpaDistanceText"
-                            Margin="8,0,0,0"
-                            Text="None" />
+                        <TextBlock Margin="8,0,0,0" Text="None" />
                     </StackPanel>
 
-                    <StackPanel
-                        Margin="0,8,0,0"
-                        VerticalAlignment="Center"
-                        Orientation="Horizontal">
+                    <DockPanel Margin="0,8,0,0" VerticalAlignment="Center">
                         <CheckBox
                             Content="Time-To-Go"
                             FontWeight="Bold"
                             IsChecked="{Binding UseTimeTogo}" />
-                        <TextBlock
-                            x:Name="TimeToGoValueText"
-                            Margin="8,0,0,0"
-                            Text="00:02:00.000" />
-                    </StackPanel>
+                        <TextBox
+                            Width="100"
+                            Margin="10,0,0,0"
+                            HorizontalAlignment="Left"
+                            HorizontalContentAlignment="Center"
+                            Text="{Binding TimeTogoValue, Mode=TwoWay, Converter={StaticResource secToTime}}" />
+                        <!--<TextBlock Margin="8,0,0,0" Text="{Binding ElementName=sliderTimeTogo, Path=Value, Converter={StaticResource secToTime}, StringFormat='hh\\:mm\\:ss'}" />-->
+                    </DockPanel>
 
                     <!--  Time-To-Go 슬라이더 + 값 표시  -->
                     <Slider
-                        Margin="0,2,0,0"
+                        x:Name="sliderTimeTogo"
+                        Margin="0,2,20,0"
                         LargeChange="10"
-                        Maximum="1000"
+                        Maximum="1800"
                         Minimum="0"
                         SmallChange="1"
+                        TickFrequency="1"
                         Value="{Binding TimeTogoValue}" />
 
                     <!--  Zoom In / Zoom Out 버튼  -->
@@ -692,12 +671,8 @@
                         Margin="0,8,0,8"
                         HorizontalAlignment="Center"
                         Orientation="Horizontal">
+                        <Button Width="100" Content="Zoom In" />
                         <Button
-                            x:Name="ZoomInButton"
-                            Width="100"
-                            Content="Zoom In" />
-                        <Button
-                            x:Name="ZoomOutButton"
                             Width="100"
                             Margin="8,0,0,0"
                             Content="Zoom Out" />

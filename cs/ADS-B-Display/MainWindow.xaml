@@ -10,6 +10,7 @@
     Title="ADS-B Display"
     Width="1280"
     Height="800"
+    Closing="Window_Closing"
     WindowStartupLocation="CenterScreen"
     WindowState="Maximized"
     mc:Ignorable="d">
@@ -39,7 +40,7 @@
             <Border Grid.Column="0" Background="#FF222222">
                 <!--<DataGrid x:Name="dg" IsReadOnly="True">
                 </DataGrid>-->
-                <views:AirScreenPanelView />
+                <views:AirScreenPanelView x:Name="airScreenPanelView" />
             </Border>
 
             <views:AircraftControlView x:Name="AircraftControlPanel" Grid.Column="1" />

@@ -28,26 +28,8 @@ namespace ADS_B_Display.Views
     /// <summary>
     /// AirScreenPanelView.xaml에 대한 상호 작용 논리
     /// </summary>
-    public partial class AirScreenPanelView : UserControl
+    public partial class AirScreenPanelView : UserControl, IDisposable
     {
-        private struct TrackHookStruct
-        {
-            public bool Valid_CC;
-            public uint ICAO_CC;
-            public bool Valid_CPA;
-            public uint ICAO_CPA;
-            public Dictionary<string, string> DepartureAirport;
-            public Dictionary<string, string> ArrivalAirport;
-        }
-
-        private class ADSBAircraft
-        {
-            public uint ICAO;
-            public bool HaveLatLon;
-            public double Latitude;
-            public double Longitude;
-        }
-
         private int _MouseLeftDownX;
         private int _MouseLeftDownY;
         private int _MouseDownMask;
@@ -70,6 +52,7 @@ namespace ADS_B_Display.Views
 
         private bool _useTimeToGo;
         private double _timeTogoValue;
+        private bool _mapDisplay;
 
         private int _numSpriteImages;
         private bool _isLoaded;
@@ -83,7 +66,7 @@ namespace ADS_B_Display.Views
         public AirScreenPanelView()
         {
             InitializeComponent();
-            EventBus.Observe(EventIds.EvtTimeToGoChanged).Subscribe(msg => UpdateTimeToGo(msg));
+            EventBus.Observe(EventIds.EvtControlSettingChanged).Subscribe(msg => UpdateTimeToGo(msg));
 
             var settings = new GLWpfControlSettings() {
                 MajorVersion = 2, // OpenGL Major Version
@@ -91,16 +74,21 @@ namespace ADS_B_Display.Views
             };
             glControl.Start(settings);
 
-            MapCenterLat = MAP_CENTER_LAT;
-            MapCenterLon = MAP_CENTER_LON;
-
             MapManager.Instance.RegisterLoadMapCallback(MapLoaded);
             MapManager.Instance.LoadMap(TileServerType.GoogleMaps);
             //LoadMap(TileServerType.GoogleMaps);
-            SetMapCenter(out double x, out double y);
-            _earthView.Eye.X = x;
-            _earthView.Eye.Y = y;
-            _earthView.Eye.H /= Math.Pow(1.3, 18); // 높이(줌)도 필요시 조정
+
+            double x, y, h;
+            if (Setting.Instance.MapConfig.IsInitialState) {
+                MapCenterLat = MAP_CENTER_LAT;
+                MapCenterLon = MAP_CENTER_LON;
+                SetMapCenter(out x, out y);
+                h = 1 / Math.Pow(1.3, 18);
+            } else {
+                _earthView.Eye.X = Setting.Instance.MapConfig.EyeX;
+                _earthView.Eye.Y = Setting.Instance.MapConfig.EyeY;
+                _earthView.Eye.H = Setting.Instance.MapConfig.EyeH;
+            }
 
             airplaneScale = Math.Min((0.05 / _earthView.Eye.H), 1.5); // 스케일 계산
 
@@ -109,11 +97,19 @@ namespace ADS_B_Display.Views
             _updateTimer.Start();
         }
 
+        public void Dispose()
+        {
+            Setting.Instance.MapConfig.EyeX = _earthView.Eye.X;
+            Setting.Instance.MapConfig.EyeY = _earthView.Eye.Y;
+            Setting.Instance.MapConfig.EyeH = _earthView.Eye.H;
+        }
+
         private void UpdateTimeToGo(object msg)
         {
-            var param = ((bool, double))msg;
-            _useTimeToGo = param.Item1;
-            _timeTogoValue = param.Item2;
+            var setting = (ControlSettings)msg;
+            _useTimeToGo = setting.UseTimeToGo;
+            _timeTogoValue = setting.TimeToGoValue;
+            _mapDisplay = setting.DisplayMapEnabled;
         }
 
         private void _updateTimer_Tick(object sender, EventArgs e)
@@ -289,7 +285,7 @@ namespace ADS_B_Display.Views
             if (!_isLoaded)
                 return;
 
-            if (Setting.Instance.MapConfig.IsDisplayMap)
+            if (_mapDisplay)
                 GL.ClearColor(0.0f, 0.0f, 0.0f, 0.0f); // 검은색 배경
             else
                 GL.ClearColor(BG_INTENSITY, BG_INTENSITY, BG_INTENSITY, 0.0f); // 배경색 강도에 따라 설정
@@ -297,7 +293,7 @@ namespace ADS_B_Display.Views
             GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit); // 화면 지우기
 
             _earthView.Animate(); // 애니메이션 업데이트
-            _earthView.Render(Setting.Instance.MapConfig.IsDisplayMap); // 지도 렌더링
+            _earthView.Render(_mapDisplay); // 지도 렌더링
             MapManager.Instance.ClearTitleManager(); // 타일 매니저 정리
 
             DrawObject(); // OpenGL 객체 그리기
@@ -376,6 +372,25 @@ namespace ADS_B_Display.Views
                     //CpaDistanceValue.Text = "None";
                 }
             }
+
+            if (_trackHook.Valid_CC)
+                glControl.InvalidateVisual();
+
+            if (!cpaHook)
+                PublishHookInfo(_trackHook);
+        }
+
+        private bool _prevValid_CC = false;
+        private uint _prevICAO_CC = 0;
+        private void PublishHookInfo(TrackHookStruct trackHook)
+        {
+            if (_prevICAO_CC == trackHook.ICAO_CC &&
+                _prevValid_CC == trackHook.Valid_CC) { // 같은 놈 같은 상태면 업데이트 하지 말자.
+                return;
+            }
+            _prevValid_CC = trackHook.Valid_CC;
+            _prevICAO_CC = trackHook.ICAO_CC;
+            EventBus.Publish(EventIds.EvtAircraftHooked, trackHook);
         }
 
         private void DrawObject()

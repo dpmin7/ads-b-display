@@ -1,5 +1,6 @@
 ﻿using ADS_B_Display;
 using System;
+using System.Collections.Generic;
 
 namespace ADS_B_Display
 {
@@ -31,5 +32,15 @@ namespace ADS_B_Display
         public double Speed { get; set; }
         public double VerticalRate { get; set; }
         public int SpriteImage { get; set; }
+    }
+
+    public struct TrackHookStruct
+    {
+        public bool Valid_CC { get; set; }
+        public uint ICAO_CC { get; set; }
+        public bool Valid_CPA { get; set; }
+        public uint ICAO_CPA { get; set; }
+        public Dictionary<string, string> DepartureAirport { get; set; }
+        public Dictionary<string, string> ArrivalAirport { get; set; }
     }
 }

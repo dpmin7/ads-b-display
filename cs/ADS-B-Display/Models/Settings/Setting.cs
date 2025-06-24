@@ -16,8 +16,8 @@ namespace ADS_B_Display.Models.Settings
         public const string Name = "Setting.json";
         private static Setting _instance = null;
         public static Setting Instance => _instance ?? (_instance = new Setting());
-        public TcpConfig TcpConfig { get; set; } = new TcpConfig();
-        public MapConfig MapConfig { get; set; } = new MapConfig();
+        public ControlSettings ControlSettings { get; set; } = new ControlSettings();
+        public MapViewConfig MapConfig { get; set; } = new MapViewConfig();
 
         public static bool Load()
         {
@@ -47,18 +47,60 @@ namespace ADS_B_Display.Models.Settings
         }
     }
 
-    internal class TcpConfig
+    internal class MapViewConfig
     {
-        public string Address { get; set; }
-        public int Port { get; set; }
+        public double EyeX { get; set; }
+        public double EyeY { get; set; }
+        public double EyeH { get; set; }
+        public bool IsInitialState => EyeX == 0 && EyeY == 0 && EyeH == 0;
     }
 
-    internal class MapConfig
+    public class ControlSettings
     {
-        public bool IsDisplayMap { get; set; } = true;
         public TileServerType ServerType { get; set; } = TileServerType.GoogleMaps;
-        public double EyeX { get; set; }      // longitude [-0.5..0.5]
-        public double EyeY { get; set; }      // latitude  [-0.25..0.25]
-        public double EyeH { get; set; }      // height above surface
+
+        // Display Map
+        public bool DisplayMapEnabled { get; set; } = true;
+        public int PurgeDuration { get; set; } = 90;
+        public bool PurgeStale { get; set; } = false;
+        public bool CycleImages { get; set; } = false;
+
+        // Raw Connection
+        public string RawAddress { get; set; } = "127.0.0.1";
+        public bool RawConnectOnStartup { get; set; }
+
+        // SBS Connection
+        public string SbsAddress { get; set; } = "128.237.96.41";
+        public bool SbsConnectOnStartup { get; set; }
+
+
+        // Areas of Interest
+        public List<AreaList> AreaList { get; set; } = new List<AreaList>();
+
+        // ETC
+        public string MapProvider { get; set; } = "GoogleMaps";
+        public bool UseTimeToGo { get; set; } = true;
+        public double TimeToGoValue { get; set; } = 300; // 5 minutes in seconds
+
+        public bool UseBigQuery { get; set; } = false;
+    }
+
+    public class AreaList
+    {
+        public string Name { get; set; }
+        public List<AreaOfInterest> AreaOfInterestList { get; set; } = new List<AreaOfInterest>();
+    }
+
+    public class AreaOfInterest
+    {
+        public string Name { get; set; }
+        public List<Pos> Area { get; set; } = new List<Pos>();
+        public string Color { get; set; } // 또는 System.Windows.Media.Color 등
+    }
+
+    public struct Pos
+    {
+        public double X { get; set; }
+        public double Y{ get; set; }
     }
 }

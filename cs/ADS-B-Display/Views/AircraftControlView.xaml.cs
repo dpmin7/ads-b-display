@@ -18,11 +18,16 @@ namespace ADS_B_Display.Views
     /// <summary>
     /// AircraftControlView.xaml에 대한 상호 작용 논리
     /// </summary>
-    public partial class AircraftControlView : UserControl
+    public partial class AircraftControlView : UserControl, IDisposable
     {
         public AircraftControlView()
         {
             InitializeComponent();
+        }
+
+        public void Dispose()
+        {
+            (DataContext as IDisposable)?.Dispose();
         }
     }
 }

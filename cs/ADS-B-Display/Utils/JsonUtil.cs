@@ -14,16 +14,18 @@ namespace ADS_B_Display.Utils
         {
             return JsonConvert.SerializeObject(obj, Formatting.Indented, new JsonSerializerSettings
             {
-                NullValueHandling = NullValueHandling.Ignore,
-                DefaultValueHandling = DefaultValueHandling.Ignore
+                NullValueHandling = NullValueHandling.Include,
+                DefaultValueHandling = DefaultValueHandling.Include,
+                Formatting = Formatting.Indented
             });
         }
         public static T Deserialize<T>(string json)
         {
             return JsonConvert.DeserializeObject<T>(json, new JsonSerializerSettings
             {
-                NullValueHandling = NullValueHandling.Ignore,
-                DefaultValueHandling = DefaultValueHandling.Ignore
+                NullValueHandling = NullValueHandling.Include,
+                DefaultValueHandling = DefaultValueHandling.Include,
+                Formatting = Formatting.Indented
             });
         }
         public static bool TryDeserialize<T>(string json, out T result)

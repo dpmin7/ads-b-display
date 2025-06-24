@@ -2,6 +2,7 @@
 using ADS_B_Display.Map.MapSrc;
 using ADS_B_Display.Models;
 using ADS_B_Display.Models.Settings;
+using ADS_B_Display.Properties;
 using ADS_B_Display.Utils;
 using ADS_B_Display.Views.Popup;
 using ADS_B_Display.Views.UserControls;
@@ -19,7 +20,7 @@ using System.Windows.Threading;
 
 namespace ADS_B_Display.Views
 {
-    internal class AircraftControlViewModel : NotifyPropertyChangedBase
+    internal class AircraftControlViewModel : NotifyPropertyChangedBase, IDisposable
     {
         private static readonly NLog.Logger logger = NLog.LogManager.GetLogger("AircraftControlViewModel");
 
@@ -33,6 +34,14 @@ namespace ADS_B_Display.Views
             _rawWorker = new SbsWorker(AircraftManager.ReceiveRawMessage);
 
             RegisterEvents();
+
+            ControlSettings = Setting.Instance.ControlSettings;
+            OnChangeSetting();
+
+            if (Enum.TryParse(ControlSettings.MapProvider, true, out TileServerType res))
+                SelectedTileServer = res;
+            else
+                SelectedTileServer = TileServerType.GoogleMaps; // 기본값 설정
 
             Cmd_RawConnect = new DelegateCommand(RawConnect, CanRawConnect);
             Cmd_RawDisconnect = new DelegateCommand(RawDisconnect, CanRawDisconnect);
@@ -69,6 +78,12 @@ namespace ADS_B_Display.Views
         private bool CanSbsRecordStop(object obj) => true;//!_isRawRecording;
         private bool CanSbsPlay(object obj) => true;//!_isRawRecording;
         private bool CanSbsPlayStop(object obj) => true;//!_isRawRecording;
+
+        public void Dispose()
+        {
+            ControlSettings.MapProvider = SelectedTileServer.ToString();
+            Setting.Instance.ControlSettings = ControlSettings;
+        }
 
         private void RawRecord(object obj)
         {
@@ -208,7 +223,7 @@ namespace ADS_B_Display.Views
 
         private void RegisterEvents()
         {
-            EventBus.Observe(EventIds.EvtAircraftHooked).Subscribe(msg => UpdateAircraft(msg));
+            EventBus.Observe(EventIds.EvtAircraftHooked).Subscribe(msg => UpdateHookedAircraft(msg));
             EventBus.Observe(EventIds.EvtMouseMoved).Subscribe(msg => UpdateMouseMove(msg));
         }
 
@@ -257,7 +272,7 @@ namespace ADS_B_Display.Views
                 return;
 
             // 연결 중이 아니면 TextBox에 입력된 host:port로 연결 시도
-            string input = RawAddress.Trim();
+            string input = ControlSettings.RawAddress.Trim();
             if (string.IsNullOrEmpty(input)) {
                 MessageBox.Show("Raw Connect 주소를 입력하세요. (예: 127.0.0.1:30002)", "Warning", MessageBoxButton.OK, MessageBoxImage.Warning);
                 return;
@@ -320,7 +335,7 @@ namespace ADS_B_Display.Views
             if (SbsConnectStatus == ConnectStatus.Connect)
                 return;
 
-            string input = SbsAddress.Trim();
+            string input = ControlSettings.SbsAddress.Trim();
             if (string.IsNullOrEmpty(input)) {
                 MessageBox.Show("SBS Connect 주소를 입력하세요. (예: data.adsbhub.org:30003)", "Warning", MessageBoxButton.OK, MessageBoxImage.Warning);
                 return;
@@ -383,12 +398,14 @@ namespace ADS_B_Display.Views
         }
 
 
-        private void UpdateAircraft(object msg)
+        private void UpdateHookedAircraft(object msg)
         {
-            if (msg == null)
+            if (msg == null) {
                 Aircraft = null;
+                return;
+            }
 
-            if (msg is Aircraft ac)
+            if (msg is TrackHookStruct hookedAc && AircraftManager.TryGet(hookedAc.ICAO_CC, out Aircraft ac))
             {
                 if (Aircraft == null) {
                     Aircraft = new AircraftForUI();
@@ -412,25 +429,8 @@ namespace ADS_B_Display.Views
         public ConnectStatus SbsConnectStatus { get => sbsConnectStatus; set => SetProperty(ref sbsConnectStatus, value); }
 
 
-        // Control
-        private string rawAddress = "127.0.0.1";
-        public string RawAddress { get => rawAddress; set => SetProperty(ref rawAddress, value); }
-
-        private string sbsAddress = "data.adsbhub.org";
-        public string SbsAddress { get => sbsAddress; set => SetProperty(ref sbsAddress, value); }
-
-        private string latitudeOfMouse;
-        public string LatitudeOfMouse { get => latitudeOfMouse; set => SetProperty(ref latitudeOfMouse, value); }
-
-        private string longitudeOfMouse;
-        public string LongitudeOfMouse { get => longitudeOfMouse; set => SetProperty(ref longitudeOfMouse, value); }
-
-        public bool IsDisplayMap { 
-            get => Setting.Instance.MapConfig.IsDisplayMap;
-            set {
-                Setting.Instance.MapConfig.IsDisplayMap = value;
-            }
-        }
+        // Config
+        public ControlSettings ControlSettings { get; set; } = new ControlSettings();
 
         public List<TileServerType> TileServerTypeList { get; set; } = Enum.GetValues(typeof(TileServerType)).Cast<TileServerType>().ToList();
         private TileServerType selectedTileServer = TileServerType.GoogleMaps;
@@ -442,27 +442,45 @@ namespace ADS_B_Display.Views
             }
         }
 
+        // Control
+        private string latitudeOfMouse;
+        public string LatitudeOfMouse { get => latitudeOfMouse; set => SetProperty(ref latitudeOfMouse, value); }
+
+        private string longitudeOfMouse;
+        public string LongitudeOfMouse { get => longitudeOfMouse; set => SetProperty(ref longitudeOfMouse, value); }
+
+        public bool DisplayMapEnabled {
+            get => ControlSettings.DisplayMapEnabled;
+            set {
+                ControlSettings.DisplayMapEnabled = value;
+                OnPropertyChanged(nameof(DisplayMapEnabled));
+                OnChangeSetting();
+            }
+        }
+
         private bool useTimeTogo;
         public bool UseTimeTogo {
-            get => useTimeTogo;
+            get => ControlSettings.UseTimeToGo;
             set {
-                SetProperty(ref useTimeTogo, value);
-                OnChangeTimeToGo();
+                ControlSettings.UseTimeToGo = value;
+                OnPropertyChanged(nameof(UseTimeTogo));
+                OnChangeSetting();
             }
         }
 
         private double timeTogoValue;
         public double TimeTogoValue {
-            get => timeTogoValue;
+            get => ControlSettings.TimeToGoValue;
             set {
-                SetProperty(ref timeTogoValue, value);
-                OnChangeTimeToGo();
+                ControlSettings.TimeToGoValue = value;
+                OnPropertyChanged(nameof(TimeTogoValue));
+                OnChangeSetting();
             }
         }
 
-        private void OnChangeTimeToGo()
+        private void OnChangeSetting()
         {
-            EventBus.Publish(EventIds.EvtTimeToGoChanged, (useTimeTogo, timeTogoValue));
+            EventBus.Publish(EventIds.EvtControlSettingChanged, ControlSettings);
         }
 
         // Display
