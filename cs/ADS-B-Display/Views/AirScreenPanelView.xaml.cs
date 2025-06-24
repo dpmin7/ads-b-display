@@ -102,6 +102,8 @@ namespace ADS_B_Display.Views
             _earthView.Eye.Y = y;
             _earthView.Eye.H /= Math.Pow(1.3, 18); // 높이(줌)도 필요시 조정
 
+            airplaneScale = Math.Min((0.05 / _earthView.Eye.H), 1.5); // 스케일 계산
+
             _updateTimer.Interval = TimeSpan.FromMilliseconds(500);
             _updateTimer.Tick += _updateTimer_Tick;
             _updateTimer.Start();
