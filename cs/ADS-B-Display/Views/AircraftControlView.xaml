@@ -354,7 +354,7 @@
                         <GroupBox
                             Margin="10,10,0,0"
                             Padding="4,2"
-                            Background="DarkGray"
+                            Background="Transparent"
                             Header="Record"
                             Style="{x:Null}">
                             <StackPanel Orientation="Horizontal">
@@ -393,7 +393,7 @@
                         <GroupBox
                             Margin="10,10,0,0"
                             Padding="4,2"
-                            Background="DarkGray"
+                            Background="Transparent"
                             Header="Play"
                             Style="{x:Null}">
                             <StackPanel Orientation="Horizontal">
@@ -483,7 +483,7 @@
                             <GroupBox
                                 Margin="10,0,0,0"
                                 Padding="4,2"
-                                Background="DarkGray"
+                                Background="Transparent"
                                 Header="Record"
                                 Style="{x:Null}">
                                 <StackPanel Orientation="Horizontal">
@@ -522,7 +522,7 @@
                             <GroupBox
                                 Margin="10,0,0,0"
                                 Padding="4,2"
-                                Background="DarkGray"
+                                Background="Transparent"
                                 Header="Play"
                                 Style="{x:Null}">
                                 <StackPanel Orientation="Horizontal">
