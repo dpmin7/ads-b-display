@@ -9000,6 +9000,6 @@
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
     <PostBuildEvent>xcopy /s /d /y $(ProjectDir)Resources\ $(TargetDir)
-xcopy /s /d /y $(ProjectDir)Utils\BigQuery $(TargetDir)BigQuery</PostBuildEvent>
+xcopy /s /d /y $(ProjectDir)Utils\BigQuery $(TargetDir)BigQuery\</PostBuildEvent>
   </PropertyGroup>
 </Project>
