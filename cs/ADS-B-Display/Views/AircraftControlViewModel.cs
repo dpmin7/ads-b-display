@@ -168,38 +168,61 @@ namespace ADS_B_Display.Views
 
         private void SbsRecord(object obj)
         {
-            // 2) 기록 중이 아니면, SaveFileDialog 띄워서 파일 경로 선택
-            var dlg = new SaveFileDialog {
-                Title = "SBS Record file save",
-                Filter = "SBS Log (*.sbs)|*.sbs|모든 파일 (*.*)|*.*",
-                FileName = $"SbsLog_{DateTime.Now:yyyyMMdd_HHmmss}.sbs", // 기본 파일명 예시
-                DefaultExt = ".sbs"
-            };
+            string path = "";
 
-            bool? result = dlg.ShowDialog();
-            if (result != true) {
-                // 사용자가 취소했으면 아무 동작 없이 종료
-                return;
+            if (ControlSettings.UseBigQuery)
+            {
+                // 2-1) BigQuery 이용하여 녹화
+                try
+                {
+                    _sbsWorker.RecordOn(path, true);
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show($"Can not open the recorded file.:\n{ex.Message}",
+                                    "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                    _sbsWorker.RecordOff();
+                    return;
+                }
+
+                // 3) 녹화를 시작했다는 안내 메시지 (선택 사항)
+                MessageBox.Show($"Start SBS record:\nQuery", "Info", MessageBoxButton.OK, MessageBoxImage.Information);
             }
+            else
+            {
+                // 2-2) 기록 중이 아니면, SaveFileDialog 띄워서 파일 경로 선택
+                var dlg = new SaveFileDialog {
+                    Title = "SBS Record file save",
+                    Filter = "SBS Log (*.sbs)|*.sbs|모든 파일 (*.*)|*.*",
+                    FileName = $"SbsLog_{DateTime.Now:yyyyMMdd_HHmmss}.sbs", // 기본 파일명 예시
+                    DefaultExt = ".sbs"
+                };
 
-            string path = dlg.FileName;
-            try {
-                _sbsWorker.RecordOn(path);
-            } catch (Exception ex) {
-                MessageBox.Show($"Can not open the recorded file.:\n{ex.Message}",
-                                "Error", MessageBoxButton.OK, MessageBoxImage.Error);
-                _sbsWorker.RecordOff();
-                return;
+                bool? result = dlg.ShowDialog();
+                if (result != true) {
+                    // 사용자가 취소했으면 아무 동작 없이 종료
+                    return;
+                }
+
+                path = dlg.FileName;
+                try {
+                    _sbsWorker.RecordOn(path);
+                } catch (Exception ex) {
+                    MessageBox.Show($"Can not open the recorded file.:\n{ex.Message}",
+                                    "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                    _sbsWorker.RecordOff();
+                    return;
+                }
+
+                // 4) 녹화를 시작했다는 안내 메시지 (선택 사항)
+                MessageBox.Show($"Start SBS record:\n{path}", "Info", MessageBoxButton.OK, MessageBoxImage.Information);
             }
-
-            // 4) 녹화를 시작했다는 안내 메시지 (선택 사항)
-            MessageBox.Show($"Start SBS record:\n{path}", "Info", MessageBoxButton.OK, MessageBoxImage.Information);
         }
 
         private void SbsRecordStop(object obj)
         {
             try {
-                _sbsWorker.RecordOff();
+                _sbsWorker.RecordOff(ControlSettings.UseBigQuery);
             } catch (Exception ex) {
                 MessageBox.Show($"SBS 기록 파일을 닫는 동안 오류가 발생했습니다:\n{ex.Message}",
                                 "Error", MessageBoxButton.OK, MessageBoxImage.Error);
@@ -208,22 +231,29 @@ namespace ADS_B_Display.Views
 
         private void SbsPlay(object obj)
         {
-            var dlg = new OpenFileDialog {
-                Title = "SBS Record file save",
-                Filter = "SBS Log (*.sbs)|*.sbs|모든 파일 (*.*)|*.*",
-                FileName = $"SbsLog_{DateTime.Now:yyyyMMdd_HHmmss}.sbs", // 기본 파일명 예시
-                DefaultExt = ".sbs"
-            };
+            if (ControlSettings.UseBigQuery)
+            {
+                _sbsWorker.Start(null, true);
+            }
+            else
+            {
+                var dlg = new OpenFileDialog {
+                    Title = "SBS Record file save",
+                    Filter = "SBS Log (*.sbs)|*.sbs|모든 파일 (*.*)|*.*",
+                    FileName = $"SbsLog_{DateTime.Now:yyyyMMdd_HHmmss}.sbs", // 기본 파일명 예시
+                    DefaultExt = ".sbs"
+                };
 
-            if (dlg.ShowDialog() == true) {
-                string fileName = dlg.FileName;
-                if (!File.Exists(fileName)) {
-                    MessageBox.Show("File " + fileName + " does not exist");
-                } else {
-                    try {
-                        _sbsWorker.Start(fileName);
-                    } catch (Exception ex) {
-                        MessageBox.Show("Cannot open file " + fileName + "\n" + ex.Message);
+                if (dlg.ShowDialog() == true) {
+                    string fileName = dlg.FileName;
+                    if (!File.Exists(fileName)) {
+                        MessageBox.Show("File " + fileName + " does not exist");
+                    } else {
+                        try {
+                            _sbsWorker.Start(fileName);
+                        } catch (Exception ex) {
+                            MessageBox.Show("Cannot open file " + fileName + "\n" + ex.Message);
+                        }
                     }
                 }
             }
@@ -231,7 +261,7 @@ namespace ADS_B_Display.Views
 
         private void SbsPlayStop(object obj)
         {
-            _sbsWorker.Stop();
+            _sbsWorker.Stop(ControlSettings.UseBigQuery);
         }
 
         private void RegisterEvents()

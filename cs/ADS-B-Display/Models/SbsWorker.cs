@@ -25,27 +25,26 @@ namespace ADS_B_Display
         private int _playBackSpeed = 1;
 
         private readonly Func<string, uint> OnMessageReceived;
+
         private Action OnFinished;
 
         public StreamWriter RecordStream;
-        public StreamWriter BigQueryCsv;
-        public int BigQueryRowCount = 0;
-        public int BigQueryUploadThreshold = 1000;
-        public string BigQueryScriptPath;
-        public string BigQueryCsvFileName;
-        public string BigQueryUploadArgs;
+
+        private bool _useBigQuery = false;
+        private BigQuery bigQuery;
 
         public SbsWorker(Func<string, uint> onMessageReceived)
         {
             OnMessageReceived = onMessageReceived;
         }
 
-        public bool Start(string path)
+        public bool Start(string path, bool useBigQuery = false)
         {
             try {
                 _first = true;
                 _running = true;
                 _filePath = path;
+                _useBigQuery = useBigQuery;
                 _thread = new Thread(Run) { IsBackground = true };
                 _thread.Start();
 
@@ -82,28 +81,58 @@ namespace ADS_B_Display
             }
         }
 
-        public void RecordOn(string path)
+        public void RecordOn(string path, bool useBigQuery = false)
         {
-            RecordStream = new StreamWriter(path, append: true) {
-                AutoFlush = true
-            };
-        }
-
-        public void RecordOff()
-        {
-            try {
-                RecordStream?.Flush();
-                RecordStream?.Close();
-                RecordStream = null;
-            } catch (Exception ex) {
-                MessageBox.Show($"SBS 기록 파일을 닫는 동안 오류가 발생했습니다:\n{ex.Message}",
-                                "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            if (useBigQuery) // BigQuery Mode
+            {
+                bigQuery = new BigQuery(useBigQuery);
+                bigQuery.SetPathBigQuery();
+                bigQuery.CreateCsvWriter();
+                bigQuery.DeleteBigQueryData();
+            }
+            else // File Mode
+            {
+                RecordStream = new StreamWriter(path, append: true)
+                {
+                    AutoFlush = true
+                };
             }
         }
 
-        public void Stop()
+        public void RecordOff(bool useBigQuery = false)
+        {
+            if (useBigQuery) // BigQuery Mode
+            {
+                try
+                {
+                    bigQuery.CloseCsvWriter();
+                    bigQuery = null;
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show($"BigQuery 기록 파일을 닫는 동안 오류가 발생했습니다:\n{ex.Message}",
+                                    "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                }
+            }
+            else // File mode
+            {
+                try
+                {
+                    RecordStream?.Flush();
+                    RecordStream?.Close();
+                    RecordStream = null;
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show($"SBS 기록 파일을 닫는 동안 오류가 발생했습니다:\n{ex.Message}",
+                                    "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                }
+            } 
+        }
+
+        public void Stop(bool useBigQuery = false)
         {   
-            RecordOff(); // 레코딩 중에 멈추면 레코딩 종료부터 하자.
+            RecordOff(useBigQuery); // 레코딩 중에 멈추면 레코딩 종료부터 하자.
             _running = false;
             if (_tcpClient != null)
             {
@@ -120,10 +149,87 @@ namespace ADS_B_Display
         private void Run()
         {
             AircraftManager.PurgeAll();
+
+            if (_useBigQuery == true)
+            {
+                RunBigQueryMode();
+                return;
+            }
+            
             if (_filePath != null)
+            {
                 RunFileMode();
-            else if (_tcpClient != null)
+                return;
+            }
+
+            if (_tcpClient != null)
+            {
                 RunTcpMode();
+                return;
+            }
+        }
+
+        private void RunBigQueryMode()
+        {
+            bigQuery = new BigQuery(true);
+            bigQuery.SetPathBigQuery();
+#if true
+            bigQuery.DeleteAllCsvFiles();
+
+            // BigQuery 데이터 읽기 (Query에서 CSV 파일 읽기)
+            bigQuery.ReadBigQueryData();
+#endif
+            // BigQuery CSV 리더 생성
+            bigQuery.CreateCsvReader();
+
+            try
+            {
+                while (_running)
+                {
+                    string rawLine = bigQuery.ReadRow();
+
+                    // 파일이 더 이상 없거나, 읽을 데이터가 없으면 종료
+                    if (rawLine == null)
+                    {
+                        MessageBox.Show("BigQuery Playback End");
+                        break;
+                    }
+
+                    // 빈 줄 또는 헤더는 건너뜀
+                    if (string.IsNullOrWhiteSpace(rawLine) || rawLine.StartsWith("Timestamp,"))
+                        continue;
+
+                    // 첫 번째 열(timestamp)와 나머지(row) 분리
+                    var parts = rawLine.Split(new[] { ',' }, 2);
+                    if (parts.Length < 2)
+                        continue;
+
+                    if (!long.TryParse(parts[0], out var time))
+                        continue;
+
+                    if (_first)
+                    {
+                        _first = false;
+                        _lastTime = time;
+                    }
+                    var _sleepTime = (int)(time - _lastTime);
+                    _lastTime = time;
+                    if (_sleepTime > 0)
+                        Thread.Sleep(_sleepTime / _playBackSpeed);
+
+                    string row = parts[1];
+                    if (string.IsNullOrEmpty(row))
+                        continue;
+
+                    OnMessageReceived?.Invoke(row);
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("BigQuery Playback Error: " + ex.Message);
+            }
+
+            OnFinished?.Invoke();
         }
 
         private void RunFileMode()
@@ -169,7 +275,8 @@ namespace ADS_B_Display
                     }
                 }
             } catch (Exception ex) {
-                MessageBox.Show("TCP Error: " + ex.Message);
+                // TODO:
+                //MessageBox.Show("TCP Error: " + ex.Message);
             }
 
             OnFinished?.Invoke();
@@ -180,38 +287,9 @@ namespace ADS_B_Display
             RecordStream?.WriteLine(timestamp);
             RecordStream?.WriteLine(msg);
 
-            if (BigQueryCsv != null) {
-                BigQueryCsv.WriteLine(msg);
-                BigQueryRowCount++;
-                if (BigQueryRowCount >= BigQueryUploadThreshold) {
-                    BigQueryCsv.Close();
-                    RunBigQueryUpload();
-                    CreateNewBigQueryCsv();
-                }
-            }
+            bigQuery?.WriteRow(timestamp, msg);
 
             OnMessageReceived?.Invoke(msg);
-        }
-
-        private void RunBigQueryUpload()
-        {
-            try {
-                var psi = new System.Diagnostics.ProcessStartInfo() {
-                    FileName = "python",
-                    Arguments = $"\"{BigQueryScriptPath}\" {BigQueryUploadArgs} \"{BigQueryCsvFileName}\"",
-                    CreateNoWindow = true,
-                    UseShellExecute = false
-                };
-                System.Diagnostics.Process.Start(psi);
-            } catch (Exception ex) {
-                MessageBox.Show("BigQuery Upload Error: " + ex.Message);
-            }
-        }
-
-        private void CreateNewBigQueryCsv()
-        {
-            BigQueryRowCount = 0;
-            BigQueryCsv = new StreamWriter(BigQueryCsvFileName, false);
         }
     }
 }

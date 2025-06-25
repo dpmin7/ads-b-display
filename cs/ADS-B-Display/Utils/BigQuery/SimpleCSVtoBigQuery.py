@@ -27,10 +27,12 @@ def read_csv_file(filename):
             except Exception as e:
                 print(f"Error reading file {filename}: {e}")
                 return 1
+               
+            sys.stdout.flush()
 
 
 if len(sys.argv) == 3:  
-   global_filepath = sys.argv[1]
+   global_filepath = sys.argv[1]+"\\"
    filename = sys.argv[2]
    print(f"The first argument is: {global_filepath}")
    print(f"The second argument is: {filename}")
@@ -46,9 +48,8 @@ os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = api_key
 # Construct a BigQuery client object.
 client = bigquery.Client()
 
-
 # Set table_id to the ID of the table.
-table_id = "scs-lg-solvit.SBS_Data.FirstRun"
+table_id = "scs-lg-arch-5.SBS_Data.FirstRun"
 
 
 job_config = bigquery.LoadJobConfig(
