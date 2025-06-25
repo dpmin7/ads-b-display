@@ -78,10 +78,8 @@ namespace ADS_B_Display.Views
 
         private bool _isRawRecording = false;
         private bool _isRawPalying = false;
-        private bool _isRawPalyStopped = true;
         private bool _isSbsRecording = false;
         private bool _isSbsPalying = false;
-        private bool _isSbsPalyStopped = true;
 
         private bool CanRawRecord(object obj) => true;//RawConnectStatus == ConnectStatus.Connect; // connect 시에 _isRecord, isPlaying, isPlayStopped 초기화
         private bool CanRawRecordStop(object obj) => true;//RawConnectStatus == ConnectStatus.Connect; // connect 시에 _isRecord, isPlaying, isPlayStopped 초기화
@@ -100,6 +98,9 @@ namespace ADS_B_Display.Views
 
         private void RawRecord(object obj)
         {
+            if (RawConnectStatus != ConnectStatus.Connect)
+                return;
+
             // 2) 기록 중이 아니면, SaveFileDialog 띄워서 파일 경로 선택
             var dlg = new SaveFileDialog {
                 Title = "Raw Record file save",
@@ -116,7 +117,7 @@ namespace ADS_B_Display.Views
 
             string path = dlg.FileName;
             try {
-                _rawWorker.RecordOn(path);
+                _rawWorker.RecordOn(path, false);
             } catch (Exception ex) {
                 MessageBox.Show($"Can not open the recorded file.:\n{ex.Message}",
                                 "Error", MessageBoxButton.OK, MessageBoxImage.Error);
@@ -126,12 +127,17 @@ namespace ADS_B_Display.Views
 
             // 4) 녹화를 시작했다는 안내 메시지 (선택 사항)
             MessageBox.Show($"Start Raw record:\n{path}", "Info", MessageBoxButton.OK, MessageBoxImage.Information);
+            _isRawRecording = true;
         }
 
         private void RawRecordStop(object obj)
         {
+            if (_isRawRecording == false)
+                return;
+
             try {
                 _rawWorker.RecordOff();
+                _isRawRecording = false;
             } catch (Exception ex) {
                 MessageBox.Show($"Error occur while Raw record file is closing.:\n{ex.Message}",
                                 "Error", MessageBoxButton.OK, MessageBoxImage.Error);
@@ -140,6 +146,9 @@ namespace ADS_B_Display.Views
 
         private void RawPlay(object obj)
         {
+            if (_isRawPalying == true)
+                return;
+
             var dlg = new OpenFileDialog {
                 Title = "Raw Record file save",
                 Filter = "Raw Log (*.raw)|*.raw|모든 파일 (*.*)|*.*",
@@ -154,6 +163,7 @@ namespace ADS_B_Display.Views
                 } else {
                     try {
                         _rawWorker.Start(fileName);
+                        _isRawPalying = true;
                     } catch (Exception ex) {
                         MessageBox.Show("Cannot open file " + fileName + "\n" + ex.Message);
                     }
@@ -163,11 +173,20 @@ namespace ADS_B_Display.Views
 
         private void RawPlayStop(object obj)
         {
+            if (_isRawPalying == false)
+                return;
+
             _rawWorker.Stop();
+            _isRawPalying = false;
         }
 
         private void SbsRecord(object obj)
-        {
+        {   
+            if (SbsConnectStatus != ConnectStatus.Connect) {
+                MessageBox.Show("SBS is not connected.");
+                return;
+            }
+
             string path = "";
 
             if (ControlSettings.UseBigQuery)
@@ -175,9 +194,8 @@ namespace ADS_B_Display.Views
                 // 2-1) BigQuery 이용하여 녹화
                 try
                 {
-                    _sbsWorker.RecordOn(path, true);
-                }
-                catch (Exception ex)
+                    _sbsWorker.RecordOn(path, ControlSettings.UseBigQuery);
+                } catch (Exception ex)
                 {
                     MessageBox.Show($"Can not open the recorded file.:\n{ex.Message}",
                                     "Error", MessageBoxButton.OK, MessageBoxImage.Error);
@@ -217,12 +235,18 @@ namespace ADS_B_Display.Views
                 // 4) 녹화를 시작했다는 안내 메시지 (선택 사항)
                 MessageBox.Show($"Start SBS record:\n{path}", "Info", MessageBoxButton.OK, MessageBoxImage.Information);
             }
+
+            _isSbsRecording = true;
         }
 
         private void SbsRecordStop(object obj)
         {
+            if (_isSbsRecording == false)
+                return;
+
             try {
                 _sbsWorker.RecordOff(ControlSettings.UseBigQuery);
+                _isSbsRecording = false;
             } catch (Exception ex) {
                 MessageBox.Show($"SBS 기록 파일을 닫는 동안 오류가 발생했습니다:\n{ex.Message}",
                                 "Error", MessageBoxButton.OK, MessageBoxImage.Error);
@@ -231,8 +255,26 @@ namespace ADS_B_Display.Views
 
         private void SbsPlay(object obj)
         {
+            if (_isSbsPalying == true)
+                return;
+
             if (ControlSettings.UseBigQuery)
             {
+                List<BigQueryListItem> items = new List<BigQueryListItem>();
+                int temp = 100;
+                DateTime now = DateTime.Now;
+                for (int i = 0; i < 5; i++) {
+
+                    BigQueryListItem item = new BigQueryListItem(DateTime.Now.AddSeconds(i*100), DateTime.Now.AddSeconds((i+1)*100));
+                    items.Add(item);
+                }
+                var win = new BigQueryListPopup(items);
+                var res = win.ShowDialog();
+                if (res == false)
+                    return;
+
+                var selItem = win.SelectedItem;
+
                 _sbsWorker.Start(null, true);
             }
             else
@@ -257,11 +299,17 @@ namespace ADS_B_Display.Views
                     }
                 }
             }
+
+            _isSbsPalying = true;
         }
 
         private void SbsPlayStop(object obj)
         {
+            if (_isSbsPalying == false)
+                return;
+
             _sbsWorker.Stop(ControlSettings.UseBigQuery);
+            _isSbsPalying = false;
         }
 
         private void RegisterEvents()

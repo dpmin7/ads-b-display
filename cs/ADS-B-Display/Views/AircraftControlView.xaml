@@ -8,9 +8,9 @@
     xmlns:local="clr-namespace:ADS_B_Display.Views"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:usercontrols="clr-namespace:ADS_B_Display.Views.UserControls"
+    Width="200"
     d:DataContext="{d:DesignInstance Type=local:AircraftControlViewModel}"
     d:DesignHeight="1200"
-    d:DesignWidth="300"
     mc:Ignorable="d">
     <UserControl.Resources>
         <converters:SecToDateTime x:Key="secToTime" />

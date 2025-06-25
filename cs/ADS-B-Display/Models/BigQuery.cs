@@ -351,4 +351,17 @@ namespace ADS_B_Display.Models
             CsvWriter = null;
         }
     }
+
+    public class BigQueryListItem
+    {
+        public DateTime StartTime { get; set; }
+        public DateTime EndTime { get; set; }
+        public TimeSpan Duration => EndTime - StartTime;
+        public string Name => StartTime.ToString("yyyy-MM-dd");
+        public BigQueryListItem(DateTime st, DateTime et)
+        {
+            StartTime = st;
+            EndTime = et;
+        }
+    }
 }
