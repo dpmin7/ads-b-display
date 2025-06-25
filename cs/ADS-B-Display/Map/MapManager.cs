@@ -12,6 +12,7 @@ namespace ADS_B_Display.Map
         SkyVector_IFR_Low = 2,
         SkyVector_IFR_High = 3,
         OpenStreet = 4,
+        ArcGIS = 5
     }
     internal class MapManager
     {
@@ -44,6 +45,9 @@ namespace ADS_B_Display.Map
                         break;
                     case TileServerType.OpenStreet:
                         _mapProvider.Add(serverType, new OpenStreetMap());
+                        break;
+                    case TileServerType.ArcGIS:
+                        _mapProvider.Add(serverType, new ArcGISMap());
                         break;
                     default:
                         break;
