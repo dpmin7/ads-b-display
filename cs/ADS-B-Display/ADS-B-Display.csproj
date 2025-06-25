@@ -108,6 +108,7 @@
     <Compile Include="Models\RangeFilter\IRangeFilter.cs" />
     <Compile Include="Models\RangeFilter\VerticalRangeFilter.cs" />
     <Compile Include="StringDefinitions.cs" />
+    <Compile Include="Utils\AltitudeToColor.cs" />
     <Compile Include="Utils\csv.cs" />
     <Compile Include="Models\DecodeRawADS_B.cs" />
     <Compile Include="Utils\Dms.cs" />

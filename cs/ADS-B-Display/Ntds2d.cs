@@ -2,10 +2,8 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows.Media.Imaging;
+using ADS_B_Display.Utils;
 
 namespace ADS_B_Display
 {
@@ -223,6 +221,13 @@ namespace ADS_B_Display
             GL.BindTexture(TextureTarget.Texture2D, 0);
             GL.Disable(EnableCap.Texture2D);
             GL.PopMatrix();
+        }
+
+        public static void DrawAirplaneImage(double x, double y, double h, double scale, double heading, int imageNum)
+        {
+            (double r, double g, double b) color = AltitudeToColor.GetAltitudeColorRGB(h);
+            GL.Color4(color.r, color.g, color.b, 0.8f); // 색상 설정
+            DrawAirplaneImage(x, y, scale, heading, imageNum);
         }
 
         /// <summary>

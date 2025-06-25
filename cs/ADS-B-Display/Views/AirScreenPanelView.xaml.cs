@@ -514,7 +514,7 @@ namespace ADS_B_Display.Views
                     GL.Color4(1f, 0f, 0f, 1f);
                 }
 
-                Ntds2d.DrawAirplaneImage(scrX, scrY, airplaneScale * 0.5, data.Heading, data.SpriteImage);
+                Ntds2d.DrawAirplaneImage(scrX, scrY, data.Altitude, airplaneScale * 0.5, data.Heading, data.SpriteImage);
                 //glControl.Draw2DText(data.HexAddr, scrX + 10, scrY - 10, System.Drawing.Color.Pink);
                 // TODO: Draw2DText 구현 필요
 
