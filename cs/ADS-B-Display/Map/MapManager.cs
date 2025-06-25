@@ -1,42 +1,55 @@
 ﻿using ADS_B_Display.Map.MapSrc;
-using ADS_B_Display.Utils;
 using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace ADS_B_Display.Map
 {
+    public enum TileServerType
+    {
+        GoogleMaps = 0,
+        SkyVector_VFR = 1,
+        SkyVector_IFR_Low = 2,
+        SkyVector_IFR_High = 3,
+        OpenStreet = 4,
+    }
     internal class MapManager
     {
-        private static readonly NLog.Logger logger = NLog.LogManager.GetLogger("MapManager");
-
         private FileSystemStorage _storage;
         private KeyholeConnection _keyhole;
         private TileManager _tileManager;
         private MasterLayer _masterLayer;
         //private FlatEarthView _earthView; // 뷰는 뷰가
         private Action<MasterLayer> _loadMapCallback;
-
-        private static readonly string[] Folders = new string[] {
-            "GoogleMap",
-            "VFR_Map",
-            "IFR_Low_Map",
-            "IFR_High_Map",
-            "OpenStreetMap"
-        };
+        private Dictionary<TileServerType, AbstractMap> _mapProvider = new Dictionary<TileServerType, AbstractMap>();
 
         private static MapManager _instance = null;
         public static MapManager Instance => _instance ?? (_instance = new MapManager());
 
         private MapManager()
         {
-            
-        }
+            Array allTileServerType = Enum.GetValues(typeof(TileServerType));
 
-        private bool _loadMapFromInternet = true;
+            foreach (TileServerType serverType in allTileServerType)
+            {
+                switch(serverType)
+                {
+                    case TileServerType.GoogleMaps:
+                        _mapProvider.Add(serverType, new GoogleMap());
+                        break;
+                    case TileServerType.SkyVector_VFR:
+                    case TileServerType.SkyVector_IFR_Low:
+                    case TileServerType.SkyVector_IFR_High:
+                        _mapProvider.Add(serverType, new SkyVectorMap(serverType));
+                        break;
+                    case TileServerType.OpenStreet:
+                        _mapProvider.Add(serverType, new OpenStreetMap());
+                        break;
+                    default:
+                        break;
+                }
+            }
+        }
 
         public void RegisterLoadMapCallback(Action<MasterLayer> callback)
         {
@@ -45,36 +58,29 @@ namespace ADS_B_Display.Map
 
         public void LoadMap(TileServerType type)
         {
-            // Determine base directory
-            var homeDir = $"{Directory.GetCurrentDirectory()}\\Map";
-            string subfolder;
-            try {
-                subfolder = Folders[(int)type];
-            } catch(Exception ex) { logger.Error(ex.Message); throw new ArgumentOutOfRangeException(nameof(type)); }
-            
-            var cacheDir = Path.Combine(homeDir, subfolder);
-            Directory.CreateDirectory(cacheDir);
+            if (_mapProvider.TryGetValue(type, out var map))
+            {
+                var filePath = map.GetFilePath();
+                Directory.CreateDirectory(filePath);
 
-            // Initialize filesystem storage
-            _storage = new FileSystemStorage(cacheDir, useGe: true);
+                // Initialize filesystem storage
+                _storage = new FileSystemStorage(filePath, useGe: true);
 
-            // If using internet, chain keyhole connection
-            if (_loadMapFromInternet) {
-                _keyhole = new KeyholeConnection(type);
-                _keyhole.SetSaveStorage(_storage);
-                _storage.SetNextLoadStorage(_keyhole);
+                // If using internet, chain keyhole connection
+                if (map.IsInternet())
+                {
+                    _keyhole = new KeyholeConnection(map);
+                    _keyhole.SetSaveStorage(_storage);
+                    _storage.SetNextLoadStorage(_keyhole);
+                }
+
+                // TileManager and rendering layers
+                _tileManager = new TileManager(_storage);
+                _masterLayer = new GoogleLayer(_tileManager);
+                //_earthView = new FlatEarthView(_masterLayer);
+
+                _loadMapCallback?.Invoke(_masterLayer);
             }
-
-            // TileManager and rendering layers
-            _tileManager = new TileManager(_storage);
-            _masterLayer = new GoogleLayer(_tileManager);
-            //_earthView = new FlatEarthView(_masterLayer);
-
-            // Resize view to current control size
-            //_earthView.Resize((int)glControl.ActualWidth, (int)glControl.ActualHeight);
-
-            _loadMapCallback?.Invoke(_masterLayer);
-            //EventBus.Publish(EventIds.EvtMapLoaded, _masterLayer);
         }
 
         internal void ClearTitleManager()

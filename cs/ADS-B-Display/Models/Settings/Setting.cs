@@ -1,4 +1,5 @@
-﻿using ADS_B_Display.Map.MapSrc;
+﻿using ADS_B_Display.Map;
+using ADS_B_Display.Map.MapSrc;
 using ADS_B_Display.Utils;
 using OpenTK.Graphics.OpenGL;
 using System;
