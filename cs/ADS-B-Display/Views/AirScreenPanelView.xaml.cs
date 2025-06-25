@@ -85,11 +85,15 @@ namespace ADS_B_Display.Views
                 SetMapCenter(out x, out y);
                 h = 1 / Math.Pow(1.3, 18);
             } else {
-                _earthView.Eye.X = Setting.Instance.MapConfig.EyeX;
-                _earthView.Eye.Y = Setting.Instance.MapConfig.EyeY;
-                _earthView.Eye.H = Setting.Instance.MapConfig.EyeH;
+                MapCenterLat = MAP_CENTER_LAT;
+                MapCenterLon = MAP_CENTER_LON;
+                x = Setting.Instance.MapConfig.EyeX;
+                y = Setting.Instance.MapConfig.EyeY;
+                h = Setting.Instance.MapConfig.EyeH;
             }
-
+            _earthView.Eye.X = x;
+            _earthView.Eye.Y = y;
+            _earthView.Eye.H = h;
             airplaneScale = Math.Min((0.05 / _earthView.Eye.H), 1.5); // 스케일 계산
 
             _updateTimer.Interval = TimeSpan.FromMilliseconds(500);
@@ -330,7 +334,7 @@ namespace ADS_B_Display.Views
                 if (!cpaHook) {
                     _trackHook.Valid_CC = true;
                     _trackHook.ICAO_CC = selectedAircraft.ICAO;
-                    Console.WriteLine(AircraftDB.GetAircraftInfo(selectedAircraft.ICAO));
+                    //Console.WriteLine(AircraftDB.GetAircraftInfo(selectedAircraft.ICAO));
 
                     // 출발 - 도착 정보 저장
                     List<Dictionary<string, string>> airportsInfo = AirportDB.GetAirPortsInfo();

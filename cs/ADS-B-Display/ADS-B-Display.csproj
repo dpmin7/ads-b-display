@@ -157,6 +157,9 @@
     <Compile Include="Views\AreaPopup.xaml.cs">
       <DependentUpon>AreaPopup.xaml</DependentUpon>
     </Compile>
+    <Compile Include="Views\Popup\AreaRegisterPopup.xaml.cs">
+      <DependentUpon>AreaRegisterPopup.xaml</DependentUpon>
+    </Compile>
     <Compile Include="Views\UserControls\ConnectionSignal.xaml.cs">
       <DependentUpon>ConnectionSignal.xaml</DependentUpon>
     </Compile>
@@ -194,6 +197,10 @@
       <Generator>MSBuild:Compile</Generator>
     </Page>
     <Page Include="Views\AreaPopup.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="Views\Popup\AreaRegisterPopup.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>

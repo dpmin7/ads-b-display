@@ -605,6 +605,7 @@
                         <Button
                             Width="70"
                             Margin="4,0,0,0"
+                            Command="{Binding Cmd_PolygonComplete}"
                             Content="Complete" />
                         <Button
                             Width="60"

@@ -61,6 +61,19 @@ namespace ADS_B_Display.Views
             Cmd_SbsPlayStop = new DelegateCommand(SbsPlayStop, CanSbsPlayStop);
 
             Cmd_Purge = new DelegateCommand(Purge);
+
+            Cmd_PolygonComplete = new DelegateCommand(PolygonComplete);
+        }
+
+        private void PolygonComplete(object obj)
+        {
+            AreaRegisterPopup popup = new AreaRegisterPopup();
+            popup.Owner = Application.Current.MainWindow;
+            var res = popup.ShowDialog();
+            if (res == true) {
+                var name = popup.AreaName;
+                var color = popup.AreaColor;
+            }
         }
 
         private bool _isRawRecording = false;
@@ -253,6 +266,7 @@ namespace ADS_B_Display.Views
         public ICommand Cmd_SbsPlay { get; }
         public ICommand Cmd_SbsPlayStop { get; }
         public ICommand Cmd_Purge { get; }
+        public ICommand Cmd_PolygonComplete { get; }
         //
 
         private void RawDisconnect(object obj)
