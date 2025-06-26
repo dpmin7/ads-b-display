@@ -604,7 +604,7 @@ namespace ADS_B_Display.Views
             {
                 if (!data.HaveLatLon) continue;
 
-               
+               //hyunjae - 임시로 다각형이 있으면 다격형 내에 항공기만 전시하도록 하는 코드
                 if(AreaManager.Areas.Count > 0)
                 {
                     bool isInsideAnyArea = false;
