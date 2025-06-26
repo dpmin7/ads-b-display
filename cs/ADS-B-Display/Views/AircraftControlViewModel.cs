@@ -374,7 +374,7 @@ namespace ADS_B_Display.Views
                 List<BigQueryListItem> items = new List<BigQueryListItem>();
                 int temp = 100;
                 DateTime now = DateTime.Now;
-                for (int i = 0; i < 5; i++) {
+                for (int i = 0; i < 50; i++) {
 
                     BigQueryListItem item = new BigQueryListItem(DateTime.Now.AddSeconds(i*100), DateTime.Now.AddSeconds((i+1)*100));
                     items.Add(item);

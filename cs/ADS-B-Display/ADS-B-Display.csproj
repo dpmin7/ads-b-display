@@ -158,6 +158,7 @@
     <Compile Include="Models\AirportDB.cs" />
     <Compile Include="Models\Area.cs" />
     <Compile Include="Controllers\MVVM.cs" />
+    <Compile Include="Models\AreaManager.cs" />
     <Compile Include="Models\CPA\CollisionRiskWorker.cs" />
     <Compile Include="Models\CPA\CPAInterop.cs" />
     <Compile Include="Models\CPA\CPAProcessor.cs" />
