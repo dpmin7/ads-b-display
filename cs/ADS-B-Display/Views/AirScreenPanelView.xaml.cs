@@ -11,6 +11,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reactive.Linq;
+using System.Timers;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows;
@@ -54,13 +55,13 @@ namespace ADS_B_Display.Views
         private double _timeTogoValue;
         private bool _mapDisplay;
 
-        private int _numSpriteImages;
         private bool _isLoaded;
-        private object lockObj = new object();
+        private bool _allowDraw = true; // 그리기 허용 여부
 
         private FlatEarthView _earthView;
 
         private DispatcherTimer _updateTimer = new DispatcherTimer();
+        private Timer _delayTimer;
 
 
         public AirScreenPanelView()
@@ -72,6 +73,7 @@ namespace ADS_B_Display.Views
             {
                 MajorVersion = 2, // OpenGL Major Version
                 MinorVersion = 1, // OpenGL Minor Version
+                RenderContinuously = false
             };
             glControl.Start(settings);
 
@@ -103,6 +105,15 @@ namespace ADS_B_Display.Views
             _updateTimer.Interval = TimeSpan.FromMilliseconds(500);
             _updateTimer.Tick += _updateTimer_Tick;
             _updateTimer.Start();
+
+            _delayTimer = new Timer(200) { // 200ms 후에 그릴지 확인
+                AutoReset = false, // 단발성 타이머
+            };
+            _delayTimer.Elapsed += (s, e) => {
+                _allowDraw = true; // 타이머가 끝나면 그리기 허용
+
+                glControl.InvalidateVisual(); // OpenGL 컨트롤 강제 갱신
+            };
         }
 
         public void Dispose()
@@ -122,6 +133,8 @@ namespace ADS_B_Display.Views
 
         private void _updateTimer_Tick(object sender, EventArgs e)
         {
+            if (!_allowDraw || !_isLoaded) return; // 그리기 허용 여부 확인
+
             glControl.InvalidateVisual(); // OpenGL 컨트롤 강제 갱신
         }
 
@@ -270,8 +283,7 @@ namespace ADS_B_Display.Views
         }
 
         private void glControl_Loaded(object sender, RoutedEventArgs e)
-        {
-            glControl.RenderContinuously = false;
+        {   
             glControl.InvalidateVisual(); // 첫 프레임 수동 렌더링
 
             // 뷰포트 설정: 컨트롤 크기에 맞춰 화면 전체를 사용
@@ -289,7 +301,7 @@ namespace ADS_B_Display.Views
             // GL.LineStipple(1, 0xAAAA);  // 필요시 패턴 지정
 
             // 비행기 스프라이트 이미지 로드/생성
-            _numSpriteImages = Ntds2d.MakeAirplaneImages();
+            Ntds2d.MakeAirplaneImages();
             Ntds2d.MakeAirTrackFriend();
             Ntds2d.MakeAirTrackHostile();
             Ntds2d.MakeAirTrackUnknown();
@@ -609,7 +621,7 @@ namespace ADS_B_Display.Views
 
                 viewableAircraft++;
                 GL.Color4(1f, 1f, 1f, 1f);
-                LatLon2XY(data.Latitude, data.Longitude, out scrX, out scrY);
+                LatLon2XY(data.VLatitude, data.VLongitude, out scrX, out scrY);
 
                 if (data.HaveSpeedAndHeading)
                     GL.Color4(1f, 0f, 1f, 1f);
@@ -619,16 +631,15 @@ namespace ADS_B_Display.Views
                     GL.Color4(1f, 0f, 0f, 1f);
                 }
 
-                Ntds2d.DrawAirplaneImage(scrX, scrY, data.Altitude, airplaneScale * 0.5, data.Heading, data.SpriteImage);
+                Ntds2d.DrawAirplaneImage(scrX, scrY, data.Altitude, airplaneScale * 0.5, data.Heading, data.SpriteImage, data.IsGhost);
                 //glControl.Draw2DText(data.HexAddr, scrX + 10, scrY - 10, System.Drawing.Color.Pink);
                 // TODO: Draw2DText 구현 필요
 
                 if ((data.HaveSpeedAndHeading) && (_useTimeToGo))
                 {
                     double lat, lon, az;
-                    if (LatLonConv.VDirect(data.Latitude, data.Longitude,
-                                data.Heading, data.Speed / 3060.0 * _timeTogoValue, out lat, out lon, out az) == TCoordConvStatus.OKNOERROR)
-                    {
+                    if (LatLonConv.VDirect(data.VLatitude, data.VLongitude,
+                                data.Heading, data.Speed / 3060.0 * _timeTogoValue, out lat, out lon, out az) == TCoordConvStatus.OKNOERROR) {
                         double scrX2, scrY2;
                         LatLon2XY(lat, lon, out scrX2, out scrY2);
                         GL.Color4(1.0, 1.0, 0.0, 1.0);
@@ -645,7 +656,7 @@ namespace ADS_B_Display.Views
             {
                 if (AircraftManager.TryGet(_trackHook.ICAO_CC, out var data))
                 {
-                    LatLon2XY(data.Latitude, data.Longitude, out scrX, out scrY);
+                    LatLon2XY(data.VLatitude, data.VLongitude, out scrX, out scrY);
                     Ntds2d.DrawTrackHook(scrX, scrY, airplaneScale * 0.5);
                 }
                 else

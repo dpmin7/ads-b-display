@@ -107,6 +107,10 @@ namespace ADS_B_Display
             double sigma = dist / (b0 * A), deltasigma;
             double sigmaPrev;
             double c2sm;
+
+            int iteration = 0;
+            const int MAX_ITERATIONS = 100;
+
             do {
                 sigmaPrev = sigma;
                 double twosigmam = 2.0 * sigma1 + sigma;
@@ -117,6 +121,12 @@ namespace ADS_B_Display
                     B / 6.0 * c2sm * (-3.0 + 4.0 * Sqr(ss)) * (-3.0 + 4.0 * Sqr(c2sm))));
 
                 sigma = dist / (b0 * A) + deltasigma;
+
+                iteration++;
+                if (iteration > MAX_ITERATIONS) {
+                    Console.WriteLine("WARNING: Vincenty iteration did not converge.");
+                    break;
+                }
             }
             while (Math.Abs(sigma - sigmaPrev) > EPS);
 
@@ -160,7 +170,5 @@ namespace ADS_B_Display
             lonOut = Modulus(lonIn + 180.0, 180.0);
             return TCoordConvStatus.OKNOERROR;
         }
-
-
     }
 }

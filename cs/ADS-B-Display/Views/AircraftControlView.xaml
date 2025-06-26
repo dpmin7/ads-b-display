@@ -10,6 +10,7 @@
     xmlns:usercontrols="clr-namespace:ADS_B_Display.Views.UserControls"
     d:DataContext="{d:DesignInstance Type=local:AircraftControlViewModel}"
     d:DesignHeight="1200"
+    d:DesignWidth="300"
     mc:Ignorable="d">
     <UserControl.Resources>
         <converters:SecToDateTime x:Key="secToTime" />
@@ -110,7 +111,7 @@
                         <TextBlock
                             Margin="0"
                             HorizontalAlignment="Right"
-                            Text="{Binding SystemTime, FallbackValue=21:24:17:362}" />
+                            Text="{Binding SystemTime, StringFormat='yyyy-MM-dd HH:mm:ss', FallbackValue=21:24:17:362}" />
                     </Grid>
                     <Grid>
                         <TextBlock
@@ -140,12 +141,12 @@
                             Margin="0,0,0,0"
                             FontWeight="Bold"
                             Text="Num of Aircraft:" />
-                        <TextBlock Margin="4,0,0,0" Text="66" />
+                        <TextBlock Margin="4,0,0,0" Text="{Binding NumOfAircraft}" />
                         <TextBlock
                             Margin="16,0,0,0"
                             FontWeight="Bold"
                             Text="  Viewable:" />
-                        <TextBlock Margin="4,0,0,0" Text="33" />
+                        <TextBlock Margin="4,0,0,0" Text="{Binding ViewableAircraft}" />
                     </StackPanel>
                 </StackPanel>
             </GroupBox>
@@ -340,13 +341,13 @@
                             Width="100"
                             Margin="24,0,8,0"
                             Command="{Binding Cmd_RawConnect}"
-                            Content="🔗 Connect" />
+                            Content="Connect" />
 
                         <!--  Disconnect Button  -->
                         <Button
                             Width="100"
                             Command="{Binding Cmd_RawDisconnect}"
-                            Content="❌ Disconnect" />
+                            Content="Disconnect" />
                     </StackPanel>
 
                     <StackPanel HorizontalAlignment="Right" Orientation="Horizontal">
@@ -459,13 +460,13 @@
                             Width="100"
                             Margin="24,0,8,0"
                             Command="{Binding Cmd_SbsConnect}"
-                            Content="🔗 Connect" />
+                            Content="Connect" />
 
                         <!--  Disconnect Button  -->
                         <Button
                             Width="100"
                             Command="{Binding Cmd_SbsDisconnect}"
-                            Content="❌ Disconnect" />
+                            Content="Disconnect" />
                     </StackPanel>
 
                     <!--  Icon Buttons  -->
@@ -568,13 +569,10 @@
             <GroupBox Margin="0,10,0,0" Header="Areas Of Interest">
                 <StackPanel Orientation="Vertical">
                     <ListView
-                        x:Name="AreaListView"
                         Height="100"
                         BorderBrush="Gray"
                         BorderThickness="1"
-                        ItemsSource="{Binding AreaList}"
                         ScrollViewer.VerticalScrollBarVisibility="Auto"
-                        SelectedItem="{Binding SelectedArea, Mode=TwoWay}"
                         SelectionMode="Single">
                         <ListView.View>
                             <GridView>
@@ -603,24 +601,19 @@
                         Margin="0,4,0,0"
                         HorizontalAlignment="Left"
                         Orientation="Horizontal">
-                        <Button
-                            Width="60"
-                            Command="{Binding InsertCommand}"
-                            Content="Insert" />
+                        <Button Width="60" Content="Insert" />
                         <Button
                             Width="70"
                             Margin="4,0,0,0"
-                            Command="{Binding CompleteCommand}"
+                            Command="{Binding Cmd_PolygonComplete}"
                             Content="Complete" />
                         <Button
                             Width="60"
                             Margin="4,0,0,0"
-                            Command="{Binding CancelCommand}"
                             Content="Cancel" />
                         <Button
                             Width="60"
                             Margin="4,0,0,0"
-                            Command="{Binding DeleteCommand}"
                             Content="Delete" />
                     </StackPanel>
                 </StackPanel>

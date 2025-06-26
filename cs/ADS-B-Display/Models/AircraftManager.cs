@@ -1,5 +1,8 @@
-﻿using System.Collections.Generic;
+﻿using NLog.Common;
+using System;
+using System.Collections.Generic;
 using System.Linq;
+using System.Timers;
 
 namespace ADS_B_Display.Models
 {
@@ -9,6 +12,40 @@ namespace ADS_B_Display.Models
             = new Dictionary<uint, Aircraft>();
 
         private static object lockObj = new object();
+
+        private static Timer _dataTimer;
+        private static long _purgeLimitMS = 30000; // 30초 (1분) 후에 Purge
+        private static long _ghostLimitMS = 10000; // 10초 (1분) 후에 Purge
+
+        static AircraftManager()
+        {
+            // Timer 설정: 1초마다 데이터 업데이트
+            _dataTimer = new Timer(300);
+            _dataTimer.Elapsed += OnDataTimerElapsed;
+            _dataTimer.AutoReset = true;
+            _dataTimer.Enabled = true;
+        }
+
+        internal static void SetPurgeLimitMS(long limitMS, long ghostLimitMS)
+        {
+            _purgeLimitMS = limitMS;
+            _ghostLimitMS = ghostLimitMS;
+        }
+
+        // Purge, virtual 업데이트
+        private static void OnDataTimerElapsed(object sender, ElapsedEventArgs e)
+        {
+            long now = TimeFunctions.GetCurrentTimeInMsec();
+            lock (lockObj) {
+                foreach (var key in _aircraftTable
+                    .Where(kvp => kvp.Value.TimeCheck(now, _ghostLimitMS, _purgeLimitMS))
+                    .Select(kvp => kvp.Key)
+                    .ToArray()) // 안전 복사
+                {
+                    _aircraftTable.Remove(key);
+                }
+            }
+        }
 
         internal static Aircraft GetOrAdd(uint icao)
         {
@@ -44,6 +81,13 @@ namespace ADS_B_Display.Models
             }
         }
 
+        internal static int Count()
+        {
+            lock (lockObj) {
+                return _aircraftTable.Count;
+            }
+        }
+
         internal static uint ReceiveSBSMessage(string msgLine)
         {
             // 필드를 분리
@@ -55,6 +99,18 @@ namespace ADS_B_Display.Models
             SBSMessage.SBS_Message_Decode(SBS_Fields, ref aircraft);
 
             return addr;
+        }
+
+        private static double _onLeftTopLat = 0.0;
+        private static double _onRightBottomLat = 0.0;
+        private static double _onLeftTopLon = 0.0;
+        private static double _onRightBottomLon = 0.0;
+        internal static void UpdateOnScreen(double leftTopLat, double leftTopLon, double rightBottomLat, double rightBottomLon)
+        {
+            _onLeftTopLat = leftTopLat;
+            _onLeftTopLon = leftTopLon;
+            _onRightBottomLat = rightBottomLat;
+            _onRightBottomLon = rightBottomLon;
         }
 
         internal static uint ReceiveRawMessage(string msgLine)

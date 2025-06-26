@@ -223,10 +223,14 @@ namespace ADS_B_Display
             GL.PopMatrix();
         }
 
-        public static void DrawAirplaneImage(double x, double y, double h, double scale, double heading, int imageNum)
+        public static void DrawAirplaneImage(double x, double y, double h, double scale, double heading, int imageNum, bool isGhost)
         {
-            (double r, double g, double b) color = AltitudeToColor.GetAltitudeColorRGB(h);
-            GL.Color4(color.r, color.g, color.b, 0.8f); // 색상 설정
+            if (!isGhost) {
+                (double r, double g, double b) color = AltitudeToColor.GetAltitudeColorRGB(h);
+                GL.Color4(color.r, color.g, color.b, 0.8f); // 색상 설정 0.8f
+            } else {
+                GL.Color4(0.5f, 0.5f, 0.5f, 0.8f); // 색상 설정 0.8f
+            }
             DrawAirplaneImage(x, y, scale, heading, imageNum);
         }
 
