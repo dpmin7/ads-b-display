@@ -6,6 +6,7 @@
     xmlns:local="clr-namespace:ADS_B_Display.Views.Popup"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     Title="BigQueryListPopup"
+    Width="200"
     Height="400"
     ResizeMode="NoResize"
     mc:Ignorable="d">
@@ -18,7 +19,6 @@
         <DataGrid
             x:Name="bigQueryList"
             Grid.Row="1"
-            Width="80"
             Margin="10"
             AutoGenerateColumns="False"
             CanUserAddRows="False"
