@@ -268,7 +268,14 @@ namespace ADS_B_Display
             string altStr = SBS_Fields[SBS_ALTITUDE];
             if (!string.IsNullOrEmpty(altStr) && double.TryParse(altStr, NumberStyles.Float, CultureInfo.InvariantCulture, out double altVal)) {
                 if (!double.IsInfinity(altVal)) {
-                    aircraft.HaveAltitude = true;
+                    if (altVal < 1)
+                    {
+                        aircraft.HaveAltitude = false;
+                    }
+                    else
+                    {
+                        aircraft.HaveAltitude = true;
+                    }
                     aircraft.Altitude = altVal;
                 }
             }

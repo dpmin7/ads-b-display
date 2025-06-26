@@ -160,5 +160,7 @@ namespace ADS_B_Display
             lonOut = Modulus(lonIn + 180.0, 180.0);
             return TCoordConvStatus.OKNOERROR;
         }
+
+
     }
 }

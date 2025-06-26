@@ -7,8 +7,10 @@ using ADS_B_Display.Utils;
 using ADS_B_Display.Views.Popup;
 using ADS_B_Display.Views.UserControls;
 using Microsoft.Win32;
+using OpenTK;
 using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -27,6 +29,10 @@ namespace ADS_B_Display.Views
         private SbsWorker _sbsWorker = null;
         private SbsWorker _rawWorker = null;
 
+        //Area Insert Module
+        private bool _canCompleteOrCancel = false;
+        public ObservableCollection<Area> AreaList { get; }
+        private Area _selectedArea;
 
         public AircraftControlViewModel()
         {
@@ -63,6 +69,13 @@ namespace ADS_B_Display.Views
             Cmd_Purge = new DelegateCommand(Purge);
 
             Cmd_PolygonComplete = new DelegateCommand(PolygonComplete);
+
+            InsertCommand = new DelegateCommand(InsertArea, CanInsertArea);
+            CompleteCommand = new DelegateCommand(CompleteArea, CanCompleteArea);
+            CancelCommand = new DelegateCommand(CancelArea, CanCancelArea);
+            DeleteCommand = new DelegateCommand(DeleteArea, CanDeleteArea);
+
+            AreaList = new ObservableCollection<Area>(AreaManager.Areas);
         }
 
         private void PolygonComplete(object obj)
@@ -89,6 +102,104 @@ namespace ADS_B_Display.Views
         private bool CanSbsRecordStop(object obj) => true;//!_isRawRecording;
         private bool CanSbsPlay(object obj) => true;//!_isRawRecording;
         private bool CanSbsPlayStop(object obj) => true;//!_isRawRecording;
+
+        public Area SelectedArea
+        {
+            get => _selectedArea;
+            set
+            {
+                _selectedArea = value;
+                OnPropertyChanged(); // INotifyPropertyChanged 구현 시
+            }
+        }
+        public void RefreshAreaList()
+        {
+            AreaList.Clear();
+            foreach (var area in AreaManager.Areas)
+                AreaList.Add(area);
+        }
+
+        private void InsertArea(object obj)
+        {
+            AreaManager.IsInsertMode = true;
+            _canCompleteOrCancel = true;
+
+            ((DelegateCommand)InsertCommand).RaiseCanExecuteChanged();
+            ((DelegateCommand)CompleteCommand).RaiseCanExecuteChanged();
+            ((DelegateCommand)CancelCommand).RaiseCanExecuteChanged();
+        }
+
+        private bool CanInsertArea(object obj) => !_canCompleteOrCancel;
+
+        private void CompleteArea(object obj)
+        {
+            int result = AreaManager.Orientation2DPolygon(AreaManager.TempArea);
+            if (result == 0)
+            {
+                MessageBox.Show("Degenerate Polygon");
+                AreaManager.ResetTempArea();
+                CancelArea(null);
+                return;
+            }
+            if (TrianglePoly.CheckComplex(AreaManager.TempArea.Points.ToArray(), AreaManager.TempArea.NumPoints))
+            {
+                MessageBox.Show("Polygon is Complex");
+                AreaManager.ResetTempArea();
+                CancelArea(null);
+                return;
+            }
+            if (result == TrianglePoly.CLOCKWISE)
+            {
+                var pointsArray = AreaManager.TempArea.Points.ToArray();
+                TrianglePoly.ReversePoints(pointsArray, pointsArray.Length);
+                AreaManager.TempArea.Points = new List<Vector3d>(pointsArray);
+            }
+
+            AreaRegisterPopup popup = new AreaRegisterPopup();
+            popup.Owner = Application.Current.MainWindow;
+
+            var res = popup.ShowDialog();
+            if(res == true) {
+                var name = popup.AreaName;
+                var color = popup.AreaColor;
+                AreaManager.FinalizeTempAreaIfReady(name, color);
+                RefreshAreaList();
+                AreaManager.ResetTempArea();
+            }
+
+            AreaManager.IsInsertMode = false;
+            _canCompleteOrCancel = false;
+        }
+        private bool CanCompleteArea(object obj) => _canCompleteOrCancel;
+
+        private void CancelArea(object obj)
+        {
+            AreaManager.IsInsertMode = false;
+            _canCompleteOrCancel = false;
+        }
+
+        private bool CanCancelArea(object obj) => _canCompleteOrCancel;
+
+        private void DeleteArea(object obj)
+        {
+            if (SelectedArea != null)
+            {
+
+                AreaManager.RemoveArea(SelectedArea);
+                AreaList.Remove(SelectedArea);
+                SelectedArea = null; // 선택 초기화
+            }
+        }
+
+        private bool CanDeleteArea(object obj) => true;
+
+        private bool _isInsertMode;
+        public bool IsInsertMode
+        {
+            get => _isInsertMode;
+            set => SetProperty(ref _isInsertMode, value);
+        }
+
 
         public void Dispose()
         {
@@ -346,7 +457,10 @@ namespace ADS_B_Display.Views
         public ICommand Cmd_Purge { get; }
         public ICommand Cmd_PolygonComplete { get; }
         //
-
+        public ICommand InsertCommand { get; }
+        public ICommand CompleteCommand { get; }
+        public ICommand CancelCommand { get; }
+        public ICommand DeleteCommand { get; }
         private void RawDisconnect(object obj)
         {
             if (RawConnectStatus == ConnectStatus.Disconnect)

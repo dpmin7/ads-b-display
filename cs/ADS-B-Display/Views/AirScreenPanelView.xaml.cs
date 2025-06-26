@@ -68,7 +68,8 @@ namespace ADS_B_Display.Views
             InitializeComponent();
             EventBus.Observe(EventIds.EvtControlSettingChanged).Subscribe(msg => UpdateTimeToGo(msg));
 
-            var settings = new GLWpfControlSettings() {
+            var settings = new GLWpfControlSettings()
+            {
                 MajorVersion = 2, // OpenGL Major Version
                 MinorVersion = 1, // OpenGL Minor Version
             };
@@ -79,12 +80,15 @@ namespace ADS_B_Display.Views
             //LoadMap(TileServerType.GoogleMaps);
 
             double x, y, h;
-            if (Setting.Instance.MapConfig.IsInitialState) {
+            if (Setting.Instance.MapConfig.IsInitialState)
+            {
                 MapCenterLat = MAP_CENTER_LAT;
                 MapCenterLon = MAP_CENTER_LON;
                 SetMapCenter(out x, out y);
                 h = 1 / Math.Pow(1.3, 18);
-            } else {
+            }
+            else
+            {
                 MapCenterLat = MAP_CENTER_LAT;
                 MapCenterLon = MAP_CENTER_LON;
                 x = Setting.Instance.MapConfig.EyeX;
@@ -141,11 +145,15 @@ namespace ADS_B_Display.Views
             int x = (int)e.GetPosition(glControl).X;
             int y = (int)e.GetPosition(glControl).Y;
             // 마우스 왼쪽 버튼 클릭 확인
-            if (e.ChangedButton == MouseButton.Left) {
+            if (e.ChangedButton == MouseButton.Left)
+            {
                 // Ctrl 키가 눌렸는지 확인
-                if ((System.Windows.Input.Keyboard.Modifiers & System.Windows.Input.ModifierKeys.Control) != 0) {
+                if ((System.Windows.Input.Keyboard.Modifiers & System.Windows.Input.ModifierKeys.Control) != 0)
+                {
                     // Ctrl + 왼쪽 클릭 시 동작 (필요시 구현)
-                } else {
+                }
+                else
+                {
                     // 필요한 전역 변수에 값 저장 (예시)
                     _MouseLeftDownX = x;
                     _MouseLeftDownY = y;
@@ -154,18 +162,19 @@ namespace ADS_B_Display.Views
                     // EarthView의 StartDrag 호출
                     _earthView.StartDrag(x, y, EarthView.NAV_DRAG_PAN);
                 }
-            } else if (e.ChangedButton == MouseButton.Right) {
-                //if (AreaTemp != null) {
-                //    if (AreaTemp.NumPoints < Area.MaxPoints) {
-                //        AddPoint(e.X, e.Y);
-                //    } else {
-                //        MessageBox.Show("Max Area Points Reached");
-                //    }
-                //} else {
+            }
+            else if (e.ChangedButton == MouseButton.Right)
+            {
+                if (AreaManager.IsInsertMode)
+                {
+                    InsertPolygon(x, y);
+                }
                 bool ctrl = Keyboard.Modifiers == ModifierKeys.Control;
                 HookTrack(x, y, ctrl);
                 //}
-            } else if (e.ChangedButton == MouseButton.Middle) {
+            }
+            else if (e.ChangedButton == MouseButton.Middle)
+            {
                 //ResetXYOffset();
             }
         }
@@ -184,7 +193,8 @@ namespace ADS_B_Display.Views
             // Map_v, Map_w, xf, yf 등은 클래스 필드로 선언되어 있다고 가정
             if (Map_v != null && Map_w != null &&
                 X1 >= Map_v[0].X && X1 <= Map_v[1].X &&
-                Y1 >= Map_v[0].Y && Y1 <= Map_v[3].Y) {
+                Y1 >= Map_v[0].Y && Y1 <= Map_v[3].Y)
+            {
                 // 위도/경도 계산
                 double VLat = Math.Atan(Math.Sinh(Math.PI * (2 * (Map_w[1].Y - (yf * (Map_v[3].Y - Y1)))))) * (180.0 / Math.PI);
                 double VLon = (Map_w[1].X - (xf * (Map_v[1].X - X1))) * 360.0;
@@ -204,7 +214,8 @@ namespace ADS_B_Display.Views
             }
 
             // 드래그 중이면 EarthView에 Drag 이벤트 전달
-            if ((_MouseDownMask & LEFT_MOUSE_DOWN) != 0) {
+            if ((_MouseDownMask & LEFT_MOUSE_DOWN) != 0)
+            {
                 UpdateRegion(); // 현재 지역 업데이트
                 _earthView.Drag(_MouseLeftDownX, _MouseLeftDownY, x, y, EarthView.NAV_DRAG_PAN);
                 glControl.InvalidateVisual(); // 화면 갱신
@@ -214,9 +225,48 @@ namespace ADS_B_Display.Views
         private void glControl_PreviewMouseUp(object sender, MouseButtonEventArgs e)
         {
             // 마우스 왼쪽 버튼이 떼어졌을 때만 처리
-            if (e.ChangedButton == System.Windows.Input.MouseButton.Left) {
+            if (e.ChangedButton == System.Windows.Input.MouseButton.Left)
+            {
                 _MouseDownMask &= ~LEFT_MOUSE_DOWN;
             }
+        }
+
+        private void InsertPolygon(int x, int y)
+        {
+            double lat, lon;
+            if (XY2LatLon2(x, y, out lat, out lon) == 0)
+            {
+                if (AreaManager.AddPointToTempArea(lat, lon))
+                {
+
+                }
+                else
+                {
+                    MessageBox.Show("Max Area Points Reached");
+                }
+            }
+
+            glControl.InvalidateVisual();
+        }
+
+        private int XY2LatLon2(double x, double y, out double lat, out double lon)
+        {
+            lat = 0;
+            lon = 0;
+
+            int X1 = (int)x;
+            int Y1 = (int)((glControl.ActualHeight - 1) - y);
+
+            if (X1 < Map_v[0].X || X1 > Map_v[1].X ||
+                Y1 < Map_v[0].Y || Y1 > Map_v[3].Y)
+            {
+                return -1;
+            }
+
+            lat = Math.Atan(Math.Sinh(Math.PI * (2 * (Map_w[1].Y - (yf * (Map_v[3].Y - Y1)))))) * (180.0 / Math.PI);
+            lon = (Map_w[1].X - (xf * (Map_v[1].X - X1))) * 360.0;
+
+            return 0;
         }
 
         private void glControl_Loaded(object sender, RoutedEventArgs e)
@@ -317,21 +367,26 @@ namespace ADS_B_Display.Views
             double minRange = 16.0;
             uint currentICAO = 0;
 
-            foreach (var data in AircraftManager.GetAll()) {
-                if (data.HaveLatLon) {
+            foreach (var data in AircraftManager.GetAll())
+            {
+                if (data.HaveLatLon)
+                {
                     double dLat = vLat - data.Latitude;
                     double dLon = vLon - data.Longitude;
                     double range = Math.Sqrt(dLat * dLat + dLon * dLon);
-                    if (range < minRange) {
+                    if (range < minRange)
+                    {
                         currentICAO = data.ICAO;
                         minRange = range;
                     }
                 }
             }
 
-            if (minRange < 0.2) {
+            if (minRange < 0.2)
+            {
                 var selectedAircraft = AircraftManager.GetOrAdd(currentICAO);
-                if (!cpaHook) {
+                if (!cpaHook)
+                {
                     _trackHook.Valid_CC = true;
                     _trackHook.ICAO_CC = selectedAircraft.ICAO;
                     //Console.WriteLine(AircraftDB.GetAircraftInfo(selectedAircraft.ICAO));
@@ -341,23 +396,30 @@ namespace ADS_B_Display.Views
                     List<Dictionary<string, string>> routesInfo = AirportDB.GetRoutesInfo();
 
                     // callSign
-                    if (airportsInfo != null && routesInfo != null && selectedAircraft.FlightNum.Trim() != "") {
+                    if (airportsInfo != null && routesInfo != null && selectedAircraft.FlightNum.Trim() != "")
+                    {
                         var selectedRoute = routesInfo.FirstOrDefault(dict => dict.ContainsKey("Callsign") && dict["Callsign"] == selectedAircraft.FlightNum.Trim());
 
-                        if (selectedRoute != null) {
+                        if (selectedRoute != null)
+                        {
                             var airportCodes = selectedRoute["AirportCodes"].Split('-');
                             _trackHook.DepartureAirport = airportsInfo.FirstOrDefault(dict => dict.ContainsKey("ICAO") && dict["ICAO"] == airportCodes[0]);
                             _trackHook.ArrivalAirport = airportsInfo.FirstOrDefault(dict => dict.ContainsKey("ICAO") && dict["ICAO"] == airportCodes[1]);
                         }
                     }
-                } else {
+                }
+                else
+                {
                     _trackHook.Valid_CPA = true;
                     _trackHook.ICAO_CPA = selectedAircraft.ICAO;
                     _trackHook.DepartureAirport = null;
                     _trackHook.ArrivalAirport = null;
                 }
-            } else {
-                if (!cpaHook) {
+            }
+            else
+            {
+                if (!cpaHook)
+                {
                     _trackHook.Valid_CC = false;
                     //ICAOLabel.Text = "N/A";
                     //FlightNumLabel.Text = "N/A";
@@ -370,7 +432,9 @@ namespace ADS_B_Display.Views
                     //TrkLastUpdateTimeLabel.Text = "N/A";
                     _trackHook.DepartureAirport = null;
                     _trackHook.ArrivalAirport = null;
-                } else {
+                }
+                else
+                {
                     //TrackHook.Valid_CPA = false;
                     //CpaTimeValue.Text = "None";
                     //CpaDistanceValue.Text = "None";
@@ -389,7 +453,8 @@ namespace ADS_B_Display.Views
         private void PublishHookInfo(TrackHookStruct trackHook)
         {
             if (_prevICAO_CC == trackHook.ICAO_CC &&
-                _prevValid_CC == trackHook.Valid_CC) { // 같은 놈 같은 상태면 업데이트 하지 말자.
+                _prevValid_CC == trackHook.Valid_CC)
+            { // 같은 놈 같은 상태면 업데이트 하지 말자.
                 return;
             }
             _prevValid_CC = trackHook.Valid_CC;
@@ -423,76 +488,93 @@ namespace ADS_B_Display.Views
             GL.End();
 
 
-            // 임시 영역(AreaTemp) 그리기
-            //if (_areaTemp != null) {
-            //    GL.PointSize(3f);
-            //    var adj = new Vector2d[_areaTemp.NumPoints];
-            //    for (int i = 0; i < _areaTemp.NumPoints; i++) {
-            //        LatLonToXY(_areaTemp.Points[i].Y, _areaTemp.Points[i].X,
-            //                   out adj[i].X, out adj[i].Y);
-            //    }
+            var tempArea = AreaManager.TempArea;
+            GL.Color4(1f, 1, 1f, 1f);
+            if (tempArea != null && tempArea.NumPoints > 0)
+            {
+                GL.PointSize(3f);
+                var adj = new Vector2d[tempArea.NumPoints];
+                for (int i = 0; i < tempArea.NumPoints; i++)
+                {
+                    LatLon2XY(tempArea.Points[i].Y, tempArea.Points[i].X,
+                               out adj[i].X, out adj[i].Y);
+                }
 
-            //    GL.Begin(PrimitiveType.Points);
-            //    for (int i = 0; i < _areaTemp.NumPoints; i++)
-            //        GL.Vertex2(adj[i].X, adj[i].Y);
-            //    GL.End();
+                GL.Begin(PrimitiveType.Points);
+                for (int i = 0; i < tempArea.NumPoints; i++)
+                    GL.Vertex2(adj[i].X, adj[i].Y);
+                GL.End();
 
-            //    GL.Begin(PrimitiveType.LineStrip);
-            //    for (int i = 0; i < _areaTemp.NumPoints; i++)
-            //        GL.Vertex2(adj[i].X, adj[i].Y);
-            //    GL.End();
-            //}
+                GL.Begin(PrimitiveType.LineStrip);
+                for (int i = 0; i < tempArea.NumPoints; i++)
+                    GL.Vertex2(adj[i].X, adj[i].Y);
+                GL.End();
+            }
 
-            //// 저장된 영역들(Areas) 그리기
-            //foreach (var area in Areas) {
-            //    // 색상 변환
-            //    var mc = area.Color;
-            //    if (area.Selected) {
-            //        GL.LineWidth(4f);
-            //        GL.PushAttrib(AttribMask.LineBit);
-            //        GL.LineStipple(3, 0xAAAA);
-            //    }
+            // 저장된 영역들(Areas) 그리기
+            foreach (var area in AreaManager.Areas)
+            {
+                // 색상 변환
+                var mc = area.Color;
 
-            //    GL.Color4(mc.Red / 255f, mc.Green / 255f, mc.Blue / 255f, 1f);
-            //    GL.Begin(PrimitiveType.LineLoop);
-            //    for (int j = 0; j < area.NumPoints; j++) {
-            //        LatLonToXY(area.Points[j].Y, area.Points[j].X,
-            //                   out scrX, out scrY);
-            //        GL.Vertex2(scrX, scrY);
-            //    }
-            //    GL.End();
+                // 영역 내부 채우기 (삼각형)
+                // 삼각형 리스트 반복
+                GL.Enable(EnableCap.PolygonOffsetFill);
+                GL.PolygonOffset(1.0f, 1.0f); // 한 번만 설정
 
-            //    if (area.Selected) {
-            //        GL.PopAttrib();
-            //        GL.LineWidth(2f);
-            //    }
+                GL.Color4(mc.R / 255f, mc.G / 255f, mc.B / 255f, 0.4f);
+                GL.Begin(PrimitiveType.Triangles);
+                foreach (var tri in area.Triangles)
+                {
+                    for (int k = 0; k < 3; k++)
+                    {
+                        var idx = tri[k];
+                        if (idx >= area.NumPoints) continue;
+                        LatLon2XY(area.Points[(int)idx].Y, area.Points[(int)idx].X, out scrX, out scrY);
+                        GL.Vertex2(scrX, scrY);
+                    }
+                }
+                GL.End();
+                GL.Disable(EnableCap.PolygonOffsetFill); // 정리
 
-            //    // 영역 내부 채우기 (삼각형)
-            //    GL.Color4(mc.Red / 255f, mc.Green / 255f, mc.Blue / 255f, 0.4f);
-            //    // 삼각형 리스트 반복
-            //    foreach (var tri in area.Triangles) {
-            //        GL.Begin(PrimitiveType.Triangles);
-            //        for (int k = 0; k < 3; k++) {
-            //            var idx = tri.IndexList[k];
-            //            LatLonToXY(area.Points[idx].Y, area.Points[idx].X,
-            //                       out scrX, out scrY);
-            //            GL.Vertex2(scrX, scrY);
-            //        }
-            //        GL.End();
-            //    }
-            //}
+                if (area.Selected)
+                {
+                    GL.LineWidth(4f);
+                    GL.PushAttrib(AttribMask.LineBit);
+                    GL.LineStipple(3, 0xAAAA);
+                }
+
+                GL.Color4(mc.R / 255f, mc.G / 255f, mc.B / 255f, 1f);
+                GL.Begin(PrimitiveType.LineLoop);
+                for (int j = 0; j < area.NumPoints; j++)
+                {
+                    LatLon2XY(area.Points[j].Y, area.Points[j].X,
+                               out scrX, out scrY);
+                    GL.Vertex2(scrX, scrY);
+                }
+                GL.End();
+
+                if (area.Selected)
+                {
+                    GL.PopAttrib();
+                    GL.LineWidth(2f);
+                }
+            }
 
             // 공항 정보 표시
             List<Dictionary<string, string>> airportsInfo = AirportDB.GetAirPortsInfo();
             HashSet<string> uniqueAirports = AirportDB.GetUniqueAirportCodes();
 
-            if (airportsInfo != null) {
-                foreach (var row in airportsInfo) {
+            if (airportsInfo != null)
+            {
+                foreach (var row in airportsInfo)
+                {
                     string icao = row["ICAO"];
                     string latitude = row["Latitude"];
                     string longitude = row["Longitude"];
 
-                    if (uniqueAirports.Contains(icao) && double.TryParse(latitude, out double lat) && double.TryParse(longitude, out double lon)) {
+                    if (uniqueAirports.Contains(icao) && double.TryParse(latitude, out double lat) && double.TryParse(longitude, out double lon))
+                    {
                         if (lat > 85.0511 || lat < -85.0511)
                             continue;
 
@@ -503,17 +585,36 @@ namespace ADS_B_Display.Views
                 }
             }
 
+
             // 항공기 정보 그리기
             var aircraftTable = AircraftManager.GetAll();
-            foreach (var data in aircraftTable) {
+            foreach (var data in aircraftTable)
+            {
                 if (!data.HaveLatLon) continue;
+
+               
+                if(AreaManager.Areas.Count > 0)
+                {
+                    bool isInsideAnyArea = false;
+                    foreach (var area in AreaManager.Areas)
+                    {
+                        if (PointPolygonFilter.IsPointInArea(data.Latitude, data.Longitude, area.Points.ToArray()))
+                        {
+                            isInsideAnyArea = true;
+                            break;
+                        }
+                    }
+                    if (!isInsideAnyArea) continue;
+                }
+
                 viewableAircraft++;
                 GL.Color4(1f, 1f, 1f, 1f);
                 LatLon2XY(data.Latitude, data.Longitude, out scrX, out scrY);
 
                 if (data.HaveSpeedAndHeading)
                     GL.Color4(1f, 0f, 1f, 1f);
-                else {
+                else
+                {
                     data.Heading = 0;
                     GL.Color4(1f, 0f, 0f, 1f);
                 }
@@ -522,10 +623,12 @@ namespace ADS_B_Display.Views
                 //glControl.Draw2DText(data.HexAddr, scrX + 10, scrY - 10, System.Drawing.Color.Pink);
                 // TODO: Draw2DText 구현 필요
 
-                if ((data.HaveSpeedAndHeading) && (_useTimeToGo)) {
+                if ((data.HaveSpeedAndHeading) && (_useTimeToGo))
+                {
                     double lat, lon, az;
                     if (LatLonConv.VDirect(data.Latitude, data.Longitude,
-                                data.Heading, data.Speed / 3060.0 * _timeTogoValue, out lat, out lon, out az) == TCoordConvStatus.OKNOERROR) {
+                                data.Heading, data.Speed / 3060.0 * _timeTogoValue, out lat, out lon, out az) == TCoordConvStatus.OKNOERROR)
+                    {
                         double scrX2, scrY2;
                         LatLon2XY(lat, lon, out scrX2, out scrY2);
                         GL.Color4(1.0, 1.0, 0.0, 1.0);
@@ -538,11 +641,15 @@ namespace ADS_B_Display.Views
             }
 
             // TrackHook 정보 그리기
-            if (_trackHook.Valid_CC) {
-                if (AircraftManager.TryGet(_trackHook.ICAO_CC, out var data)) {
+            if (_trackHook.Valid_CC)
+            {
+                if (AircraftManager.TryGet(_trackHook.ICAO_CC, out var data))
+                {
                     LatLon2XY(data.Latitude, data.Longitude, out scrX, out scrY);
                     Ntds2d.DrawTrackHook(scrX, scrY, airplaneScale * 0.5);
-                } else {
+                }
+                else
+                {
                     _trackHook.Valid_CC = false;
                 }
             }

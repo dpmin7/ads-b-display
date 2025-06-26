@@ -489,7 +489,7 @@ namespace ADS_B_Display
             GL.Enable(EnableCap.Texture2D);
             GL.BindTexture(TextureTarget.Texture2D, airportTextId);
 
-            // GL.Color4(1f, 1f, 1f, 1f); // 흰색으로 설정하여 텍스처 본연의 색이 나오게 함
+            GL.Color4(1f, 1f, 1f, 1f); // 흰색으로 설정하여 텍스처 본연의 색이 나오게 함
 
             // --- 레거시 VBO 그리기를 위한 설정 ---
 
