@@ -607,16 +607,10 @@ namespace ADS_B_Display.Views
                //hyunjae - 임시로 다각형이 있으면 다격형 내에 항공기만 전시하도록 하는 코드
                 if(AreaManager.Areas.Count > 0)
                 {
-                    bool isInsideAnyArea = false;
-                    foreach (var area in AreaManager.Areas)
+                    if(data.Viewable == false)
                     {
-                        if (PointPolygonFilter.IsPointInArea(data.Latitude, data.Longitude, area.Points.ToArray()))
-                        {
-                            isInsideAnyArea = true;
-                            break;
-                        }
+                        continue;
                     }
-                    if (!isInsideAnyArea) continue;
                 }
 
                 viewableAircraft++;

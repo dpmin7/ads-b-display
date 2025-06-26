@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Timers;
+using System.Windows.Markup;
 
 namespace ADS_B_Display.Models
 {
@@ -45,6 +46,8 @@ namespace ADS_B_Display.Models
                     _aircraftTable.Remove(key);
                 }
             }
+
+            UpdateViewableAircraftInPolygon();
         }
 
         internal static Aircraft GetOrAdd(uint icao)
@@ -135,6 +138,29 @@ namespace ADS_B_Display.Models
         {
             lock (lockObj) {
                 _aircraftTable.Clear();
+            }
+        }
+
+        internal static void UpdateViewableAircraftInPolygon()
+        {
+            lock (lockObj)
+            {
+                foreach (var aircraft in _aircraftTable.Values)
+                {
+
+                    bool isInAnyArea = false;
+                    foreach (var area in AreaManager.Areas)
+                    {
+                        if(PointPolygonFilter.IsPointInArea(aircraft.Latitude,
+                            aircraft.Longitude, area.Points.ToArray()))
+                        {
+                            isInAnyArea = true;
+                            break;
+                        }
+                  
+                    }
+                    aircraft.Viewable = isInAnyArea;
+                }
             }
         }
     }
