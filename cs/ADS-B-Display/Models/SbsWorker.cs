@@ -108,7 +108,7 @@ namespace ADS_B_Display
                     bigQuery.Close();
                     bigQuery = null;
 
-                    MessageBox.Show("BigQuery Recording End");
+                    MessageBox.Show("BigQuery End");
                 }
                 catch (Exception ex)
                 {

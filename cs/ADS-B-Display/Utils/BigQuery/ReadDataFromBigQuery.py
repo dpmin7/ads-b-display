@@ -4,66 +4,68 @@ import time
 import pandas as pd
 from google.cloud import bigquery
 
-def main():
-    global_start = time.time()
+def setup_bigquery_client(credential_path: str) -> bigquery.Client:
+    os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = credential_path
+    return bigquery.Client()
 
-    if len(sys.argv) == 3:
-        output_folder = sys.argv[1]
-        table_id = sys.argv[2]
-
-        if not output_folder.endswith("\\") and not output_folder.endswith("/"):
-            output_folder += "\\"
-
-        print(f"[{time.time() - global_start:.2f}s] ▶ Arguments parsed: {output_folder}")
-    else:
-        print("Usage: python ReadDataFromBigQuery.py <BigQueryCredentialFolder> <TableID>")
-        os._exit(0)
-
-    # Set credentials and create BigQuery client
+def run_query_batch(client: bigquery.Client, table_id: str, batch_size: int, offset: int) -> pd.DataFrame:
+    query = f"SELECT * FROM `{table_id}` ORDER BY timestamp ASC LIMIT {batch_size} OFFSET {offset}"
+    print(f"▶ Running query: OFFSET={offset}")
     start = time.time()
-    os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = output_folder + "YourJsonFile.json"
-    client = bigquery.Client()
-    print(f"[{time.time() - global_start:.2f}s] ▶ BigQuery client initialized (Elapsed: {time.time() - start:.2f}s)")
+    df = client.query(query).to_dataframe()
+    print(f"▶ Query finished in {time.time() - start:.2f}s")
+    return df
+
+def save_dataframe_to_csv(df: pd.DataFrame, output_dir: str, batch_index: int):
+    tmp_path = os.path.join(output_dir, f"BigQuery{batch_index}.tmp")
+    final_path = os.path.join(output_dir, f"BigQuery{batch_index}.csv")
+
+    start = time.time()
+    df.to_csv(tmp_path, index=False, encoding="utf-8")
+    print(f"▶ CSV saved to temporary file in {time.time() - start:.2f}s")
+
+    start = time.time()
+    os.rename(tmp_path, final_path)
+    print(f"▶ File renamed to {final_path} in {time.time() - start:.3f}s")
+
+def main():
+    start_time = time.time()
+
+    if len(sys.argv) != 3:
+        print("Usage: python ReadDataFromBigQuery.py <BigQueryCredentialFolder> <TableID>")
+        sys.exit(1)
+
+    output_folder = sys.argv[1]
+    table_id = sys.argv[2]
+
+    if not output_folder.endswith(os.sep):
+        output_folder += os.sep
+
+    credential_path = os.path.join(output_folder, "YourJsonFile.json")
+
+    print(f"▶ Initializing BigQuery client...")
+    client = setup_bigquery_client(credential_path)
+    print(f"▶ BigQuery client ready")
 
     batch_size = 50000
     offset = 0
-    file_count = 0
+    batch_index = 0
 
     while True:
         loop_start = time.time()
-
-        query = f"SELECT * FROM `{table_id}` ORDER BY timestamp ASC LIMIT {batch_size} OFFSET {offset}"
-        print(f"[{time.time() - global_start:.2f}s] ▶ Query execution started: {query}")
-
-        start = time.time()
-        query_job = client.query(query)
-        df = query_job.to_dataframe()
-        query_duration = time.time() - start
-        print(f"[{time.time() - global_start:.2f}s] ▶ Query completed and DataFrame created (Elapsed: {query_duration:.2f}s)")
+        df = run_query_batch(client, table_id, batch_size, offset)
 
         if df.empty:
-            print(f"[{time.time() - global_start:.2f}s] ▶ No more data. Exiting.")
+            print(f"▶ No more rows to process. Total batches: {batch_index}")
             break
 
-        tmp_file = os.path.join(output_folder, f"BigQuery{file_count}.tmp")
-        final_file = os.path.join(output_folder, f"BigQuery{file_count}.csv")
-
-        start = time.time()
-        df.to_csv(tmp_file, index=False, encoding="utf-8")
-        csv_write_duration = time.time() - start
-        print(f"[{time.time() - global_start:.2f}s] ▶ Temporary CSV file saved (Elapsed: {csv_write_duration:.2f}s)")
-
-        start = time.time()
-        os.rename(tmp_file, final_file)
-        rename_duration = time.time() - start
-        print(f"[{time.time() - global_start:.2f}s] ▶ File renamed to final CSV (Elapsed: {rename_duration:.3f}s)")
-
-        print(f"[{time.time() - global_start:.2f}s] ▶ Batch {file_count} completed (Total: {time.time() - loop_start:.2f}s)\n")
+        save_dataframe_to_csv(df, output_folder, batch_index)
 
         offset += batch_size
-        file_count += 1
+        batch_index += 1
+        print(f"▶ Batch {batch_index - 1} complete (Elapsed: {time.time() - loop_start:.2f}s)\n")
 
-    print(f"[{time.time() - global_start:.2f}s] ▶ All tasks completed.")
+    print(f"▶ All batches completed in {time.time() - start_time:.2f}s")
 
 if __name__ == "__main__":
     main()

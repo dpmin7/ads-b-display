@@ -1,71 +1,61 @@
-﻿'''
-Make sure the following is installed:
-pip install google-cloud-bigquery
-pip install --upgrade google-api-python-client
-'''
-
-import os
-import winsound
+﻿import os
 import sys
+import winsound
 from google.cloud import bigquery
 
-def read_csv_file(filename):
 
-            try:
-                print(f"Read file: {filename}")
-                with open(global_filepath+filename, "rb") as source_file:
-                    job = client.load_table_from_file(
-                        source_file, 
-                        table_id, 
-                        job_config=job_config
-                    )
-                job.result()  # Waits for the job to complete.
-                # Delete file
-                if os.path.exists(global_filepath+filename):
-                   os.remove(global_filepath+filename)
-                   print(f"File '{global_filepath+filename}' deleted successfully.")
-                return 0
-            except Exception as e:
-                print(f"Error reading file {filename}: {e}")
-                return 1
-               
-            sys.stdout.flush()
+def read_csv_file(filepath: str, table_id: str, client: bigquery.Client, job_config: bigquery.LoadJobConfig) -> bool:
+    try:
+        print(f"Reading file: {filepath}")
+        with open(filepath, "rb") as source_file:
+            job = client.load_table_from_file(source_file, table_id, job_config=job_config)
+        job.result()  # Waits for the job to complete
+
+        os.remove(filepath)
+        print(f"File '{filepath}' deleted successfully.")
+        return True
+
+    except Exception as e:
+        print(f"Error processing file '{filepath}': {e}")
+        return False
 
 
-if len(sys.argv) == 4:  
-   global_filepath = sys.argv[1]+"\\"
-   filename = sys.argv[2]
-   table_id = sys.argv[3]
-   print(f"The first argument is: {global_filepath}")
-   print(f"The second argument is: {filename}")
-   print(f"The third argument is: {table_id}")
-else:
-   print(f"Failure 1\n")	
-   os._exit(0)
-current_directory = os.getcwd()
-print(current_directory)
-# Set credentials
-api_key = global_filepath+"YourJsonFile.json"
-os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = api_key
+def main():
+    if len(sys.argv) != 4:
+        print("Usage: python script.py <CredentialFolder> <Filename> <TableID>")
+        sys.exit(1)
 
-# Construct a BigQuery client object.
-client = bigquery.Client()
+    credential_folder = sys.argv[1]
+    filename = sys.argv[2]
+    table_id = sys.argv[3]
 
-# Set table_id to the ID of the table.
-print(f"TableId: {table_id}")
+    filepath = os.path.join(credential_folder, filename)
+    credential_path = os.path.join(credential_folder, "YourJsonFile.json")
 
-job_config = bigquery.LoadJobConfig(
-    source_format=bigquery.SourceFormat.CSV,
-    autodetect=True,
-    skip_leading_rows=1,
-    write_disposition=bigquery.WriteDisposition.WRITE_APPEND,   #add this line to append rows vice creating a new table or overwriting data
+    print(f"Credential Path: {credential_path}")
+    print(f"CSV File: {filepath}")
+    print(f"BigQuery Table ID: {table_id}")
 
-)
-result=read_csv_file(filename)
-if result == 0:
-  print(f"Success\n")
-  frequency = 2500  # Set Frequency (Hz)
-  duration = 1000 # Set Duration (ms)
-  winsound.Beep(frequency, duration)
-else:
-  print(f"Failure 2\n")
+    os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = credential_path
+
+    client = bigquery.Client()
+
+    job_config = bigquery.LoadJobConfig(
+        source_format=bigquery.SourceFormat.CSV,
+        autodetect=True,
+        skip_leading_rows=1,
+        write_disposition=bigquery.WriteDisposition.WRITE_APPEND
+    )
+
+    success = read_csv_file(filepath, table_id, client, job_config)
+
+    if success:
+        print("CSV upload successful.")
+        winsound.Beep(2500, 1000)
+    else:
+        print("CSV upload failed.")
+        sys.exit(2)
+
+
+if __name__ == "__main__":
+    main()
