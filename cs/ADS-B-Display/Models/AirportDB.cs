@@ -1,4 +1,5 @@
-﻿using System;
+﻿using ADS_B_Display.Utils;
+using System;
 using System.Collections.Generic;
 using System.Net.Http;
 using System.Threading.Tasks;
@@ -27,7 +28,7 @@ namespace ADS_B_Display
                 }
 
                 var airportsData = airportsResponse.Content.ReadAsStringAsync().Result;
-                airports = Parse(airportsData);
+                airports = CsvUtil.Parse(airportsData);
 
                 var routesResponse = _httpClient.GetAsync(routesUrl).Result;
                 if (!routesResponse.IsSuccessStatusCode)
@@ -36,38 +37,9 @@ namespace ADS_B_Display
                 }
 
                 var routesData = routesResponse.Content.ReadAsStringAsync().Result;
-                routes = Parse(routesData);
+                routes = CsvUtil.Parse(routesData);
                 SetUniqueAirportCodes();
             });
-        }
-
-        private static List<Dictionary<string, string>> Parse(string data)
-        {
-            var result = new List<Dictionary<string, string>>();
-
-            var lines = data.Split('\n');
-            if (lines.Length == 0) return result;
-
-            var headers = lines[0].Split(',');
-
-            for (int i = 1; i < lines.Length; i++)
-            {
-                var line = lines[i];
-                var values = line.Split(',');
-                var row = new Dictionary<string, string>();
-
-                for (int j = 0; j < headers.Length; j++)
-                {
-                    string key = headers[j].Trim();
-                    string value = j < values.Length ? values[j].Trim() : "";
-
-                    row[key] = value;
-                }
-
-                result.Add(row);
-            }
-
-            return result;
         }
 
         public static List<Dictionary<string, string>> GetAirPortsInfo()

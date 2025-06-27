@@ -1,8 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Net.Http;
-using System.Text;
 using System.Threading.Tasks;
 
 namespace ADS_B_Display.Map.MapSrc
@@ -18,7 +15,6 @@ namespace ADS_B_Display.Map.MapSrc
     public class KeyholeConnection : SimpleTileStorage
     {
         private readonly HttpClient _httpClient;
-        private readonly TileServerType _serverType;
         private readonly AbstractMap map;
 
         public KeyholeConnection(AbstractMap map) : base()

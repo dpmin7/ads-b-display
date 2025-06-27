@@ -626,7 +626,20 @@ namespace ADS_B_Display.Views
                     GL.Color4(1f, 0f, 0f, 1f);
                 }
 
-                Ntds2d.DrawAirplaneImage(scrX, scrY, data.Altitude, airplaneScale * 0.5, data.Heading, data.SpriteImage, data.IsGhost);
+                // 이미지 변경?
+                var spriteImage = data.SpriteImage;
+                if (uint.TryParse(data.HexAddr, out uint result))
+                {
+                    var additionalData = AircraftDB.GetAircraftInfo(result);
+
+                    if (additionalData != null)
+                    {
+                        spriteImage = convertSpriteImage(additionalData["icaoaircrafttype"]);
+                        // Console.WriteLine($"additionalData - icao: {data.ICAO}, spriteImage: {spriteImage}");
+                    }
+                }
+
+                Ntds2d.DrawAirplaneImage(scrX, scrY, data.Altitude, airplaneScale * 0.5, data.Heading, spriteImage, data.IsGhost);
                 //glControl.Draw2DText(data.HexAddr, scrX + 10, scrY - 10, System.Drawing.Color.Pink);
                 // TODO: Draw2DText 구현 필요
 
@@ -725,6 +738,30 @@ namespace ADS_B_Display.Views
             siny = Math.Sin((MapCenterLat * Math.PI) / 180.0);
             siny = Math.Min(Math.Max(siny, -0.9999), 0.9999);
             y = (Math.Log((1 + siny) / (1 - siny)) / (4 * Math.PI));
+        }
+
+        private static int convertSpriteImage(string icaoaircrafttype)
+        {
+            switch (icaoaircrafttype)
+            {
+                case "L2J":
+                    return 79;
+                case "H1P":
+                    return 46;
+                case "H1T":
+                    return 75;
+                case "H2P":
+                    return 75;
+                case "H2T":
+                    return 52;
+                case "H3T":
+                    return 53;
+                case "H25B":
+                    return 79;
+
+            }
+
+            return 0;
         }
     }
 }

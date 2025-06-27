@@ -81,6 +81,7 @@ namespace ADS_B_Display.Models
                     _aircraftTable.Add(icao, aircraft);
                 }
             }
+
             return aircraft;
         }
 
