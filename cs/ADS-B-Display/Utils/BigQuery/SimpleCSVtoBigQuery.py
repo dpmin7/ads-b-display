@@ -1,4 +1,4 @@
-'''
+﻿'''
 Make sure the following is installed:
 pip install google-cloud-bigquery
 pip install --upgrade google-api-python-client
@@ -8,6 +8,7 @@ import os
 import winsound
 import sys
 from google.cloud import bigquery
+
 def read_csv_file(filename):
 
             try:
@@ -31,11 +32,13 @@ def read_csv_file(filename):
             sys.stdout.flush()
 
 
-if len(sys.argv) == 3:  
+if len(sys.argv) == 4:  
    global_filepath = sys.argv[1]+"\\"
    filename = sys.argv[2]
+   table_id = sys.argv[3]
    print(f"The first argument is: {global_filepath}")
    print(f"The second argument is: {filename}")
+   print(f"The third argument is: {table_id}")
 else:
    print(f"Failure 1\n")	
    os._exit(0)
@@ -49,8 +52,7 @@ os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = api_key
 client = bigquery.Client()
 
 # Set table_id to the ID of the table.
-table_id = "scs-lg-arch-5.SBS_Data.FirstRun"
-
+print(f"TableId: {table_id}")
 
 job_config = bigquery.LoadJobConfig(
     source_format=bigquery.SourceFormat.CSV,

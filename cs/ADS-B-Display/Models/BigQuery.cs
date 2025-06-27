@@ -308,10 +308,10 @@ namespace ADS_B_Display.Models
                 {
                     FileName = "python",
                     Arguments = args,
-                    CreateNoWindow = true,
-                    UseShellExecute = false,
                     //CreateNoWindow = false, // For Debug
                     //UseShellExecute = true, // For Debug
+                    CreateNoWindow = true,
+                    UseShellExecute = false,
                     //RedirectStandardOutput = true,
                     //RedirectStandardError = true,
                 };
@@ -341,73 +341,73 @@ namespace ADS_B_Display.Models
             }
         }
 
-        public void DownloadBigQueryToGzippedCsvFiles(string projectId, string datasetId, string tableId, string credentialJsonPath)
-        {
-            Environment.SetEnvironmentVariable("GOOGLE_APPLICATION_CREDENTIALS", credentialJsonPath);
+        //public void DownloadBigQueryToGzippedCsvFiles(string projectId, string datasetId, string tableId, string credentialJsonPath)
+        //{
+        //    Environment.SetEnvironmentVariable("GOOGLE_APPLICATION_CREDENTIALS", credentialJsonPath);
 
-            var totalSw = Stopwatch.StartNew();
+        //    var totalSw = Stopwatch.StartNew();
 
-            var client = BigQueryClient.Create(projectId);
-            string tableRef = $"{projectId}.{datasetId}.{tableId}";
+        //    var client = BigQueryClient.Create(projectId);
+        //    string tableRef = $"{projectId}.{datasetId}.{tableId}";
 
-            // 전체 row 수 조회
-            var countSw = Stopwatch.StartNew();
-            var totalQuery = $"SELECT COUNT(*) as total FROM `{tableRef}`";
-            var totalRows = (long)client.ExecuteQuery(totalQuery, null).First()["total"];
-            countSw.Stop();
-            Console.WriteLine($"[BigQuery] Row count 쿼리 소요 시간: {countSw.ElapsedMilliseconds} ms, 총 {totalRows} rows");
+        //    // 전체 row 수 조회
+        //    var countSw = Stopwatch.StartNew();
+        //    var totalQuery = $"SELECT COUNT(*) as total FROM `{tableRef}`";
+        //    var totalRows = (long)client.ExecuteQuery(totalQuery, null).First()["total"];
+        //    countSw.Stop();
+        //    Console.WriteLine($"[BigQuery] Row count 쿼리 소요 시간: {countSw.ElapsedMilliseconds} ms, 총 {totalRows} rows");
 
-            int batchSize = RowThreshold;
-            int offset = 0;
-            int fileCount = 0;
+        //    int batchSize = RowThreshold;
+        //    int offset = 0;
+        //    int fileCount = 0;
 
-            while (offset < totalRows)
-            {
-                var querySw = Stopwatch.StartNew();
-                var query = $"SELECT * FROM `{tableRef}` ORDER BY timestamp LIMIT {batchSize} OFFSET {offset}";
-                var result = client.ExecuteQuery(query, null);
-                querySw.Stop();
-                Console.WriteLine($"[BigQuery] 쿼리({fileCount}) 소요 시간: {querySw.ElapsedMilliseconds} ms (OFFSET={offset})");
+        //    while (offset < totalRows)
+        //    {
+        //        var querySw = Stopwatch.StartNew();
+        //        var query = $"SELECT * FROM `{tableRef}` ORDER BY timestamp LIMIT {batchSize} OFFSET {offset}";
+        //        var result = client.ExecuteQuery(query, null);
+        //        querySw.Stop();
+        //        Console.WriteLine($"[BigQuery] 쿼리({fileCount}) 소요 시간: {querySw.ElapsedMilliseconds} ms (OFFSET={offset})");
 
-                var fileSw = Stopwatch.StartNew();
-                string gzFile = Path.Combine(CsvFolderPath, $"BigQuery{fileCount}.csv.gz");
+        //        var fileSw = Stopwatch.StartNew();
+        //        string gzFile = Path.Combine(CsvFolderPath, $"BigQuery{fileCount}.csv.gz");
 
-                using (var fileStream = new FileStream(gzFile, FileMode.Create, FileAccess.Write, FileShare.None))
-                using (var gzipStream = new GZipStream(fileStream, CompressionLevel.Optimal))
-                using (var writer = new StreamWriter(gzipStream, Encoding.UTF8))
-                {
-                    var schema = result.Schema.Fields;
-                    writer.WriteLine(string.Join(",", schema.Select(f => f.Name)));
+        //        using (var fileStream = new FileStream(gzFile, FileMode.Create, FileAccess.Write, FileShare.None))
+        //        using (var gzipStream = new GZipStream(fileStream, CompressionLevel.Optimal))
+        //        using (var writer = new StreamWriter(gzipStream, Encoding.UTF8))
+        //        {
+        //            var schema = result.Schema.Fields;
+        //            writer.WriteLine(string.Join(",", schema.Select(f => f.Name)));
 
-                    var sb = new StringBuilder(1024);
-                    foreach (var row in result)
-                    {
-                        sb.Clear();
-                        for (int i = 0; i < schema.Count; i++)
-                        {
-                            if (i > 0) sb.Append(',');
-                            var value = row[schema[i].Name];
-                            var str = value?.ToString() ?? "";
-                            if (str.Contains(',') || str.Contains('"') || str.Contains('\n') || str.Contains('\r'))
-                            {
-                                str = $"\"{str.Replace("\"", "\"\"")}\"";
-                            }
-                            sb.Append(str);
-                        }
-                        writer.WriteLine(sb.ToString());
-                    }
-                }
+        //            var sb = new StringBuilder(1024);
+        //            foreach (var row in result)
+        //            {
+        //                sb.Clear();
+        //                for (int i = 0; i < schema.Count; i++)
+        //                {
+        //                    if (i > 0) sb.Append(',');
+        //                    var value = row[schema[i].Name];
+        //                    var str = value?.ToString() ?? "";
+        //                    if (str.Contains(',') || str.Contains('"') || str.Contains('\n') || str.Contains('\r'))
+        //                    {
+        //                        str = $"\"{str.Replace("\"", "\"\"")}\"";
+        //                    }
+        //                    sb.Append(str);
+        //                }
+        //                writer.WriteLine(sb.ToString());
+        //            }
+        //        }
 
-                fileSw.Stop();
-                Console.WriteLine($"[BigQuery] 압축 파일 저장({fileCount}) 소요 시간: {fileSw.ElapsedMilliseconds} ms ({gzFile})");
+        //        fileSw.Stop();
+        //        Console.WriteLine($"[BigQuery] 압축 파일 저장({fileCount}) 소요 시간: {fileSw.ElapsedMilliseconds} ms ({gzFile})");
 
-                offset += batchSize;
-                fileCount++;
-            }
+        //        offset += batchSize;
+        //        fileCount++;
+        //    }
 
-            totalSw.Stop();
-            Console.WriteLine($"[BigQuery] 전체 다운로드 소요 시간: {totalSw.ElapsedMilliseconds} ms");
-        }
+        //    totalSw.Stop();
+        //    Console.WriteLine($"[BigQuery] 전체 다운로드 소요 시간: {totalSw.ElapsedMilliseconds} ms");
+        //}
 
         public void Dispose()
         {
