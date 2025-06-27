@@ -422,6 +422,7 @@ namespace ADS_B_Display.Views
                 }
                 else
                 {
+                    _trackHook.TimestampUtc = selectedAircraft.LastSeen;
                     _trackHook.Valid_CPA = true;
                     _trackHook.ICAO_CPA = selectedAircraft.ICAO;
                     _trackHook.DepartureAirport = null;
@@ -455,22 +456,22 @@ namespace ADS_B_Display.Views
 
             if (_trackHook.Valid_CC)
                 glControl.InvalidateVisual();
-
-            if (!cpaHook)
-                PublishHookInfo(_trackHook);
         }
 
         private bool _prevValid_CC = false;
         private uint _prevICAO_CC = 0;
+        private long _prevTime = 0;
         private void PublishHookInfo(TrackHookStruct trackHook)
         {
             if (_prevICAO_CC == trackHook.ICAO_CC &&
-                _prevValid_CC == trackHook.Valid_CC)
+                _prevValid_CC == false &&
+                _prevTime == trackHook.TimestampUtc)
             { // 같은 놈 같은 상태면 업데이트 하지 말자.
                 return;
             }
             _prevValid_CC = trackHook.Valid_CC;
             _prevICAO_CC = trackHook.ICAO_CC;
+            _prevTime = trackHook.TimestampUtc;
             EventBus.Publish(EventIds.EvtAircraftHooked, trackHook);
         }
 
@@ -658,6 +659,8 @@ namespace ADS_B_Display.Views
                     _trackHook.Valid_CC = false;
                 }
             }
+
+            PublishHookInfo(_trackHook);
 
             // --- 5. 선택된 항공기의 출발/도착 공항 정보 그리기 ---
             if (_trackHook.DepartureAirport != null && _trackHook.ArrivalAirport != null)

@@ -33,6 +33,7 @@ namespace ADS_B_Display.Views
         private bool _canCompleteOrCancel = false;
         public ObservableCollection<Area> AreaList { get; }
         private Area _selectedArea;
+        private DispatcherTimer _timer = null;
 
         public AircraftControlViewModel()
         {
@@ -76,6 +77,17 @@ namespace ADS_B_Display.Views
             DeleteCommand = new DelegateCommand(DeleteArea, CanDeleteArea);
 
             AreaList = new ObservableCollection<Area>(AreaManager.Areas);
+
+            _timer = new DispatcherTimer(DispatcherPriority.Background) {
+                Interval = TimeSpan.FromMilliseconds(500)
+            };
+            _timer.Tick += (s, e) => {
+                NumOfAircraft = AircraftManager.Count();
+                ViewableAircraft = AircraftManager.GetAll().Count(a => a.Viewable);
+                SystemTime = DateTime.Now;
+            };
+
+            _timer.Start();
         }
 
         private void PolygonComplete(object obj)
@@ -681,6 +693,15 @@ namespace ADS_B_Display.Views
         {
             EventBus.Publish(EventIds.EvtControlSettingChanged, ControlSettings);
         }
+
+        private int numOfAircraft;
+        public int NumOfAircraft { get => numOfAircraft; set => SetProperty(ref numOfAircraft, value); }
+
+        private int viewableAircraft;
+        public int ViewableAircraft { get => viewableAircraft; set => SetProperty(ref viewableAircraft, value); }
+
+        private DateTime systemTime;
+        public DateTime SystemTime { get => systemTime; set => SetProperty(ref systemTime, value); }
 
         // Display
         //private string icaoText;

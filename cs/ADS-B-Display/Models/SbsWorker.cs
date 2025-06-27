@@ -262,7 +262,8 @@ namespace ADS_B_Display
                         if (string.IsNullOrEmpty(rawLine))
                             continue;
 
-                        OnMessageReceived?.Invoke(rawLine);
+                        uint acio = OnMessageReceived?.Invoke(rawLine) ?? 0;
+                        PostProcess(acio);
                     }
                 }
             } catch (Exception ex) {
@@ -284,8 +285,7 @@ namespace ADS_B_Display
                     }
                 }
             } catch (Exception ex) {
-                // TODO:
-                //MessageBox.Show("TCP Error: " + ex.Message);
+                MessageBox.Show("TCP Error: " + ex.Message); //리 컨넥션 필수
             }
 
             OnFinished?.Invoke();
@@ -298,7 +298,17 @@ namespace ADS_B_Display
 
             bigQuery?.WriteRow(timestamp, msg);
 
-            OnMessageReceived?.Invoke(msg);
+            uint acio = OnMessageReceived?.Invoke(msg) ?? 0;
+            PostProcess(acio);
+        }
+
+        private void PostProcess(uint acio)
+        {
+            if (AircraftManager.TryGet(acio, out var aircraft))
+            {
+                aircraft.TrackPoint.Enqueue(new AircraftTrackPoint(
+                    aircraft.Latitude, aircraft.Longitude, aircraft.Altitude, aircraft.LastSeen));
+            }
         }
     }
 }

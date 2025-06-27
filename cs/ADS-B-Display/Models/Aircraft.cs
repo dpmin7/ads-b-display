@@ -133,6 +133,7 @@ namespace ADS_B_Display
 
     public struct TrackHookStruct
     {
+        public long TimestampUtc { get; set; } // UTC timestamp in milliseconds
         public bool Valid_CC { get; set; }
         public uint ICAO_CC { get; set; }
         public bool Valid_CPA { get; set; }

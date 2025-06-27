@@ -15,5 +15,10 @@ namespace ADS_B_Display
         {
             return DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
         }
+
+        public static DateTime ConvertMsecToDateTime(long msec)
+        {
+            return DateTimeOffset.FromUnixTimeMilliseconds(msec).UtcDateTime;
+        }
     }
 }

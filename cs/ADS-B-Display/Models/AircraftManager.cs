@@ -37,11 +37,23 @@ namespace ADS_B_Display.Models
         private static void OnDataTimerElapsed(object sender, ElapsedEventArgs e)
         {
             long now = TimeFunctions.GetCurrentTimeInMsec();
-            lock (lockObj) {
-                foreach (var key in _aircraftTable
-                    .Where(kvp => kvp.Value.TimeCheck(now, _ghostLimitMS, _purgeLimitMS))
-                    .Select(kvp => kvp.Key)
-                    .ToArray()) // 안전 복사
+            lock (lockObj)
+            {
+                var keysToRemove = new List<uint>();
+
+                // 첫 번째 루프: 
+                // 1. TimeCheck함수에서 현재 시간과 비교하여 Purge 대상 키를 수집, Ghost상태 체크, 가상 위치 계산
+                // 2. 다각형 등의 필터도 여기서 하기...
+                foreach (var kvp in _aircraftTable)
+                {
+                    if (kvp.Value.TimeCheck(now, _ghostLimitMS, _purgeLimitMS))
+                    {
+                        keysToRemove.Add(kvp.Key);
+                    }
+                }
+
+                // 두 번째 루프: Purge키로 aircraft 삭제
+                foreach (var key in keysToRemove)
                 {
                     _aircraftTable.Remove(key);
                 }

@@ -39,4 +39,19 @@ namespace ADS_B_Display.Views.Converters
             return TimeSpan.Zero.TotalSeconds;
         }
     }
+
+    public class MsToDateTime : IValueConverter
+    {
+        public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+        {
+            if (value is long ms) {
+                return TimeFunctions.ConvertMsecToDateTime(ms);
+            }
+            return default(DateTime);
+        }
+        public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+        {
+            throw new NotImplementedException("ConvertBack is not implemented for MsToDateTime converter.");
+        }
+    }
 }
