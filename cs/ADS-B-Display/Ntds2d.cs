@@ -305,6 +305,20 @@ namespace ADS_B_Display
             GL.End();
         }
 
+        public static void DrawLeader(double x1, double y1, double x2, double y2, double width)
+        {
+            GL.LineWidth((float)width);
+            DrawLeader(x1, y1, x2, y2);
+            GL.LineWidth(1f); // 기본 두께로 되돌리기
+        }
+
+        public static void DrawLeader(double x1, double y1, double x2, double y2, double width, (double r, double g, double b) color)
+        {
+            GL.Color4((float)color.r, (float)color.g, (float)color.b, 1f);
+            DrawLeader(x1, y1, x2, y2, width);
+            GL.Color4(1f, 1f, 1f, 1f); // 기본 색상으로 되돌리기
+        }
+
         /// <summary>
         /// 목적지 점 계산
         /// </summary>

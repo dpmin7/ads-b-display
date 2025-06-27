@@ -285,7 +285,7 @@ namespace ADS_B_Display
                     }
                 }
             } catch (Exception ex) {
-                MessageBox.Show("TCP Error: " + ex.Message); //리 컨넥션 필수
+                //MessageBox.Show("TCP Error: " + ex.Message); //리 컨넥션 필수
             }
 
             OnFinished?.Invoke();

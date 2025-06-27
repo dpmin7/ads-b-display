@@ -79,12 +79,13 @@ namespace ADS_B_Display.Views
             AreaList = new ObservableCollection<Area>(AreaManager.Areas);
 
             _timer = new DispatcherTimer(DispatcherPriority.Background) {
-                Interval = TimeSpan.FromMilliseconds(500)
+                Interval = TimeSpan.FromMilliseconds(250)
             };
             _timer.Tick += (s, e) => {
                 NumOfAircraft = AircraftManager.Count();
                 ViewableAircraft = AircraftManager.GetAll().Count(a => a.Viewable);
                 SystemTime = DateTime.Now;
+                UpdateHookedAircraft();
             };
 
             _timer.Start();
@@ -430,7 +431,6 @@ namespace ADS_B_Display.Views
 
         private void RegisterEvents()
         {
-            EventBus.Observe(EventIds.EvtAircraftHooked).Subscribe(msg => UpdateHookedAircraft(msg));
             EventBus.Observe(EventIds.EvtMouseMoved).Subscribe(msg => UpdateMouseMove(msg));
         }
 
@@ -609,19 +609,18 @@ namespace ADS_B_Display.Views
         }
 
 
-        private void UpdateHookedAircraft(object msg)
+        private void UpdateHookedAircraft()
         {
-            if (msg == null) {
-                Aircraft = null;
-                return;
-            }
-
-            if (msg is TrackHookStruct hookedAc && AircraftManager.TryGet(hookedAc.ICAO_CC, out Aircraft ac))
+            if (AircraftManager.TrackHook.Valid_CC && AircraftManager.TryGet(AircraftManager.TrackHook.ICAO_CC, out Aircraft ac))
             {
                 if (Aircraft == null) {
                     Aircraft = new AircraftForUI();
                 }
                 Aircraft.UpdateAircraftForUI(ac);
+            }
+            else
+            {
+                Aircraft = null;
             }
         }
 

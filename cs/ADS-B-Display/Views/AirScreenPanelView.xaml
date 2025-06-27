@@ -10,12 +10,39 @@
     d:DesignWidth="800"
     MouseWheel="Window_MouseWheel"
     mc:Ignorable="d">
-    <gl:GLWpfControl
-        x:Name="glControl"
-        Loaded="glControl_Loaded"
-        PreviewMouseDown="glControl_PreviewMouseDown"
-        PreviewMouseMove="glControl_PreviewMouseMove"
-        PreviewMouseUp="glControl_PreviewMouseUp"
-        Render="glControl_Render"
-        SizeChanged="glControl_SizeChanged" />
+    <Grid>
+        <gl:GLWpfControl
+            x:Name="glControl"
+            Loaded="glControl_Loaded"
+            PreviewMouseDown="glControl_PreviewMouseDown"
+            PreviewMouseMove="glControl_PreviewMouseMove"
+            PreviewMouseUp="glControl_PreviewMouseUp"
+            Render="glControl_Render"
+            SizeChanged="glControl_SizeChanged" />
+        <Border
+            Margin="10"
+            Padding="10"
+            HorizontalAlignment="Right"
+            VerticalAlignment="Bottom"
+            Background="#55eeeeee">
+            <StackPanel Orientation="Vertical">
+                <TextBlock Text="(X, Y, H), (L, R, T, B)" />
+                <TextBlock>
+                    <Run x:Name="eyeX" />
+                    <Run Text=", " />
+                    <Run x:Name="eyeY" />
+                    <Run Text=", " />
+                    <Run x:Name="eyeH" />
+                    <Run Text=", " />
+                    <Run x:Name="Rightr" />
+                    <Run Text=", " />
+                    <Run x:Name="Left" />
+                    <Run Text=", " />
+                    <Run x:Name="Top" />
+                    <Run Text=", " />
+                    <Run x:Name="Bottom" />
+                </TextBlock>
+            </StackPanel>
+        </Border>
+    </Grid>
 </UserControl>

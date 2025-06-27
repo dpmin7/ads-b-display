@@ -12,6 +12,9 @@ namespace ADS_B_Display.Models
         private static readonly Dictionary<uint, Aircraft> _aircraftTable
             = new Dictionary<uint, Aircraft>();
 
+        private static TrackHookStruct _trackHook = new TrackHookStruct();
+        public static TrackHookStruct TrackHook => _trackHook;
+
         private static object lockObj = new object();
 
         private static Timer _dataTimer;
@@ -176,5 +179,17 @@ namespace ADS_B_Display.Models
                 }
             }
         }
+    }
+
+
+    public class TrackHookStruct
+    {
+        public long TimestampUtc { get; set; } // UTC timestamp in milliseconds
+        public bool Valid_CC { get; set; } = false;
+        public uint ICAO_CC { get; set; }
+        public bool Valid_CPA { get; set; }
+        public uint ICAO_CPA { get; set; }
+        public Dictionary<string, string> DepartureAirport { get; set; }
+        public Dictionary<string, string> ArrivalAirport { get; set; }
     }
 }

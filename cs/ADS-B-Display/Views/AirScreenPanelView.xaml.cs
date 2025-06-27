@@ -3,7 +3,6 @@ using ADS_B_Display.Map.MapSrc;
 using ADS_B_Display.Models;
 using ADS_B_Display.Models.Settings;
 using ADS_B_Display.Utils;
-using Microsoft.SqlServer.Server;
 using OpenTK;
 using OpenTK.Graphics.OpenGL;
 using OpenTK.Wpf;
@@ -12,16 +11,9 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reactive.Linq;
 using System.Timers;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
 using System.Windows.Input;
-using System.Windows.Media;
-using System.Windows.Media.Imaging;
-using System.Windows.Shapes;
 using System.Windows.Threading;
 
 namespace ADS_B_Display.Views
@@ -45,7 +37,6 @@ namespace ADS_B_Display.Views
         public Vector3d[] Map_p = new Vector3d[4];
         public Vector2d[] Map_w = new Vector2d[2];
         double MapCenterLat, MapCenterLon;
-        private TrackHookStruct _trackHook = new TrackHookStruct();
 
         private const float BG_INTENSITY = 0.37f; // 배경색 강도 (0.0f ~ 1.0f)
         private const float MAP_CENTER_LAT = 40.73612f; // 지도 중심 위도
@@ -79,28 +70,6 @@ namespace ADS_B_Display.Views
 
             MapManager.Instance.RegisterLoadMapCallback(MapLoaded);
             MapManager.Instance.LoadMap(TileServerType.GoogleMaps);
-            //LoadMap(TileServerType.GoogleMaps);
-
-            double x, y, h;
-            if (Setting.Instance.MapConfig.IsInitialState)
-            {
-                MapCenterLat = MAP_CENTER_LAT;
-                MapCenterLon = MAP_CENTER_LON;
-                SetMapCenter(out x, out y);
-                h = 1 / Math.Pow(1.3, 18);
-            }
-            else
-            {
-                MapCenterLat = MAP_CENTER_LAT;
-                MapCenterLon = MAP_CENTER_LON;
-                x = Setting.Instance.MapConfig.EyeX;
-                y = Setting.Instance.MapConfig.EyeY;
-                h = Setting.Instance.MapConfig.EyeH;
-            }
-            _earthView.Eye.X = x;
-            _earthView.Eye.Y = y;
-            _earthView.Eye.H = h;
-            airplaneScale = Math.Min((0.05 / _earthView.Eye.H), 1.5); // 스케일 계산
 
             _updateTimer.Interval = TimeSpan.FromMilliseconds(500);
             _updateTimer.Tick += _updateTimer_Tick;
@@ -111,7 +80,6 @@ namespace ADS_B_Display.Views
             };
             _delayTimer.Elapsed += (s, e) => {
                 _allowDraw = true; // 타이머가 끝나면 그리기 허용
-
                 glControl.InvalidateVisual(); // OpenGL 컨트롤 강제 갱신
             };
         }
@@ -283,8 +251,8 @@ namespace ADS_B_Display.Views
         }
 
         private void glControl_Loaded(object sender, RoutedEventArgs e)
-        {   
-            glControl.InvalidateVisual(); // 첫 프레임 수동 렌더링
+        {
+            MapInit();
 
             // 뷰포트 설정: 컨트롤 크기에 맞춰 화면 전체를 사용
             GL.Viewport(0, 0, glControl.ActualWidth > 0 ? (int)glControl.ActualWidth : 1, glControl.ActualHeight > 0 ? (int)glControl.ActualHeight : 1);
@@ -320,6 +288,33 @@ namespace ADS_B_Display.Views
             // 콘솔에 OpenGL 버전 출력
             Console.WriteLine($"OpenGL Version: {GL.GetString(StringName.Version)}");
             _isLoaded = true;
+            glControl.InvalidateVisual(); // 첫 프레임 수동 렌더링
+        }
+
+        private void MapInit()
+        {
+            double x, y, h;
+            if (Setting.Instance.MapConfig.IsInitialState)
+            {
+                MapCenterLat = MAP_CENTER_LAT;
+                MapCenterLon = MAP_CENTER_LON;
+                SetMapCenter(out x, out y);
+                h = 1 / Math.Pow(1.3, 18);
+            }
+            else
+            {
+                MapCenterLat = MAP_CENTER_LAT;
+                MapCenterLon = MAP_CENTER_LON;
+                x = Setting.Instance.MapConfig.EyeX;
+                y = Setting.Instance.MapConfig.EyeY;
+                h = Setting.Instance.MapConfig.EyeH;
+            }
+            _earthView.Eye.X = x;
+            _earthView.Eye.Y = y;
+            _earthView.Eye.H = h;
+            airplaneScale = Math.Min((0.05 / _earthView.Eye.H), 1.5); // 스케일 계산
+
+            UpdateRegion(); // 현재 지역 업데이트
         }
 
         private double airplaneScale;
@@ -399,8 +394,8 @@ namespace ADS_B_Display.Views
                 var selectedAircraft = AircraftManager.GetOrAdd(currentICAO);
                 if (!cpaHook)
                 {
-                    _trackHook.Valid_CC = true;
-                    _trackHook.ICAO_CC = selectedAircraft.ICAO;
+                    AircraftManager.TrackHook.Valid_CC = true;
+                    AircraftManager.TrackHook.ICAO_CC = selectedAircraft.ICAO;
                     //Console.WriteLine(AircraftDB.GetAircraftInfo(selectedAircraft.ICAO));
 
                     // 출발 - 도착 정보 저장
@@ -415,36 +410,27 @@ namespace ADS_B_Display.Views
                         if (selectedRoute != null)
                         {
                             var airportCodes = selectedRoute["AirportCodes"].Split('-');
-                            _trackHook.DepartureAirport = airportsInfo.FirstOrDefault(dict => dict.ContainsKey("ICAO") && dict["ICAO"] == airportCodes[0]);
-                            _trackHook.ArrivalAirport = airportsInfo.FirstOrDefault(dict => dict.ContainsKey("ICAO") && dict["ICAO"] == airportCodes[1]);
+                            AircraftManager.TrackHook.DepartureAirport = airportsInfo.FirstOrDefault(dict => dict.ContainsKey("ICAO") && dict["ICAO"] == airportCodes[0]);
+                            AircraftManager.TrackHook.ArrivalAirport = airportsInfo.FirstOrDefault(dict => dict.ContainsKey("ICAO") && dict["ICAO"] == airportCodes[1]);
                         }
                     }
                 }
                 else
                 {
-                    _trackHook.TimestampUtc = selectedAircraft.LastSeen;
-                    _trackHook.Valid_CPA = true;
-                    _trackHook.ICAO_CPA = selectedAircraft.ICAO;
-                    _trackHook.DepartureAirport = null;
-                    _trackHook.ArrivalAirport = null;
+                    AircraftManager.TrackHook.TimestampUtc = selectedAircraft.LastSeen;
+                    AircraftManager.TrackHook.Valid_CPA = true;
+                    AircraftManager.TrackHook.ICAO_CPA = selectedAircraft.ICAO;
+                    AircraftManager.TrackHook.DepartureAirport = null;
+                    AircraftManager.TrackHook.ArrivalAirport = null;
                 }
             }
             else
             {
                 if (!cpaHook)
                 {
-                    _trackHook.Valid_CC = false;
-                    //ICAOLabel.Text = "N/A";
-                    //FlightNumLabel.Text = "N/A";
-                    //CLatLabel.Text = "N/A";
-                    //CLonLabel.Text = "N/A";
-                    //SpdLabel.Text = "N/A";
-                    //HdgLabel.Text = "N/A";
-                    //AltLabel.Text = "N/A";
-                    //MsgCntLabel.Text = "N/A";
-                    //TrkLastUpdateTimeLabel.Text = "N/A";
-                    _trackHook.DepartureAirport = null;
-                    _trackHook.ArrivalAirport = null;
+                    AircraftManager.TrackHook.Valid_CC = false;
+                    AircraftManager.TrackHook.DepartureAirport = null;
+                    AircraftManager.TrackHook.ArrivalAirport = null;
                 }
                 else
                 {
@@ -454,25 +440,8 @@ namespace ADS_B_Display.Views
                 }
             }
 
-            if (_trackHook.Valid_CC)
+            if (AircraftManager.TrackHook.Valid_CC)
                 glControl.InvalidateVisual();
-        }
-
-        private bool _prevValid_CC = false;
-        private uint _prevICAO_CC = 0;
-        private long _prevTime = 0;
-        private void PublishHookInfo(TrackHookStruct trackHook)
-        {
-            if (_prevICAO_CC == trackHook.ICAO_CC &&
-                _prevValid_CC == false &&
-                _prevTime == trackHook.TimestampUtc)
-            { // 같은 놈 같은 상태면 업데이트 하지 말자.
-                return;
-            }
-            _prevValid_CC = trackHook.Valid_CC;
-            _prevICAO_CC = trackHook.ICAO_CC;
-            _prevTime = trackHook.TimestampUtc;
-            EventBus.Publish(EventIds.EvtAircraftHooked, trackHook);
         }
 
         private void DrawObject()
@@ -660,26 +629,24 @@ namespace ADS_B_Display.Views
             }
 
             // TrackHook 정보 그리기
-            if (_trackHook.Valid_CC)
+            if (AircraftManager.TrackHook.Valid_CC)
             {
-                if (AircraftManager.TryGet(_trackHook.ICAO_CC, out var data))
+                if (AircraftManager.TryGet(AircraftManager.TrackHook.ICAO_CC, out var data))
                 {
                     LatLon2XY(data.VLatitude, data.VLongitude, out scrX, out scrY);
                     Ntds2d.DrawTrackHook(scrX, scrY, airplaneScale * 0.5);
                 }
                 else
                 {
-                    _trackHook.Valid_CC = false;
+                    AircraftManager.TrackHook.Valid_CC = false;
                 }
             }
 
-            PublishHookInfo(_trackHook);
-
             // --- 5. 선택된 항공기의 출발/도착 공항 정보 그리기 ---
-            if (_trackHook.DepartureAirport != null && _trackHook.ArrivalAirport != null)
+            if (AircraftManager.TrackHook.DepartureAirport != null && AircraftManager.TrackHook.ArrivalAirport != null)
             {
-                if (double.TryParse(_trackHook.DepartureAirport["Latitude"], out double ddLat) && double.TryParse(_trackHook.DepartureAirport["Longitude"], out double ddLon) &&
-                    double.TryParse(_trackHook.ArrivalAirport["Latitude"], out double daLat) && double.TryParse(_trackHook.ArrivalAirport["Longitude"], out double daLon))
+                if (double.TryParse(AircraftManager.TrackHook.DepartureAirport["Latitude"], out double ddLat) && double.TryParse(AircraftManager.TrackHook.DepartureAirport["Longitude"], out double ddLon) &&
+                    double.TryParse(AircraftManager.TrackHook.ArrivalAirport["Latitude"], out double daLat) && double.TryParse(AircraftManager.TrackHook.ArrivalAirport["Longitude"], out double daLon))
                 {
                     LatLon2XY(ddLat, ddLon, out double dScrX, out double dScrY);
                     LatLon2XY(daLat, daLon, out double aScrX, out double aScrY);
