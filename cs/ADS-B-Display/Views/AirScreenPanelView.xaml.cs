@@ -616,7 +616,7 @@ namespace ADS_B_Display.Views
                 Ntds2d.DrawAirplaneImage(scrX, scrY, data.Altitude, airplaneScale * 0.5, data.Heading, spriteImage, data.IsGhost);
 
                 // Time To Go 경로선 표시
-                if (data.HaveSpeedAndHeading && _useTimeToGo)
+                if (data.HaveSpeedAndHeading && _useTimeToGo && _earthView.Eye.H < 0.1)
                 {
                     if (LatLonConv.VDirect(data.VLatitude, data.VLongitude,
                         data.Heading, data.Speed / 3060.0 * _timeTogoValue,
