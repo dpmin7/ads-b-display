@@ -268,7 +268,7 @@ namespace ADS_B_Display
             string altStr = SBS_Fields[SBS_ALTITUDE];
             if (!string.IsNullOrEmpty(altStr) && double.TryParse(altStr, NumberStyles.Float, CultureInfo.InvariantCulture, out double altVal)) {
                 if (!double.IsInfinity(altVal)) {
-                    if (altVal < 1)
+                    if (altVal <= 1)
                     {
                         aircraft.HaveAltitude = false;
                     }

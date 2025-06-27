@@ -282,7 +282,7 @@
                     <TextBlock
                         Grid.Row="11"
                         Style="{StaticResource ValueText}"
-                        Text="{Binding Aircraft.LastSeen, StringFormat='yyyy-MM-dd HH:mm:ss', Converter={StaticResource msToTime}}" />
+                        Text="{Binding Aircraft.LastSeenText}" />
                 </Grid>
             </GroupBox>
 

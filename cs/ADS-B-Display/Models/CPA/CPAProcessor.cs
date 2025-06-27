@@ -29,20 +29,29 @@ namespace ADS_B_Display.Models.CPA
 
             int calculatedPairs = 0;
             int collisionCandidateCnt = 0;
-            double thresholdForFilter = 85; 
-            double thresholdForCPA_NM = 1;
-
+            double thresholdForFilter = 85; //CPA 거리필터 임계값
+            double thresholdForCPA_NM = 1;  //CPA 수평거리
+            double thresholdForTcpa = 30;   //TCPA 시간
 
             //IRangeFilter filter = new CompositeFilter(new HorizontalRangeFilter(180.0), new VerticalRangeFilter(1000.0));
 
             IRangeFilter filter = new HorizontalRangeFilter(thresholdForFilter);
-
+            Aircraft ac1 = null;
+            Aircraft ac2 = null;
             for (int i = 0; i < count; i++)
+            {
+                ac1 = aircraftArray[i];
+                if(!ac1.HaveAltitude)
                 {
-                    for (int j = i + 1; j < count; j++)
+                    continue;
+                }
+                for (int j = i + 1; j < count; j++)
+                {
+                    ac2 = aircraftArray[j];
+                    if (!ac2.HaveAltitude)
                     {
-                        var ac1 = aircraftArray[i];
-                        var ac2 = aircraftArray[j];
+                        continue;
+                    }
 
                     if (!filter.IsWithinRange(ac1.Latitude, ac1.Longitude, ac1.Altitude, ac2.Latitude, ac2.Longitude, ac2.Altitude))
                     {
@@ -55,25 +64,30 @@ namespace ADS_B_Display.Models.CPA
                             ac2.Latitude, ac2.Longitude, ac2.Altitude,
                             ac2.Speed, ac2.Heading,
                             out double tcpa, out double cpaDistanceNm, out double verticalCpa))
+                    {
+                        if (tcpa > thresholdForTcpa)
                         {
-                            if (cpaDistanceNm < thresholdForCPA_NM)
-                            {
-                                collisionCandidateCnt++;
-                            }
+                            continue;
                         }
-                        //calculatedPairs++;
+                           
+                        if (cpaDistanceNm < thresholdForCPA_NM)
+                        {
+                            collisionCandidateCnt++;
+                        }
                     }
-
+                    //calculatedPairs++;
                 }
+
+            }
 
 #if DEBUG
             stopwatch.Stop();
 
-                Trace.WriteLine($"[CPA] Total pairs calculated: {calculatedPairs:N0}");
-                Trace.WriteLine($"[CPA] collisionCandidateCnt: {collisionCandidateCnt:N0}");
-                Trace.WriteLine($"[CPA] Elapsed time: {stopwatch.Elapsed.TotalSeconds:F2} seconds");
+            Trace.WriteLine($"[CPA] Total pairs calculated: {calculatedPairs:N0}");
+            Trace.WriteLine($"[CPA] collisionCandidateCnt: {collisionCandidateCnt:N0}");
+            Trace.WriteLine($"[CPA] Elapsed time: {stopwatch.Elapsed.TotalSeconds:F2} seconds");
 #endif
-            }
+        }
 
         private static bool HorizontalRangeFilter(double lat1, double lon1, double lat2, double lon2, double rangeNm)
         {

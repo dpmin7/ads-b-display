@@ -1,4 +1,5 @@
-﻿using NLog.Common;
+﻿using ADS_B_Display.Models.CPA;
+using NLog.Common;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -28,6 +29,8 @@ namespace ADS_B_Display.Models
             _dataTimer.Elapsed += OnDataTimerElapsed;
             _dataTimer.AutoReset = true;
             _dataTimer.Enabled = true;
+
+            CollisionRiskWorker.Start();
         }
 
         internal static void SetPurgeLimitMS(long limitMS, long ghostLimitMS)

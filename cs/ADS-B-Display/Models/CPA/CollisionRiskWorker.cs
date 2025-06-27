@@ -2,24 +2,26 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace ADS_B_Display.Models.CPA
 {
     internal class CollisionRiskWorker
     {
-        private static DateTime _lastCpaRun = DateTime.MinValue;
-        private static readonly TimeSpan _interval = TimeSpan.FromSeconds(5);
         private static bool _isRunning = false;
+        private static CancellationTokenSource _cts;
 
-        public static void RunPeriodicCPA()
+        public static void Start()
         {
             if (_isRunning) return;
 
-            if (DateTime.Now - _lastCpaRun >= _interval)
+            _isRunning = true;
+            _cts = new CancellationTokenSource();
+
+            Task.Run(async () =>
             {
-                _isRunning = true;
-                Task.Run(() =>
+                while (!_cts.Token.IsCancellationRequested)
                 {
                     try
                     {
@@ -29,13 +31,18 @@ namespace ADS_B_Display.Models.CPA
                     {
                         System.Diagnostics.Debug.WriteLine($"[CPA] Error: {ex.Message}");
                     }
-                    finally
-                    {
-                        _lastCpaRun = DateTime.Now;
-                        _isRunning = false;
-                    }
-                });
-            }
+
+                    await Task.Delay(TimeSpan.FromSeconds(5), _cts.Token);
+                }
+            }, _cts.Token);
+        }
+
+        public static void Stop()
+        {
+            if (!_isRunning) return;
+
+            _cts.Cancel();
+            _isRunning = false;
         }
     }
 }
