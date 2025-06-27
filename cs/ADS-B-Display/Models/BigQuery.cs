@@ -1,3 +1,4 @@
+using Google.Apis.Bigquery.v2.Data;
 using Google.Cloud.BigQuery.V2;
 using System;
 using System.Collections.Generic;
@@ -18,7 +19,13 @@ namespace ADS_B_Display.Models
         private const string ReadFilename = "ReadDataFromBigQuery.py";
         private const string CredentialFilename = "YourJsonFile.json";
 
+        private const string ProjectId = "scs-lg-arch-5";
+        private const string DatasetId = "SBS_Data";
+
         private bool _useBigQuery = false;
+        private string _TableId;
+
+        private Process _pyProcess = null;
 
         public string UploadScriptPath { get; set; }
         public string DeleteScriptPath { get; set; }
@@ -27,6 +34,7 @@ namespace ADS_B_Display.Models
         public string CsvFolderPath { get; set; }
         public string CsvFileName { get; set; }
         public string CsvFullPath { get; set; }
+        public string FullTablePath { get; set; }
 
         public int ReadRowCount { get; set; }
         public int WriteRowCount { get; set; }
@@ -36,39 +44,72 @@ namespace ADS_B_Display.Models
         public StreamWriter CsvWriter { get; private set; }
         public StreamReader CsvReader { get; private set; }
 
-        public BigQuery(bool useBigQuery = false)
+        public BigQuery(string tableId, bool useBigQuery = false)
         {
             WriteRowCount = 0;
             ReadRowCount = 0;
             FileCount = 0;
             CsvWriter = null;
             _useBigQuery = useBigQuery;
-        }
+            _TableId = tableId;
 
-        public void SetPathBigQuery()
-        {
             // 실행 파일의 상위 폴더 경로 구하기
             string exePath = System.Reflection.Assembly.GetExecutingAssembly().Location;
             string homeDir = Path.GetDirectoryName(exePath);
-            CsvFileName = $"BigQuery{FileCount}.csv";
-            
-            FileCount++;
 
             CsvFolderPath = Path.Combine(homeDir, "BigQuery");
+
             string scriptDir = Path.Combine(homeDir, "BigQuery");
 
             Directory.CreateDirectory(CsvFolderPath); // 폴더가 없으면 생성
 
-            CsvFullPath = Path.Combine(CsvFolderPath, CsvFileName);
             UploadScriptPath = Path.Combine(homeDir, "BigQuery", UploadFilename);
             DeleteScriptPath = Path.Combine(homeDir, "BigQuery", DeleteFilename);
             ReadScriptPath = Path.Combine(homeDir, "BigQuery", ReadFilename);
             CredentialPath = Path.Combine(homeDir, "BigQuery", CredentialFilename);
 
-            Console.WriteLine($"Set CsvFullPath: {CsvFullPath}");
             Console.WriteLine($"Set UploadScriptPath: {UploadScriptPath}");
             Console.WriteLine($"Set DeleteScriptPath: {DeleteScriptPath}");
             Console.WriteLine($"Set CredentialPath: {CredentialPath}");
+        }
+
+        public void SetPathBigQueryCsvFileName()
+        {   
+            CsvFileName = $"BigQuery{FileCount}.csv";
+            CsvFullPath = Path.Combine(CsvFolderPath, CsvFileName);
+
+            Console.WriteLine($"Set CsvFullPath: {CsvFullPath}");
+
+            FileCount++;
+        }
+
+        public static List<BigQueryListItem> GetTableLists()
+        {
+            string exePath = System.Reflection.Assembly.GetExecutingAssembly().Location;
+            string homeDir = Path.GetDirectoryName(exePath);
+            string credentialPath = Path.Combine(homeDir, "BigQuery", "YourJsonFile.json");
+
+            Environment.SetEnvironmentVariable("GOOGLE_APPLICATION_CREDENTIALS", credentialPath);
+            
+            // BigQuery 클라이언트 생성
+            BigQueryClient client = BigQueryClient.Create(ProjectId);
+
+            // 데이터셋 참조 생성
+            DatasetReference datasetRef = client.GetDatasetReference(DatasetId);
+
+            // 테이블 목록 가져오기
+            var tables = client.ListTables(datasetRef);
+
+            List<BigQueryListItem> itemList = new List<BigQueryListItem>();
+            foreach (var table in tables)
+            {
+                //Console.WriteLine($"Table ID: {table.Reference.TableId}");
+
+                var item = new BigQueryListItem(table.Reference.TableId);
+                itemList.Add(item);
+            }
+
+            return itemList;
         }
 
         public void CreateCsvReader()
@@ -101,13 +142,24 @@ namespace ADS_B_Display.Models
             CsvWriter.Flush();
         }
 
-        public void CloseCsvWriter()
+        public void Close()
         {
             if (CsvWriter != null)
             {
                 CsvWriter.Flush();
                 CsvWriter.Close();
                 CsvWriter = null;
+            }
+
+            if (CsvReader != null)
+            {
+                CsvReader.Close();
+                CsvReader = null;
+            }
+
+            if (!_pyProcess.HasExited)
+            {
+                _pyProcess.Kill(); // Python 프로세스 강제 종료
             }
         }
 
@@ -128,7 +180,7 @@ namespace ADS_B_Display.Models
                 //CsvFullPath = Path.Combine(CsvFolderPath, CsvFileName);
                 //FileCount++;
                 //ReadRowCount = 0;
-                SetPathBigQuery();
+                SetPathBigQueryCsvFileName();
 
                 // 다음 파일이 존재하면 열기, 없으면 종료 신호 반환
                 if (File.Exists(CsvFullPath))
@@ -167,7 +219,7 @@ namespace ADS_B_Display.Models
                 if (_useBigQuery)
                     UploadToBigQuery();
 
-                SetPathBigQuery();
+                SetPathBigQueryCsvFileName();
                 CreateCsvWriter();
                 WriteRowCount = 0; // Reset after upload
             }
@@ -175,7 +227,13 @@ namespace ADS_B_Display.Models
 
         public void UploadToBigQuery()
         {
-            PerformPythonScript($"\"{UploadScriptPath}\" \"{CsvFolderPath}\" \"{CsvFileName}\"");
+            if (CsvFileName == "BigQuery0.csv")
+            {
+                string nowStr = DateTime.Now.ToString("yyyyMMddHHmmss");
+                FullTablePath = "scs-lg-arch-5.SBS_Data." + nowStr;
+            }
+
+            PerformPythonScript($"\"{UploadScriptPath}\" \"{CsvFolderPath}\" \"{CsvFileName}\" \"{FullTablePath}\"");
         }
 
         public void DeleteBigQueryData()
@@ -192,7 +250,9 @@ namespace ADS_B_Display.Models
             //    CredentialPath
             //));
 
-            PerformPythonScript($"\"{ReadScriptPath}\" \"{CsvFolderPath}\"");
+            string fullTablePath = "scs-lg-arch-5.SBS_Data." + _TableId;
+
+            PerformPythonScript($"\"{ReadScriptPath}\" \"{CsvFolderPath}\" \"{fullTablePath}\"");
 
             string initFileName = $"BigQuery0.csv"; 
             string initFullPath = Path.Combine(CsvFolderPath, initFileName);
@@ -209,6 +269,8 @@ namespace ADS_B_Display.Models
                 }
                 catch (IOException)
                 {
+                    Console.WriteLine($"Downloading BigQuery0.csv...: ");
+
                     // 파일이 아직 다른 프로세스(파이썬)에서 열려 있음
                     Thread.Sleep(1000); // 1s 대기 후 재시도
                 }
@@ -246,28 +308,31 @@ namespace ADS_B_Display.Models
                 {
                     FileName = "python",
                     Arguments = args,
-                    //CreateNoWindow = true,
-                    //UseShellExecute = false,
-                    CreateNoWindow = false,
-                    UseShellExecute = true,
+                    CreateNoWindow = true,
+                    UseShellExecute = false,
+                    //CreateNoWindow = false, // For Debug
+                    //UseShellExecute = true, // For Debug
                     //RedirectStandardOutput = true,
-                    //RedirectStandardError = true
+                    //RedirectStandardError = true,
                 };
 
                 Console.WriteLine($"Running Python Script: {psi.FileName} {psi.Arguments}");
 
-                System.Diagnostics.Process.Start(psi);
+                _pyProcess = new Process { StartInfo = psi };
 
-                // Sync For Debug
-                //using (var process = System.Diagnostics.Process.Start(psi))
+                _pyProcess.Start();
+
+                // Sync
+                //using (var process = new Process { StartInfo = psi })
                 //{
+                //    process.Start();          // 프로세스 시작
+                //    process.WaitForExit();    // 종료까지 대기 (동기 처리)
+
+                //    // 필요 시 결과 확인
                 //    string output = process.StandardOutput.ReadToEnd();
                 //    string error = process.StandardError.ReadToEnd();
-                //    process.WaitForExit();
-
-                //    // 로그 출력 또는 파일 저장
-                //    Console.WriteLine("Python Output:\n" + output);
-                //    Console.WriteLine("Python Error:\n" + error);
+                //    Console.WriteLine("Output: " + output);
+                //    Console.WriteLine("Error: " + error);
                 //}
             }
             catch (Exception ex)
@@ -357,7 +422,11 @@ namespace ADS_B_Display.Models
         public DateTime StartTime { get; set; }
         public DateTime EndTime { get; set; }
         public TimeSpan Duration => EndTime - StartTime;
-        public string Name => StartTime.ToString("yyyy-MM-dd");
+        public string Name { get; set; }
+        public BigQueryListItem(string name)
+        {
+            Name = name;
+        }
         public BigQueryListItem(DateTime st, DateTime et)
         {
             StartTime = st;

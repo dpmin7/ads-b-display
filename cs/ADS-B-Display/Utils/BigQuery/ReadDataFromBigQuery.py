@@ -7,8 +7,9 @@ from google.cloud import bigquery
 def main():
     global_start = time.time()
 
-    if len(sys.argv) == 2:
+    if len(sys.argv) == 3:
         output_folder = sys.argv[1]
+        table_id = sys.argv[2]
 
         if not output_folder.endswith("\\") and not output_folder.endswith("/"):
             output_folder += "\\"
@@ -24,7 +25,6 @@ def main():
     client = bigquery.Client()
     print(f"[{time.time() - global_start:.2f}s] ▶ BigQuery Client 생성 완료 (소요: {time.time() - start:.2f}s)")
 
-    table_id = "scs-lg-arch-5.SBS_Data.FirstRun"
     batch_size = 50000
     offset = 0
     file_count = 0

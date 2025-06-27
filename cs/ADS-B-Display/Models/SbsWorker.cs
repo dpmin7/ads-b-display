@@ -85,10 +85,10 @@ namespace ADS_B_Display
         {
             if (useBigQuery) // BigQuery Mode
             {
-                bigQuery = new BigQuery(useBigQuery);
-                bigQuery.SetPathBigQuery();
+                bigQuery = new BigQuery("", useBigQuery);
+                bigQuery.SetPathBigQueryCsvFileName();
                 bigQuery.CreateCsvWriter();
-                bigQuery.DeleteBigQueryData();
+                //bigQuery.DeleteBigQueryData();
             }
             else // File Mode
             {
@@ -105,8 +105,10 @@ namespace ADS_B_Display
             {
                 try
                 {
-                    bigQuery.CloseCsvWriter();
+                    bigQuery.Close();
                     bigQuery = null;
+
+                    MessageBox.Show("BigQuery Recording End");
                 }
                 catch (Exception ex)
                 {
@@ -171,8 +173,10 @@ namespace ADS_B_Display
 
         private void RunBigQueryMode()
         {
-            bigQuery = new BigQuery(true);
-            bigQuery.SetPathBigQuery();
+            bigQuery = new BigQuery(_filePath, true);
+
+            bigQuery.SetPathBigQueryCsvFileName();
+
 #if true
             bigQuery.DeleteAllCsvFiles();
 
@@ -186,6 +190,11 @@ namespace ADS_B_Display
             {
                 while (_running)
                 {
+                    if (bigQuery == null)
+                    {
+                        break;
+                    }
+
                     string rawLine = bigQuery.ReadRow();
 
                     // 파일이 더 이상 없거나, 읽을 데이터가 없으면 종료
