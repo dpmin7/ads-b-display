@@ -183,6 +183,11 @@ namespace ADS_B_Display
             // BigQuery 데이터 읽기 (Query에서 CSV 파일 읽기)
             bigQuery.ReadBigQueryData();
 #endif
+            if (bigQuery == null)
+            {
+                return;
+            }
+
             // BigQuery CSV 리더 생성
             bigQuery.CreateCsvReader();
 

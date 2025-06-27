@@ -1,4 +1,4 @@
-using Google.Apis.Bigquery.v2.Data;
+ï»¿using Google.Apis.Bigquery.v2.Data;
 using Google.Cloud.BigQuery.V2;
 using System;
 using System.Collections.Generic;
@@ -53,7 +53,7 @@ namespace ADS_B_Display.Models
             _useBigQuery = useBigQuery;
             _TableId = tableId;
 
-            // ½ÇÇà ÆÄÀÏÀÇ »óÀ§ Æú´õ °æ·Î ±¸ÇÏ±â
+            // ì‹¤í–‰ íŒŒì¼ì˜ ìƒìœ„ í´ë” ê²½ë¡œ êµ¬í•˜ê¸°
             string exePath = System.Reflection.Assembly.GetExecutingAssembly().Location;
             string homeDir = Path.GetDirectoryName(exePath);
 
@@ -61,7 +61,7 @@ namespace ADS_B_Display.Models
 
             string scriptDir = Path.Combine(homeDir, "BigQuery");
 
-            Directory.CreateDirectory(CsvFolderPath); // Æú´õ°¡ ¾øÀ¸¸é »ı¼º
+            Directory.CreateDirectory(CsvFolderPath); // í´ë”ê°€ ì—†ìœ¼ë©´ ìƒì„±
 
             UploadScriptPath = Path.Combine(homeDir, "BigQuery", UploadFilename);
             DeleteScriptPath = Path.Combine(homeDir, "BigQuery", DeleteFilename);
@@ -91,13 +91,13 @@ namespace ADS_B_Display.Models
 
             Environment.SetEnvironmentVariable("GOOGLE_APPLICATION_CREDENTIALS", credentialPath);
             
-            // BigQuery Å¬¶óÀÌ¾ğÆ® »ı¼º
+            // BigQuery í´ë¼ì´ì–¸íŠ¸ ìƒì„±
             BigQueryClient client = BigQueryClient.Create(ProjectId);
 
-            // µ¥ÀÌÅÍ¼Â ÂüÁ¶ »ı¼º
+            // ë°ì´í„°ì…‹ ì°¸ì¡° ìƒì„±
             DatasetReference datasetRef = client.GetDatasetReference(DatasetId);
 
-            // Å×ÀÌºí ¸ñ·Ï °¡Á®¿À±â
+            // í…Œì´ë¸” ëª©ë¡ ê°€ì ¸ì˜¤ê¸°
             var tables = client.ListTables(datasetRef);
 
             List<BigQueryListItem> itemList = new List<BigQueryListItem>();
@@ -157,10 +157,10 @@ namespace ADS_B_Display.Models
                 CsvReader = null;
             }
 
-            if (!_pyProcess.HasExited)
+            if ((_pyProcess != null) && (!_pyProcess.HasExited))
             {
-                _pyProcess.Kill(); // Python ÇÁ·Î¼¼½º °­Á¦ Á¾·á
-            }
+                _pyProcess.Kill(); // Python í”„ë¡œì„¸ìŠ¤ ê°•ì œ ì¢…ë£Œ
+            }            
         }
 
         public string ReadRow()
@@ -175,18 +175,18 @@ namespace ADS_B_Display.Models
             {
                 CsvReader.Close();
 
-                // ´ÙÀ½ ÆÄÀÏ °æ·Î ¼³Á¤
+                // ë‹¤ìŒ íŒŒì¼ ê²½ë¡œ ì„¤ì •
                 //CsvFileName = $"BigQuery{FileCount}.csv";
                 //CsvFullPath = Path.Combine(CsvFolderPath, CsvFileName);
                 //FileCount++;
                 //ReadRowCount = 0;
                 SetPathBigQueryCsvFileName();
 
-                // ´ÙÀ½ ÆÄÀÏÀÌ Á¸ÀçÇÏ¸é ¿­±â, ¾øÀ¸¸é Á¾·á ½ÅÈ£ ¹İÈ¯
+                // ë‹¤ìŒ íŒŒì¼ì´ ì¡´ì¬í•˜ë©´ ì—´ê¸°, ì—†ìœ¼ë©´ ì¢…ë£Œ ì‹ í˜¸ ë°˜í™˜
                 if (File.Exists(CsvFullPath))
                 {
                     CsvReader = new StreamReader(CsvFullPath);
-                    // Ã¹ ÁÙÀÌ Çì´õ¶ó¸é °Ç³Ê¶Ü
+                    // ì²« ì¤„ì´ í—¤ë”ë¼ë©´ ê±´ë„ˆëœ€
                     CsvReader.ReadLine();
                     row = CsvReader.ReadLine();
                     ReadRowCount++;
@@ -194,7 +194,7 @@ namespace ADS_B_Display.Models
                 else
                 {
                     CsvReader = null;
-                    return null; // ´õ ÀÌ»ó ÀĞÀ» ÆÄÀÏÀÌ ¾øÀ¸¹Ç·Î Á¾·á
+                    return null; // ë” ì´ìƒ ì½ì„ íŒŒì¼ì´ ì—†ìœ¼ë¯€ë¡œ ì¢…ë£Œ
                 }
             }
 
@@ -207,7 +207,7 @@ namespace ADS_B_Display.Models
                 return;
             }
 
-            row = $"{timestamp},{row}"; // timestamp Ãß°¡
+            row = $"{timestamp},{row}"; // timestamp ì¶”ê°€
 
             CsvWriter.WriteLine(row);
             WriteRowCount++;
@@ -233,7 +233,8 @@ namespace ADS_B_Display.Models
                 FullTablePath = "scs-lg-arch-5.SBS_Data." + nowStr;
             }
 
-            PerformPythonScript($"\"{UploadScriptPath}\" \"{CsvFolderPath}\" \"{CsvFileName}\" \"{FullTablePath}\"");
+            UploadCsvToBigQuery(CsvFolderPath, CsvFileName, FullTablePath);
+            //PerformPythonScript($"\"{UploadScriptPath}\" \"{CsvFolderPath}\" \"{CsvFileName}\" \"{FullTablePath}\"");
         }
 
         public void DeleteBigQueryData()
@@ -241,41 +242,174 @@ namespace ADS_B_Display.Models
             PerformPythonScript($"\"{DeleteScriptPath}\" \"{CsvFolderPath}\"");
         }
 
+        public static async Task<bool> DownloadBigQueryToCsvAsync(string outputFolder, string tableId)
+        {
+            if (!outputFolder.EndsWith(Path.DirectorySeparatorChar.ToString()))
+                outputFolder += Path.DirectorySeparatorChar;
+
+            string credentialPath = Path.Combine(outputFolder, "YourJsonFile.json");
+            Environment.SetEnvironmentVariable("GOOGLE_APPLICATION_CREDENTIALS", credentialPath);
+
+            string[] parts = tableId.Split('.');
+            if (parts.Length != 3)
+            {
+                Console.WriteLine("Invalid Table ID format. Use project.dataset.table");
+                return false;
+            }
+
+            string projectId = parts[0];
+            BigQueryClient client = await BigQueryClient.CreateAsync(projectId);
+            Console.WriteLine("â–¶ BigQuery client initialized.");
+
+            int batchSize = 50000;
+            int offset = 0;
+            int batchIndex = 0;
+
+            while (true)
+            {
+                string query = $"SELECT * FROM `{tableId}` ORDER BY timestamp ASC LIMIT {batchSize} OFFSET {offset}";
+                Console.WriteLine($"â–¶ Running query batch {batchIndex} (OFFSET={offset})...");
+
+                BigQueryResults results;
+                try
+                {
+                    results = await client.ExecuteQueryAsync(query, parameters: null);
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine("Query failed: " + ex.Message);
+                    return false;
+                }
+
+                var rows = results.ToList();
+                if (rows.Count == 0)
+                {
+                    Console.WriteLine($"â–¶ No more rows. Total batches: {batchIndex}");
+                    break;
+                }
+
+                string tmpPath = Path.Combine(outputFolder, $"BigQuery{batchIndex}.tmp");
+                string finalPath = Path.Combine(outputFolder, $"BigQuery{batchIndex}.csv");
+
+                try
+                {
+                    using (var writer = new StreamWriter(tmpPath, false, Encoding.UTF8))
+                    {
+                        // Write header
+                        string header = string.Join(",", rows[0].Schema.Fields.Select(f => f.Name));
+                        await writer.WriteLineAsync(header);
+
+                        foreach (var row in rows)
+                        {
+                            string line = string.Join(",", row.Schema.Fields.Select(f => CsvEscape(row[f.Name]?.ToString())));
+                            await writer.WriteLineAsync(line);
+                        }
+                    }
+
+                    if (File.Exists(finalPath))
+                    {
+                        File.Delete(finalPath); // ê¸°ì¡´ íŒŒì¼ ì‚­ì œ
+                    }
+                    File.Move(tmpPath, finalPath);
+
+                    Console.WriteLine($"â–¶ Saved batch {batchIndex} â†’ {finalPath}");
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"Error writing CSV: {ex.Message}");
+                    return false;
+                }
+
+                offset += batchSize;
+                batchIndex++;
+            }
+
+            return true;
+        }
+
+        private static string CsvEscape(string value)
+        {
+            if (string.IsNullOrEmpty(value)) return "";
+            if (value.Contains(",") || value.Contains("\"") || value.Contains("\n"))
+            {
+                return "\"" + value.Replace("\"", "\"\"") + "\"";
+            }
+            return value;
+        }
+
         public void ReadBigQueryData()
         {
-            //Task.Run(() => DownloadBigQueryToGzippedCsvFiles(
-            //    "scs-lg-arch-5",
-            //    "SBS_Data",
-            //    "FirstRun",
-            //    CredentialPath
-            //));
-
             string fullTablePath = "scs-lg-arch-5.SBS_Data." + _TableId;
-
-            PerformPythonScript($"\"{ReadScriptPath}\" \"{CsvFolderPath}\" \"{fullTablePath}\"");
-
-            string initFileName = $"BigQuery0.csv"; 
+            string initFileName = "BigQuery0.csv";
             string initFullPath = Path.Combine(CsvFolderPath, initFileName);
 
+            // Task.Runìœ¼ë¡œ ë°±ê·¸ë¼ìš´ë“œ ì‹¤í–‰ (C# 7.3 async Main ë¶ˆê°€)
+            Task.Run(async () =>
+            {
+                bool success = await DownloadBigQueryToCsvAsync(CsvFolderPath, fullTablePath);
+                if (!success)
+                {
+                    Console.WriteLine("âŒ BigQuery CSV download failed.");
+                    return;
+                }
+            });
+
+            // ìµœì´ˆ íŒŒì¼ì´ ìƒì„±ë  ë•Œê¹Œì§€ ëŒ€ê¸°
             while (true)
             {
                 try
                 {
                     using (var stream = File.Open(initFullPath, FileMode.Open, FileAccess.Read, FileShare.None))
                     {
-                        // ÆÄÀÏÀÌ ¿­·ÈÀ¸¹Ç·Î ¹Ù·Î ´İ°í ·çÇÁ Å»Ãâ
+                        // íŒŒì¼ì´ ì„±ê³µì ìœ¼ë¡œ ì—´ë¦¬ë©´ ê³§ ë‹«ê³  íƒˆì¶œ
                         break;
                     }
                 }
                 catch (IOException)
                 {
-                    Console.WriteLine($"Downloading BigQuery0.csv...: ");
-
-                    // ÆÄÀÏÀÌ ¾ÆÁ÷ ´Ù¸¥ ÇÁ·Î¼¼½º(ÆÄÀÌ½ã)¿¡¼­ ¿­·Á ÀÖÀ½
-                    Thread.Sleep(1000); // 1s ´ë±â ÈÄ Àç½Ãµµ
+                    Console.WriteLine("Waiting for BigQuery0.csv to be ready...");
+                    Thread.Sleep(1000);
                 }
             }
+
+            Console.WriteLine("âœ… BigQuery0.csv is ready to read.");
         }
+
+        //public void ReadBigQueryData()
+        //{
+        //    //Task.Run(() => DownloadBigQueryToGzippedCsvFiles(
+        //    //    "scs-lg-arch-5",
+        //    //    "SBS_Data",
+        //    //    "FirstRun",
+        //    //    CredentialPath
+        //    //));
+
+        //    string fullTablePath = "scs-lg-arch-5.SBS_Data." + _TableId;
+
+        //    PerformPythonScript($"\"{ReadScriptPath}\" \"{CsvFolderPath}\" \"{fullTablePath}\"");
+
+        //    string initFileName = $"BigQuery0.csv";
+        //    string initFullPath = Path.Combine(CsvFolderPath, initFileName);
+
+        //    while (true)
+        //    {
+        //        try
+        //        {
+        //            using (var stream = File.Open(initFullPath, FileMode.Open, FileAccess.Read, FileShare.None))
+        //            {
+        //                // íŒŒì¼ì´ ì—´ë ¸ìœ¼ë¯€ë¡œ ë°”ë¡œ ë‹«ê³  ë£¨í”„ íƒˆì¶œ
+        //                break;
+        //            }
+        //        }
+        //        catch (IOException)
+        //        {
+        //            Console.WriteLine($"Downloading BigQuery0.csv...: ");
+
+        //            // íŒŒì¼ì´ ì•„ì§ ë‹¤ë¥¸ í”„ë¡œì„¸ìŠ¤(íŒŒì´ì¬)ì—ì„œ ì—´ë ¤ ìˆìŒ
+        //            Thread.Sleep(1000); // 1s ëŒ€ê¸° í›„ ì¬ì‹œë„
+        //        }
+        //    }
+        //}
 
         public void DeleteAllCsvFiles()
         {
@@ -325,10 +459,10 @@ namespace ADS_B_Display.Models
                 // Sync
                 //using (var process = new Process { StartInfo = psi })
                 //{
-                //    process.Start();          // ÇÁ·Î¼¼½º ½ÃÀÛ
-                //    process.WaitForExit();    // Á¾·á±îÁö ´ë±â (µ¿±â Ã³¸®)
+                //    process.Start();          // í”„ë¡œì„¸ìŠ¤ ì‹œì‘
+                //    process.WaitForExit();    // ì¢…ë£Œê¹Œì§€ ëŒ€ê¸° (ë™ê¸° ì²˜ë¦¬)
 
-                //    // ÇÊ¿ä ½Ã °á°ú È®ÀÎ
+                //    // í•„ìš” ì‹œ ê²°ê³¼ í™•ì¸
                 //    string output = process.StandardOutput.ReadToEnd();
                 //    string error = process.StandardError.ReadToEnd();
                 //    Console.WriteLine("Output: " + output);
@@ -341,73 +475,63 @@ namespace ADS_B_Display.Models
             }
         }
 
-        //public void DownloadBigQueryToGzippedCsvFiles(string projectId, string datasetId, string tableId, string credentialJsonPath)
-        //{
-        //    Environment.SetEnvironmentVariable("GOOGLE_APPLICATION_CREDENTIALS", credentialJsonPath);
+        bool UploadCsvToBigQuery(string credentialFolder, string filename, string tableId)
+        {
+            string filepath = Path.Combine(credentialFolder, filename);
+            string credentialPath = Path.Combine(credentialFolder, "YourJsonFile.json");
 
-        //    var totalSw = Stopwatch.StartNew();
+            Console.WriteLine("Credential Path: " + credentialPath);
+            Console.WriteLine("CSV File: " + filepath);
+            Console.WriteLine("BigQuery Table ID: " + tableId);
 
-        //    var client = BigQueryClient.Create(projectId);
-        //    string tableRef = $"{projectId}.{datasetId}.{tableId}";
+            try
+            {
+                Environment.SetEnvironmentVariable("GOOGLE_APPLICATION_CREDENTIALS", credentialPath);
 
-        //    // ÀüÃ¼ row ¼ö Á¶È¸
-        //    var countSw = Stopwatch.StartNew();
-        //    var totalQuery = $"SELECT COUNT(*) as total FROM `{tableRef}`";
-        //    var totalRows = (long)client.ExecuteQuery(totalQuery, null).First()["total"];
-        //    countSw.Stop();
-        //    Console.WriteLine($"[BigQuery] Row count Äõ¸® ¼Ò¿ä ½Ã°£: {countSw.ElapsedMilliseconds} ms, ÃÑ {totalRows} rows");
+                string[] parts = tableId.Split('.');
+                if (parts.Length != 3)
+                {
+                    Console.WriteLine("Invalid Table ID format. Use project.dataset.table");
+                    return false;
+                }
 
-        //    int batchSize = RowThreshold;
-        //    int offset = 0;
-        //    int fileCount = 0;
+                string projectId = parts[0];
+                string datasetId = parts[1];
+                string rawTableId = parts[2];
 
-        //    while (offset < totalRows)
-        //    {
-        //        var querySw = Stopwatch.StartNew();
-        //        var query = $"SELECT * FROM `{tableRef}` ORDER BY timestamp LIMIT {batchSize} OFFSET {offset}";
-        //        var result = client.ExecuteQuery(query, null);
-        //        querySw.Stop();
-        //        Console.WriteLine($"[BigQuery] Äõ¸®({fileCount}) ¼Ò¿ä ½Ã°£: {querySw.ElapsedMilliseconds} ms (OFFSET={offset})");
+                TableReference tableRef = new TableReference
+                {
+                    ProjectId = projectId,
+                    DatasetId = datasetId,
+                    TableId = rawTableId
+                };
 
-        //        var fileSw = Stopwatch.StartNew();
-        //        string gzFile = Path.Combine(CsvFolderPath, $"BigQuery{fileCount}.csv.gz");
+                BigQueryClient client = BigQueryClient.Create(projectId);
 
-        //        using (var fileStream = new FileStream(gzFile, FileMode.Create, FileAccess.Write, FileShare.None))
-        //        using (var gzipStream = new GZipStream(fileStream, CompressionLevel.Optimal))
-        //        using (var writer = new StreamWriter(gzipStream, Encoding.UTF8))
-        //        {
-        //            var schema = result.Schema.Fields;
-        //            writer.WriteLine(string.Join(",", schema.Select(f => f.Name)));
+                UploadCsvOptions uploadOptions = new UploadCsvOptions
+                {
+                    SkipLeadingRows = 1,
+                    Autodetect = true,
+                    WriteDisposition = WriteDisposition.WriteAppend
+                };
 
-        //            var sb = new StringBuilder(1024);
-        //            foreach (var row in result)
-        //            {
-        //                sb.Clear();
-        //                for (int i = 0; i < schema.Count; i++)
-        //                {
-        //                    if (i > 0) sb.Append(',');
-        //                    var value = row[schema[i].Name];
-        //                    var str = value?.ToString() ?? "";
-        //                    if (str.Contains(',') || str.Contains('"') || str.Contains('\n') || str.Contains('\r'))
-        //                    {
-        //                        str = $"\"{str.Replace("\"", "\"\"")}\"";
-        //                    }
-        //                    sb.Append(str);
-        //                }
-        //                writer.WriteLine(sb.ToString());
-        //            }
-        //        }
+                using (FileStream stream = new FileStream(filepath, FileMode.Open, FileAccess.Read))
+                {
+                    Console.WriteLine("â–¶ Uploading CSV...");
+                    BigQueryJob job = client.UploadCsv(tableRef, schema: null, input: stream, options: uploadOptions);
+                    job.PollUntilCompleted();
+                }
 
-        //        fileSw.Stop();
-        //        Console.WriteLine($"[BigQuery] ¾ĞÃà ÆÄÀÏ ÀúÀå({fileCount}) ¼Ò¿ä ½Ã°£: {fileSw.ElapsedMilliseconds} ms ({gzFile})");
-
-        //        offset += batchSize;
-        //        fileCount++;
-        //    }
-
-        //    totalSw.Stop();
-        //    Console.WriteLine($"[BigQuery] ÀüÃ¼ ´Ù¿î·Îµå ¼Ò¿ä ½Ã°£: {totalSw.ElapsedMilliseconds} ms");
-        //}
+                File.Delete(filepath);
+                Console.WriteLine("â–¶ File deleted after successful upload: " + filename);
+                return true;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("â–¶ Upload failed: " + ex.Message);
+                return false;
+            }
+        }
 
         public void Dispose()
         {
