@@ -88,7 +88,6 @@ namespace ADS_B_Display
                 bigQuery = new BigQuery("", useBigQuery);
                 bigQuery.SetPathBigQueryCsvFileName();
                 bigQuery.CreateCsvWriter();
-                //bigQuery.DeleteBigQueryData();
             }
             else // File Mode
             {
