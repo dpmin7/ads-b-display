@@ -1,4 +1,5 @@
 ﻿using ADS_B_Display.Models;
+using NLog;
 using System;
 using System.Net.NetworkInformation;
 using System.Net.Sockets;
@@ -22,13 +23,16 @@ namespace ADS_B_Display.Models
 {
     internal class PingEcho : IDisposable
     {
+        private static readonly NLog.Logger logger = NLog.LogManager.GetLogger("PingEcho");
+
         private Timer _timer;
         private string _host;
         private int _port;
         private int _intervalMs;
-        private Action<string, Exception> _onPingFailed;
+        private Action<string, int, bool> _onPingNotifier;
         private bool _isRunning;
         private readonly object _lock = new object();
+        private bool _isConnected;
 
         /// <summary>
         /// PingEcho를 시작합니다.
@@ -36,7 +40,7 @@ namespace ADS_B_Display.Models
         /// <param name="host">Ping 대상 호스트(IP 또는 도메인)</param>
         /// <param name="intervalMs">Ping 주기(ms)</param>
         /// <param name="onPingFailed">Ping 실패 시 호출될 콜백 (host, 예외)</param>
-        public void Start(string host, int port, int intervalMs, Action<string, Exception> onPingFailed)
+        public void Start(string host, int port, int intervalMs, Action<string, int, bool> onPingNotifier)
         {
             lock (_lock)
             {
@@ -46,9 +50,10 @@ namespace ADS_B_Display.Models
                 _host = host;
                 _port = port;
                 _intervalMs = intervalMs;
-                _onPingFailed = onPingFailed;
+                _onPingNotifier = onPingNotifier;
                 _timer = new Timer(OnTimer, null, 0, intervalMs);
                 _isRunning = true;
+                _isConnected = true;
             }
         }
 
@@ -61,6 +66,7 @@ namespace ADS_B_Display.Models
                 _isRunning = false;
             }
         }
+
         private bool IsPortOpen(string host, int port, int timeoutMs = 1000)
         {
             try
@@ -88,19 +94,15 @@ namespace ADS_B_Display.Models
             {
                 // TCP의 특정 포트를 확인하는 동작
                 var bReply = IsPortOpen(_host, _port, 1000);
-
-                if (!bReply)
+                if (_isConnected != bReply)
                 {
-                    _onPingFailed?.Invoke(_host, null);
-                }
-                else
-                {
-                    Console.WriteLine($"Ping 성공: {_host}");
+                    _isConnected = bReply;
+                    _onPingNotifier?.Invoke(_host, _port, bReply);
                 }
             }
             catch (Exception ex)
             {
-                _onPingFailed?.Invoke(_host, ex);
+                logger.Error(ex, $"PingEcho 예외 발생: {_host}");
             }
         }
 
