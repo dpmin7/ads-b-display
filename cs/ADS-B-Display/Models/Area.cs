@@ -14,8 +14,10 @@ namespace ADS_B_Display
     {
         public const int MAX_AREA_POINTS = 500;
 
+        public bool Use { get; set; } = true;
         public string Name { get; set; }
         public Color Color { get; set; }
+        public string ColorStr => Color.ToString();
         public int NumPoints { get; set; }
         public List<Vector3d> Points { get; set; }
         public Vector3d[] PointsAdj { get; }

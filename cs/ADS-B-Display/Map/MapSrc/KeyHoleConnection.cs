@@ -1,4 +1,5 @@
-﻿using System;
+﻿using NLog;
+using System;
 using System.Net.Http;
 using System.Threading.Tasks;
 
@@ -14,6 +15,8 @@ namespace ADS_B_Display.Map.MapSrc
     /// </summary>
     public class KeyholeConnection : SimpleTileStorage
     {
+        private readonly Logger logger = LogManager.GetLogger("KeyholeConnection");
+
         private readonly HttpClient _httpClient;
         private readonly AbstractMap map;
 
@@ -41,11 +44,11 @@ namespace ADS_B_Display.Map.MapSrc
             {
                 tile.Load(data, SaveStorage != null);
                 if (!tile.IsLoaded)
-                    Console.WriteLine($"타일 로드 실패: z={tile.Level}, x={tile.X}, y={tile.Y}");
+                    logger.Warn($"타일 로드 실패: z={tile.Level}, x={tile.X}, y={tile.Y}");
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"예외 발생: {ex.Message}");
+                logger.Error($"예외 발생: {ex.Message}");
             }
         }
     }

@@ -1,5 +1,4 @@
-﻿using System;
-using System.ComponentModel;
+﻿using System.ComponentModel;
 using System.Runtime.CompilerServices;
 
 namespace ADS_B_Display
@@ -51,11 +50,7 @@ namespace ADS_B_Display
         public long LastSeen
         {
             get => _lastSeen;
-            set
-            {
-                SetProperty(ref _lastSeen, value);
-                OnPropertyChanged(nameof(LastSeenText));
-            }
+            set => SetProperty(ref _lastSeen, value);
         }
 
         private long _numMessagesRaw;
@@ -196,18 +191,6 @@ namespace ADS_B_Display
         {
             get => _spriteImage;
             set => SetProperty(ref _spriteImage, value);
-        }
-
-        public string LastSeenText
-        {
-            get
-            {
-                if (LastSeen <= 0)
-                    return "N/A";
-
-                var dt = DateTimeOffset.FromUnixTimeMilliseconds(LastSeen).LocalDateTime;
-                return dt.ToString("yyyy-MM-dd HH:mm:ss");
-            }
         }
     }
 }

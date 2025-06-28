@@ -190,7 +190,7 @@ namespace ADS_B_Display
                     long threshold = now - _historyDuration;
 
                     return _queue
-                        .Where(item => item.TimestampUtc >= threshold)
+                        //.Where(item => item.TimestampUtc >= threshold)
                         .ToList()
                         .AsReadOnly();
                 }

@@ -1,4 +1,5 @@
-﻿using System;
+﻿using MahApps.Metro.Controls;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -17,7 +18,7 @@ namespace ADS_B_Display.Views.Popup
     /// <summary>
     /// AreaRegisterPopup.xaml에 대한 상호 작용 논리
     /// </summary>
-    public partial class AreaRegisterPopup : Window
+    public partial class AreaRegisterPopup : MetroWindow
     {
         public AreaRegisterPopup()
         {
@@ -31,8 +32,13 @@ namespace ADS_B_Display.Views.Popup
         private void OK_Click(object sender, RoutedEventArgs e)
         {
             AreaName = tbAreaName.Text;
-            AreaColor = Colors.Red;
-
+            if (colorPicker.SelectedColor == null)
+            {
+                MessageBox.Show("Select color!!!.", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                return;
+            }
+            AreaColor = colorPicker.SelectedColor.Value;
+            
             DialogResult = true;
             Close();
         }
@@ -41,6 +47,14 @@ namespace ADS_B_Display.Views.Popup
         {
             DialogResult = false;
             Close();
+        }
+
+        private void colorPicker_SelectedColorChanged(object sender, RoutedPropertyChangedEventArgs<Color?> e)
+        {
+            if (sender is MahApps.Metro.Controls.ColorPicker picker)
+            {
+                picker.IsDropDownOpen = false; // 드롭다운 닫기
+            }
         }
     }
 }

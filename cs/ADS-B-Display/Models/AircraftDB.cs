@@ -1,5 +1,6 @@
 ﻿using ADS_B_Display.Utils;
 using Newtonsoft.Json;
+using NLog;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -10,6 +11,8 @@ namespace ADS_B_Display
 
     public static class AircraftDB
     {
+        private static readonly Logger logger = LogManager.GetLogger("AircraftDB");
+
         private static Dictionary<uint, Dictionary<string, string>> aircrafts = new Dictionary<uint, Dictionary<string, string>>();
 
         private static readonly string[] HelicopterTypes = { "H1P", "H2P", "H1T", "H2T" };
@@ -202,7 +205,8 @@ namespace ADS_B_Display
                 {
                     if (row.TryGetValue("icao24", out string icaoStr))
                     {
-                        Console.WriteLine($"icaoStr: {icaoStr}");
+                        logger.Debug($"icaoStr: {icaoStr}");
+                        //Console.WriteLine($"icaoStr: {icaoStr}");
                         // ICAO 값은 일반적으로 16진수 문자열 (ex: "a3c2f7") → uint로 변환 필요
                         if (uint.TryParse(icaoStr, System.Globalization.NumberStyles.HexNumber, null, out uint icaoKey))
                         {
@@ -211,12 +215,14 @@ namespace ADS_B_Display
                         }
                         else
                         {
-                            Console.WriteLine($"ICAO 값 파싱 실패: {icaoStr}");
+                            logger.Warn($"ICAO 값 파싱 실패: {icaoStr}");
+                            //Console.WriteLine($"ICAO 값 파싱 실패: {icaoStr}");
                         }
                     }
                     else
                     {
-                        Console.WriteLine("icao24 필드가 없는 row 발견");
+                        logger.Warn("icao24 필드가 없는 row 발견");
+                        //Console.WriteLine("icao24 필드가 없는 row 발견");
                     }
 
                 }

@@ -1,4 +1,5 @@
 ﻿using ADS_B_Display.Views;
+using MahApps.Metro.Controls;
 using System;
 using System.IO;
 using System.Windows;
@@ -9,13 +10,8 @@ namespace ADS_B_Display
     /// <summary>
     /// MainWindow.xaml에 대한 상호 작용 논리
     /// </summary>
-    public partial class MainWindow : Window
+    public partial class MainWindow : MetroWindow
     {
-#if false // PingEcho 테스트용 코드 (필요시 활성화)    
-        // Ping 관련 필드
-        private PingEcho pingEcho = new PingEcho();
-#endif
-
         public MainWindow()
         {
             InitializeComponent();

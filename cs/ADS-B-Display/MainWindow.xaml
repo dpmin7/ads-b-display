@@ -1,10 +1,11 @@
-﻿<Window
+﻿<mah:MetroWindow
     x:Class="ADS_B_Display.MainWindow"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:gl="clr-namespace:OpenTK.Wpf;assembly=GLWpfControl"
     xmlns:local="clr-namespace:ADS_B_Display"
+    xmlns:mah="http://metro.mahapps.com/winfx/xaml/controls"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:views="clr-namespace:ADS_B_Display.Views"
     Title="ADS-B Display"
@@ -14,36 +15,22 @@
     WindowStartupLocation="CenterScreen"
     WindowState="Maximized"
     mc:Ignorable="d">
-    <DockPanel>
+    <!--  ─── 내용 영역 (2열짜리 Grid) ───  -->
+    <Grid>
+        <Grid.ColumnDefinitions>
+            <!--  1) 지도 영역 (나중에 OpenGL/Map 컨트롤 등을 넣어주세요)  -->
+            <ColumnDefinition Width="*" />
+            <!--  2) 오른쪽 패널 영역 (고정 폭 300으로 약간 여유)  -->
+            <ColumnDefinition Width="370" />
+        </Grid.ColumnDefinitions>
 
-        <!--  ─── 상단 메뉴 ───  -->
-        <Menu x:Name="MainMenu" DockPanel.Dock="Top">
-            <MenuItem Header="_File">
-                <MenuItem Click="UseSbsRemote_Click" Header="ADS-B Hub" />
-                <MenuItem Click="UseSbsLocal_Click" Header="ADS-B Local" />
-                <MenuItem Click="LoadArtccBoundaries_Click" Header="Load ARTCC Boundaries" />
-                <Separator />
-                <MenuItem Click="Exit_Click" Header="E_xit" />
-            </MenuItem>
-        </Menu>
-
-        <!--  ─── 내용 영역 (2열짜리 Grid) ───  -->
-        <Grid>
-            <Grid.ColumnDefinitions>
-                <!--  1) 지도 영역 (나중에 OpenGL/Map 컨트롤 등을 넣어주세요)  -->
-                <ColumnDefinition Width="*" />
-                <!--  2) 오른쪽 패널 영역 (고정 폭 300으로 약간 여유)  -->
-                <ColumnDefinition Width="auto" />
-            </Grid.ColumnDefinitions>
-
-            <!--  지도 Placeholder  -->
-            <Border Grid.Column="0" Background="#FF222222">
-                <!--<DataGrid x:Name="dg" IsReadOnly="True">
+        <!--  지도 Placeholder  -->
+        <Border Grid.Column="0" Background="#FF222222">
+            <!--<DataGrid x:Name="dg" IsReadOnly="True">
                 </DataGrid>-->
-                <views:AirScreenPanelView x:Name="airScreenPanelView" />
-            </Border>
+            <views:AirScreenPanelView x:Name="airScreenPanelView" />
+        </Border>
 
-            <views:AircraftControlView x:Name="AircraftControlPanel" Grid.Column="1" />
-        </Grid>
-    </DockPanel>
-</Window>
+        <views:AircraftControlView x:Name="AircraftControlPanel" Grid.Column="1" />
+    </Grid>
+</mah:MetroWindow>
