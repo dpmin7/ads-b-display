@@ -491,6 +491,8 @@ namespace ADS_B_Display.Views
                 _rawWorker.Stop();
                 RawConnectStatus = ConnectStatus.Disconnect;
             } catch { }
+
+            pingEcho.Stop();
         }
 
         private async void RawConnect(object obj)
@@ -533,6 +535,8 @@ namespace ADS_B_Display.Views
                 if (res) {
                     popup.Close();
                     RawConnectStatus = ConnectStatus.Connect;
+
+                    pingEcho.Start(host, port, 2000, PingEchoHandler);
                 } else {
                     MessageBox.Show("Connection Timeout.");
                 }
@@ -601,7 +605,7 @@ namespace ADS_B_Display.Views
                     popup.Close();
                     SbsConnectStatus = ConnectStatus.Connect;
 
-                    pingEcho.Start(host, port, 2000, PingEchoHandler);
+                    pingEcho.Start(host, port, 10000, PingEchoHandler);
 
                 } else {
                     MessageBox.Show("Connection Timeout.");
