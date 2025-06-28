@@ -86,6 +86,31 @@ namespace ADS_B_Display.Map.MapSrc
             UploadBitmap(decoder.Frames[0]);
         }
 
+        public void AdjustBrightness(float brightness)
+        {
+            if (_pixels == null)
+            {
+                // 아직 픽셀 데이터가 로드되지 않았을 수 있습니다.
+                Console.WriteLine("Warning: AdjustBrightness called before loading pixel data.");
+                return;
+            }
+
+            // 밝기 값을 0.0과 1.0 사이로 제한합니다.
+            brightness = Math.Max(0.0f, Math.Min(1.0f, brightness));
+
+            // 밝기 조절이 필요 없는 경우는 연산을 건너뜁니다.
+            if (brightness == 1.0f) return;
+
+            // _format이 Bgra 이므로 픽셀당 4바이트(B, G, R, A) 입니다.
+            for (int i = 0; i < _pixels.Length; i += 4)
+            {
+                // B, G, R 채널 값에만 밝기 값을 곱합니다. 알파(A) 채널은 투명도이므로 유지합니다.
+                _pixels[i] = (byte)(_pixels[i] * brightness);     // Blue
+                _pixels[i + 1] = (byte)(_pixels[i + 1] * brightness); // Green
+                _pixels[i + 2] = (byte)(_pixels[i + 2] * brightness); // Red
+                // _pixels[i + 3]은 알파(Alpha) 값이므로 변경하지 않습니다.
+            }
+        }
         private void UploadBitmap(BitmapSource bmp)
         {
             _width = bmp.PixelWidth;

@@ -82,6 +82,9 @@ namespace ADS_B_Display.Views
                 _allowDraw = true; // 타이머가 끝나면 그리기 허용
                 glControl.InvalidateVisual(); // OpenGL 컨트롤 강제 갱신
             };
+
+            // aircrafe load
+            AircraftDB.Init();
         }
 
         public void Dispose()
@@ -604,16 +607,16 @@ namespace ADS_B_Display.Views
                     GL.Color4(1f, 0f, 0f, 1f);
                 }
 
-                // 항공기 타입에 따라 이미지 선택
-                var spriteImage = data.SpriteImage;
-                if (uint.TryParse(data.HexAddr, out uint result))
+                var imageNum = data.SpriteImage;
+
+                if (data.AircraftData != null)
                 {
-                    var additionalData = AircraftDB.GetAircraftInfo(result);
-                    if (additionalData != null)
-                        spriteImage = convertSpriteImage(additionalData["icaoaircrafttype"]);
+                    imageNum = data.AircraftData.AircraftImageNum;
                 }
 
-                Ntds2d.DrawAirplaneImage(scrX, scrY, data.Altitude, airplaneScale * 0.5, data.Heading, spriteImage, data.IsGhost);
+
+                // 항공기 타입에 따라 이미지 선택
+                Ntds2d.DrawAirplaneImage(scrX, scrY, data.Altitude, airplaneScale * 0.5, data.Heading, imageNum, data.IsGhost);
 
                 // Time To Go 경로선 표시
                 if (data.HaveSpeedAndHeading && _useTimeToGo && _earthView.Eye.H < 0.05)
@@ -737,30 +740,6 @@ namespace ADS_B_Display.Views
             siny = Math.Sin((MapCenterLat * Math.PI) / 180.0);
             siny = Math.Min(Math.Max(siny, -0.9999), 0.9999);
             y = (Math.Log((1 + siny) / (1 - siny)) / (4 * Math.PI));
-        }
-
-        private static int convertSpriteImage(string icaoaircrafttype)
-        {
-            switch (icaoaircrafttype)
-            {
-                case "L2J":
-                    return 79;
-                case "H1P":
-                    return 46;
-                case "H1T":
-                    return 75;
-                case "H2P":
-                    return 75;
-                case "H2T":
-                    return 52;
-                case "H3T":
-                    return 53;
-                case "H25B":
-                    return 79;
-
-            }
-
-            return 0;
         }
     }
 }

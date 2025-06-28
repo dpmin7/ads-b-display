@@ -1,4 +1,5 @@
 ﻿using ADS_B_Display;
+using ADS_B_Display.Models;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -26,6 +27,8 @@ namespace ADS_B_Display
         public bool HaveFlightNum { get; set; }
         public bool HaveAltitude { get; set; }
         public bool HaveLatLon { get; set; }
+
+        public AircraftData AircraftData { get; set; }
 
         public double VLatitude { get; set; } // virtual Latitude for Animation
         private double _Latitude;

@@ -1,9 +1,13 @@
-﻿using ADS_B_Display.Utils;
+﻿using ADS_B_Display.Models;
+using ADS_B_Display.Utils;
 using Newtonsoft.Json;
-using NLog;
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
+using System.Globalization;
 using System.IO;
+using System.Linq;
+using System.Reflection;
 using System.Threading.Tasks;
 
 namespace ADS_B_Display
@@ -11,9 +15,8 @@ namespace ADS_B_Display
 
     public static class AircraftDB
     {
-        private static readonly Logger logger = LogManager.GetLogger("AircraftDB");
-
         private static Dictionary<uint, Dictionary<string, string>> aircrafts = new Dictionary<uint, Dictionary<string, string>>();
+        private static Dictionary<uint, AircraftData> _aircraftDataTable;
 
         private static readonly string[] HelicopterTypes = { "H1P", "H2P", "H1T", "H2T" };
 
@@ -188,7 +191,89 @@ namespace ADS_B_Display
             // 생략된 범위는 필요 시 추가
         };
 
-        static AircraftDB ()
+        private static int ConvertSpriteImage(string icaoaircrafttype)
+        {
+            Console.WriteLine($"hanmin!! ConvertSpriteImage: {icaoaircrafttype}");
+            switch (icaoaircrafttype)
+            {
+                case "L1P":
+                    return 0;
+                case "LTA":
+                    return 1;
+                case "BALL":
+                    return 2;
+                case "L2P":
+                    return 3;
+                case "LJ40":
+                    return 4;
+                case "L2J":
+                    return 5;
+                case "GLEX":
+                    return 8;
+                case "GLF6":
+                    return 9;
+                case "H25B":
+                    return 80;
+                case "CL35":
+                    return 12;
+                case "L6J":
+                    return 13;
+                case "L4J":
+                    return 14;
+                case "L4T":
+                    return 15;
+                case "GDZ":
+                    return 16;
+                case "L2T":
+                    return 17;
+                case "FA8X": // 18을 반환하는 첫 번째 케이스
+                case "L3J":  // 동일하게 18을 반환
+                    return 18;
+                case "T2T":
+                    return 19;
+                case "UAV":
+                    return 27;
+                case "L8J":
+                    return 29;
+                case "L3P":
+                    return 32;
+                case "L4P":
+                    return 33;
+                case "S4P":
+                    return 34;
+                case "A2P":
+                    return 37;
+                case "L4E":
+                    return 39;
+                case "H3T":
+                    return 54;
+                case "H1P":
+                    return 46;
+                case "H1T":
+                    return 46; // 76
+                case "G1P":
+                    return 43;
+                case "H2T":
+                    return 53;
+                case "H2P":
+                    return 76;
+                case "Z391":
+                    return 53;
+                case "P":
+                    return 55;
+                case "GRND":
+                    // 참고: GRND는 73과 74 두 번 나타나지만,
+                    // switch 문에서는 첫 번째 값인 73만 반환 가능합니다.
+                    return 73;
+                case "S602":
+                    return 76;
+                default:
+                    // 목록에 없는 값이 들어올 경우 기본값 반환
+                    return 0;
+            }
+        }
+
+        public static void Init ()
         {
             Task.Run(() =>
             {
@@ -200,47 +285,16 @@ namespace ADS_B_Display
                 string data = File.ReadAllText(fullPath);
 
                 List<Dictionary<string, string>> parseData = CsvUtil.Parse(data);
-
-                foreach (var row in parseData)
-                {
-                    if (row.TryGetValue("icao24", out string icaoStr))
-                    {
-                        logger.Debug($"icaoStr: {icaoStr}");
-                        //Console.WriteLine($"icaoStr: {icaoStr}");
-                        // ICAO 값은 일반적으로 16진수 문자열 (ex: "a3c2f7") → uint로 변환 필요
-                        if (uint.TryParse(icaoStr, System.Globalization.NumberStyles.HexNumber, null, out uint icaoKey))
-                        {
-                            // 중복 ICAO는 덮어쓰기됨
-                            aircrafts[icaoKey] = row;
-                        }
-                        else
-                        {
-                            logger.Warn($"ICAO 값 파싱 실패: {icaoStr}");
-                            //Console.WriteLine($"ICAO 값 파싱 실패: {icaoStr}");
-                        }
-                    }
-                    else
-                    {
-                        logger.Warn("icao24 필드가 없는 row 발견");
-                        //Console.WriteLine("icao24 필드가 없는 row 발견");
-                    }
-
-                }
+                _aircraftDataTable = CreateAircraftDictionary(parseData);
 
                 Console.WriteLine("end!!");
             });
         }
 
-        public static Dictionary<string, string> GetAircraftInfo(uint addr)
+        public static AircraftData GetAircraftInfo(uint addr)
         {
-            if (aircrafts != null && aircrafts.Count > 0 && aircrafts.TryGetValue(addr, out var data)) {
-                var deepCopy = JsonConvert.DeserializeObject<Dictionary<string, string>>(
-                    JsonConvert.SerializeObject(data)
-                );
-
-                deepCopy.Add("country", GetCountry(addr, false));
-
-                return deepCopy;
+            if (_aircraftDataTable != null && _aircraftDataTable.Count > 0 && _aircraftDataTable.TryGetValue(addr, out var data)) {
+                return data;
             }
 
             return null;
@@ -255,33 +309,82 @@ namespace ADS_B_Display
             return "Unknown";
         }
 
-        public static bool IsMilitary(uint addr, out string countryCode)
+        public static bool IsMilitary(uint addr)
         {
             foreach (var range in MilitaryRanges) {
                 if (addr >= range.Low && addr <= range.High) {
-                    countryCode = range.ShortCode;
                     return true;
                 }
             }
-            countryCode = null;
             return false;
         }
 
-        public static bool IsHelicopter(uint addr, out string typeCode)
+        /// <summary>
+        /// AircraftData.Icao24가 uint 타입으로 변경된 것을 반영한 리플렉션 변환 메서드입니다.
+        /// </summary>
+        public static Dictionary<uint, AircraftData> CreateAircraftDictionary(List<Dictionary<string, string>> dataList)
         {
-            typeCode = null;
-            if (aircrafts.TryGetValue(addr, out var data)) {
-                var type = data["icaoaircrafttype"];
-                if (!string.IsNullOrEmpty(type) && type.StartsWith("H")) {
-                    foreach (var h in HelicopterTypes) {
-                        if (string.Equals(h, type, StringComparison.OrdinalIgnoreCase)) {
-                            typeCode = h;
-                            return true;
-                        }
+            var aircraftDataTable = new Dictionary<uint, AircraftData>();
+            if (dataList == null) return aircraftDataTable;
+
+            var properties = typeof(AircraftData).GetProperties(BindingFlags.Public | BindingFlags.Instance)
+                                                  .Where(p => p.CanWrite).ToList();
+
+            foreach (var dict in dataList)
+            {
+                var icaoEntry = dict.FirstOrDefault(kvp => kvp.Key.Equals("Icao24", StringComparison.OrdinalIgnoreCase));
+
+                if (icaoEntry.Key == null || string.IsNullOrEmpty(icaoEntry.Value) ||
+                    !uint.TryParse(icaoEntry.Value, NumberStyles.HexNumber, CultureInfo.InvariantCulture, out uint icaoUintValue))
+                {
+                    continue;
+                }
+
+                var aircraft = new AircraftData { Icao24 = icaoUintValue };
+
+                foreach (var prop in properties)
+                {
+                    if (prop.Name.Equals(nameof(AircraftData.Icao24), StringComparison.OrdinalIgnoreCase)) continue;
+
+                    var dictEntry = dict.FirstOrDefault(kvp => kvp.Key.Equals(prop.Name, StringComparison.OrdinalIgnoreCase));
+                    if (dictEntry.Key == null || string.IsNullOrEmpty(dictEntry.Value))
+                    {
+                        continue;
+                    }
+
+                    object convertedValue = null;
+                    Type propType = Nullable.GetUnderlyingType(prop.PropertyType) ?? prop.PropertyType;
+
+                    if (propType == typeof(string))
+                    {
+                        convertedValue = dictEntry.Value;
+                    }
+                    else if (propType == typeof(int))
+                    {
+                        if (int.TryParse(dictEntry.Value, out int intVal)) convertedValue = intVal;
+                    }
+                    else if (propType == typeof(bool))
+                    {
+                        if (bool.TryParse(dictEntry.Value, out bool boolVal)) convertedValue = boolVal;
+                    }
+                    else if (propType == typeof(DateTime))
+                    {
+                        if (DateTime.TryParse(dictEntry.Value, out DateTime dateVal)) convertedValue = dateVal;
+                    }
+
+                    if (convertedValue != null)
+                    {
+                        prop.SetValue(aircraft, convertedValue);
                     }
                 }
+
+                aircraft.Country = GetCountry(aircraft.Icao24, false);
+                aircraft.IsMilitary = IsMilitary(aircraft.Icao24);
+                aircraft.AircraftImageNum = ConvertSpriteImage(aircraft.IcaoAircraftType);
+
+                aircraftDataTable[icaoUintValue] = aircraft;
             }
-            return false;
+            return aircraftDataTable;
         }
     }
 }

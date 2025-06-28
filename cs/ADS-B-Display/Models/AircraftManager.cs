@@ -88,6 +88,8 @@ namespace ADS_B_Display.Models
                     _aircraftTable.Add(icao, aircraft);
                 }
             }
+            aircraft.AircraftData = AircraftDB.GetAircraftInfo(aircraft.ICAO);
+
 
             return aircraft;
         }
