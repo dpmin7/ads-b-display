@@ -35,6 +35,8 @@ namespace ADS_B_Display.Views
         private Area _selectedArea;
         private DispatcherTimer _timer = null;
 
+        private PingEcho pingEcho = new PingEcho();
+
         public AircraftControlViewModel()
         {
             _sbsWorker = new SbsWorker(AircraftManager.ReceiveSBSMessage);
@@ -95,6 +97,7 @@ namespace ADS_B_Display.Views
         {
             AreaRegisterPopup popup = new AreaRegisterPopup();
             popup.Owner = Application.Current.MainWindow;
+            popup.WindowStartupLocation = WindowStartupLocation.CenterOwner;
             var res = popup.ShowDialog();
             if (res == true) {
                 var name = popup.AreaName;
@@ -170,7 +173,7 @@ namespace ADS_B_Display.Views
 
             AreaRegisterPopup popup = new AreaRegisterPopup();
             popup.Owner = Application.Current.MainWindow;
-
+            popup.WindowStartupLocation = WindowStartupLocation.CenterOwner;
             var res = popup.ShowDialog();
             if(res == true) {
                 var name = popup.AreaName;
@@ -532,15 +535,17 @@ namespace ADS_B_Display.Views
             if (SbsConnectStatus == ConnectStatus.Disconnect)
                 return;
 
-            try {
+            try
+            {
                 _sbsWorker.Stop();
                 SbsConnectStatus = ConnectStatus.Disconnect;
-            } catch { }
-#if false // PingEcho 테스트용 코드 (필요시 활성화)           
-                pingEcho.Stop();
-#endif
+            }
+            catch { }
+
+            pingEcho.Stop();
         }
 
+        private CancellationTokenSource _sbsCts = new CancellationTokenSource();
         private async void SbsConnect(object obj)
         {
             if (SbsConnectStatus == ConnectStatus.Connect)
@@ -570,34 +575,21 @@ namespace ADS_B_Display.Views
 
             try {
                 // 연결 후, 스트림에서 한 줄씩 읽어서 처리 (예시: OnSbsMessageReceived(rawLine))
-                CancellationTokenSource cts = new CancellationTokenSource();
+               
                 var popup = new LoadingPopup() {
                     WindowStartupLocation = WindowStartupLocation.CenterOwner,
                     Owner = Application.Current.MainWindow
                 };
-                popup.Closed += (s, e2) => { if (popup.IsCancelled) cts.Cancel(); };
+                popup.Closed += (s, e2) => { if (popup.IsCancelled) _sbsCts.Cancel(); };
                 SbsConnectStatus = ConnectStatus.Error;
                 popup.Show();
-                var res = await _sbsWorker.Start(host, port, cts.Token);
+                var res = await _sbsWorker.Start(host, port, _sbsCts.Token);
                 if (res) {
                     popup.Close();
                     SbsConnectStatus = ConnectStatus.Connect;
-#if false // PingEcho 테스트용 코드 (필요시 활성화)
-                    Console.WriteLine($"Ping 시작");
 
-                    // Ping Echo 시작
-                    pingEcho.Start(host, port, 2000, (pingHost, ex) => // 'host' 이름을 'pingHost'로 변경하여 충돌 방지
-                    {
-                        if (ex != null)
-                        {
-                            Console.WriteLine($"Ping 예외 발생: {pingHost} - {ex.Message}");
-                        }
-                        else
-                        {
-                            Console.WriteLine($"Ping 실패: {pingHost}");
-                        }
-                    });
-#endif
+                    pingEcho.Start(host, port, 2000, PingEchoHandler);
+
                 } else {
                     MessageBox.Show("Connection Timeout.");
                 }
@@ -608,6 +600,22 @@ namespace ADS_B_Display.Views
             }
         }
 
+        private async void PingEchoHandler(string host, int port, bool isConnected)
+        {
+            if (isConnected == false)
+            {
+                _sbsWorker.Stop();
+                SbsConnectStatus = ConnectStatus.Error;
+            }
+            else
+            {
+                var res = await _sbsWorker.Start(host, port, _sbsCts.Token);
+                if (res)
+                {
+                    SbsConnectStatus = ConnectStatus.Connect;
+                }
+            }
+        }
 
         private void UpdateHookedAircraft()
         {
