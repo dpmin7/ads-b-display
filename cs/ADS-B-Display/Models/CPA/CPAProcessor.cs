@@ -22,8 +22,8 @@ namespace ADS_B_Display.Models.CPA
             stopwatch.Start();
 #endif
             var aircraftList = AircraftManager.GetAll();
-            var aircraftArray = new List<Aircraft>(aircraftList);
-            int count = aircraftArray.Count;
+            var aircraftArray = aircraftList.ToArray(); // 불필요한 복사를 줄임
+            int count = aircraftArray.Length;
 #if DEBUG
             Trace.WriteLine($"[CPA] Total aircrafts: {count}");
 #endif
