@@ -28,11 +28,12 @@ namespace ADS_B_Display.Models
         private Timer _timer;
         private string _host;
         private int _port;
-        private int _intervalMs;
+        private int _rcvIntervalMs;
         private Action<string, int, bool> _onPingNotifier;
         private bool _isRunning;
         private readonly object _lock = new object();
         private bool _isConnected;
+        private const int _defaultIntervalMs = 2000; // 기본 Ping 주기 (ms)
 
         /// <summary>
         /// PingEcho를 시작합니다.
@@ -48,8 +49,8 @@ namespace ADS_B_Display.Models
                     return;
 
                 _host = host;
-                _port = port;
-                _intervalMs = intervalMs;
+                _port = port; 
+                _rcvIntervalMs = intervalMs;
                 _onPingNotifier = onPingNotifier;
                 _timer = new Timer(OnTimer, null, 0, intervalMs);
                 _isRunning = true;
@@ -98,6 +99,15 @@ namespace ADS_B_Display.Models
                 {
                     _isConnected = bReply;
                     _onPingNotifier?.Invoke(_host, _port, bReply);
+
+                    if (bReply == true)
+                    {
+                        _timer?.Change(_rcvIntervalMs, _rcvIntervalMs); // 연결 성공 시 주기 재설정
+                    }
+                    else
+                    {
+                        _timer?.Change(_defaultIntervalMs, _defaultIntervalMs); // 연결 성공 시 주기 재설정
+                    }
                 }
             }
             catch (Exception ex)
