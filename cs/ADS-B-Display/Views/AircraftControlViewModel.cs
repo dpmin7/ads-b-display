@@ -77,6 +77,7 @@ namespace ADS_B_Display.Views
             CompleteCommand = new DelegateCommand(CompleteArea, CanCompleteArea);
             CancelCommand = new DelegateCommand(CancelArea, CanCancelArea);
             DeleteCommand = new DelegateCommand(DeleteArea, CanDeleteArea);
+            MonitorCommand = new DelegateCommand(MonitorArea, CanMonitorArea);
 
             AreaList = new ObservableCollection<Area>(AreaManager.Areas);
 
@@ -175,13 +176,14 @@ namespace ADS_B_Display.Views
             popup.Owner = Application.Current.MainWindow;
             popup.WindowStartupLocation = WindowStartupLocation.CenterOwner;
             var res = popup.ShowDialog();
-            if(res == true) {
+            if (res == true)
+            {
                 var name = popup.AreaName;
                 var color = popup.AreaColor;
                 AreaManager.FinalizeTempAreaIfReady(name, color);
-                RefreshAreaList();
-                AreaManager.ResetTempArea();
             }
+            RefreshAreaList();
+            AreaManager.ResetTempArea();
 
             AreaManager.IsInsertMode = false;
             _canCompleteOrCancel = false;
@@ -192,6 +194,7 @@ namespace ADS_B_Display.Views
         {
             AreaManager.IsInsertMode = false;
             _canCompleteOrCancel = false;
+            AreaManager.ResetTempArea();
         }
 
         private bool CanCancelArea(object obj) => _canCompleteOrCancel;
@@ -205,6 +208,15 @@ namespace ADS_B_Display.Views
                 AreaList.Remove(SelectedArea);
                 SelectedArea = null; // 선택 초기화
             }
+        }
+
+        private bool CanMonitorArea(object obj) => true;
+
+
+        private void MonitorArea(object obj)
+        {
+            AreaMonitorPopup monitor = new AreaMonitorPopup();
+            monitor.Show();
         }
 
         private bool CanDeleteArea(object obj) => true;
@@ -469,6 +481,7 @@ namespace ADS_B_Display.Views
         public ICommand CompleteCommand { get; }
         public ICommand CancelCommand { get; }
         public ICommand DeleteCommand { get; }
+        public ICommand MonitorCommand { get; }
         private void RawDisconnect(object obj)
         {
             if (RawConnectStatus == ConnectStatus.Disconnect)

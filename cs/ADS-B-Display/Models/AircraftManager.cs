@@ -2,6 +2,7 @@
 using NLog.Common;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Timers;
 using System.Windows.Markup;
@@ -173,10 +174,16 @@ namespace ADS_B_Display.Models
                         if(PointPolygonFilter.IsPointInArea(aircraft.Latitude,
                             aircraft.Longitude, area.Points.ToArray()))
                         {
+                            if(area.AddAircraft(aircraft))
+                            {
+                                string time = DateTime.Now.ToString("HH:mm:ss.fff");
+                                string msg = $"[{time}] [Polygon] New Aircraft In Polygon: {aircraft.HexAddr} IN {area.AreaName}";
+
+                                AreaMonitorPopup.WriteLog(msg);  // Trace 대신 직접 호출
+                            }
                             isInAnyArea = true;
                             break;
                         }
-                  
                     }
                     aircraft.Viewable = isInAnyArea;
                 }

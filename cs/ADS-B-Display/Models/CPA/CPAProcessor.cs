@@ -24,9 +24,9 @@ namespace ADS_B_Display.Models.CPA
             var aircraftList = AircraftManager.GetAll();
             var aircraftArray = new List<Aircraft>(aircraftList);
             int count = aircraftArray.Count;
-
+#if DEBUG
             Trace.WriteLine($"[CPA] Total aircrafts: {count}");
-
+#endif
             int calculatedPairs = 0;
             int collisionCandidateCnt = 0;
             double thresholdForFilter = 85; //CPA 거리필터 임계값
@@ -75,7 +75,6 @@ namespace ADS_B_Display.Models.CPA
                             collisionCandidateCnt++;
                         }
                     }
-                    //calculatedPairs++;
                 }
 
             }

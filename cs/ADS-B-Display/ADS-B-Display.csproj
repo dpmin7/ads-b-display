@@ -221,6 +221,9 @@
     <Compile Include="Views\AreaPopup.xaml.cs">
       <DependentUpon>AreaPopup.xaml</DependentUpon>
     </Compile>
+    <Compile Include="Views\Popup\AreaMonitorPopup.xaml.cs">
+      <DependentUpon>AreaMonitorPopup.xaml</DependentUpon>
+    </Compile>
     <Compile Include="Views\Popup\AreaRegisterPopup.xaml.cs">
       <DependentUpon>AreaRegisterPopup.xaml</DependentUpon>
     </Compile>
@@ -264,6 +267,10 @@
       <Generator>MSBuild:Compile</Generator>
     </Page>
     <Page Include="Views\AreaPopup.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="Views\Popup\AreaMonitorPopup.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>

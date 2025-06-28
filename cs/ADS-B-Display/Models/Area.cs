@@ -24,6 +24,9 @@ namespace ADS_B_Display
 
         public string AreaName => Name;
 
+        private readonly HashSet<Aircraft> _aircraftSetInArea = new HashSet<Aircraft>();
+        public IReadOnlyCollection<Aircraft> AircraftListInArea => _aircraftSetInArea;
+
         public SolidColorBrush AreaColorBrush => new SolidColorBrush(Color);
 
         public Area()
@@ -34,6 +37,26 @@ namespace ADS_B_Display
             Points = new List<Vector3d>();
             Triangles = null;
             Selected = false;
+        }
+
+        public bool AddAircraft(Aircraft aircraft)
+        {
+            if (aircraft != null)
+                return _aircraftSetInArea.Add(aircraft); // 자동으로 중복 제거
+            return  false;
+        }
+
+        public void RemoveAircraft(Aircraft aircraft)
+        {
+            if (aircraft != null)
+                _aircraftSetInArea.Remove(aircraft);
+        }
+
+        public void ClearAircrafts() => _aircraftSetInArea.Clear();
+
+        public bool ContainsAircraft(Aircraft aircraft)
+        {
+            return _aircraftSetInArea.Contains(aircraft);
         }
     }
 

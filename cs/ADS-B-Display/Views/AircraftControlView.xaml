@@ -609,6 +609,7 @@
                         <Button Width="70" Margin="4,0,0,0" Content="Complete" Command="{Binding CompleteCommand}" />
                         <Button Width="60" Margin="4,0,0,0" Content="Cancel" Command="{Binding CancelCommand}" />
                         <Button Width="60" Margin="4,0,0,0" Content="Delete" Command="{Binding DeleteCommand}" />
+                        <Button Width="60" Margin="4,0,0,0" Content="Monitor" Command="{Binding MonitorCommand}" />
                     </StackPanel>
                 </StackPanel>
 
