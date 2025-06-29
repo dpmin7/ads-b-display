@@ -198,8 +198,19 @@ namespace ADS_B_Display.Models
             {
                 CsvWriter.Close();
 
-                UploadToBigQuery();
+                if (CsvFileName == "BigQuery0.csv")
+                {
+                    string nowStr = DateTime.Now.ToString("yyyyMMddHHmmss");
+                    FullTablePath = "scs-lg-arch-5.SBS_Data." + nowStr;
+                }
 
+                string uploadCsvFolder = CsvFolderPath;
+                string uploadCsvFile = CsvFileName;
+                string uploadTableId = FullTablePath;
+
+                // 비동기로 업로드 실행
+                Task.Run(() => UploadCsvToBigQuery(uploadCsvFolder, uploadCsvFile, uploadTableId));
+                
                 SetPathCsvFileName();
                 CreateCsvWriter();
                 WriteRowCount = 0; // Reset after upload
@@ -265,7 +276,7 @@ namespace ADS_B_Display.Models
             }
         }
 
-        public bool UploadCsvToBigQuery(string credentialFolder, string filename, string tableId)
+        private bool UploadCsvToBigQuery(string credentialFolder, string filename, string tableId)
         {
             string filepath = Path.Combine(credentialFolder, filename);
             string credentialPath = Path.Combine(credentialFolder, "YourJsonFile.json");
@@ -328,17 +339,6 @@ namespace ADS_B_Display.Models
             CsvWriter?.Flush();
             CsvWriter?.Close();
             CsvWriter = null;
-        }
-
-        private void UploadToBigQuery()
-        {
-            if (CsvFileName == "BigQuery0.csv")
-            {
-                string nowStr = DateTime.Now.ToString("yyyyMMddHHmmss");
-                FullTablePath = "scs-lg-arch-5.SBS_Data." + nowStr;
-            }
-
-            UploadCsvToBigQuery(CsvFolderPath, CsvFileName, FullTablePath);
         }
 
         private static async Task<bool> DownloadBigQueryToCsvAsync(string outputFolder, string tableId)
