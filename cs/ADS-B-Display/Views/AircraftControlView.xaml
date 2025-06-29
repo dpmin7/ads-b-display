@@ -14,6 +14,7 @@
     mc:Ignorable="d">
     <UserControl.Resources>
         <!--<converters:BoolToStringConverter x:Key="bToInsertCancel" />-->
+        <converters:BoolToNotConverter x:Key="bToNotConv" />
         <converters:MsToDateTime x:Key="msToTime" />
         <converters:SecToDateTime x:Key="secToTime" />
         <!--  IsTextConverter 등록  -->
@@ -373,6 +374,17 @@
                         <GroupBox Header="SBS Connection">
                             <StackPanel Margin="8,10" Orientation="Vertical">
 
+                                <StackPanel Margin="20,0,0,4" Orientation="Horizontal">
+                                    <RadioButton
+                                        Margin="4,0,10,0"
+                                        Content="Local"
+                                        IsChecked="{Binding IsLocal}" />
+                                    <RadioButton
+                                        Margin="0,0,10,0"
+                                        Content="HUB"
+                                        IsChecked="{Binding IsHub}" />
+                                    <RadioButton Content="ETC." IsChecked="{Binding IsEtc}" />
+                                </StackPanel>
                                 <!--  Connection Status + Buttons  -->
                                 <DockPanel Margin="0,0,0,8" LastChildFill="True">
                                     <!--  Signal Light  -->
@@ -386,6 +398,7 @@
                                         HorizontalContentAlignment="Left"
                                         VerticalContentAlignment="Center"
                                         IsEnabled="{Binding}"
+                                        IsReadOnly="{Binding IsEtc, Converter={StaticResource bToNotConv}}"
                                         Text="{Binding ControlSettings.SbsAddress}" />
                                 </DockPanel>
 
@@ -548,6 +561,8 @@
                                     BorderThickness="1"
                                     CanUserAddRows="False"
                                     ItemsSource="{Binding AreaList}"
+                                    SelectedItem="{Binding SelectedArea, Mode=TwoWay}"
+                                    SelectionMode="Single"
                                     VerticalScrollBarVisibility="Auto">
 
                                     <DataGrid.Columns>

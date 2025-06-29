@@ -77,8 +77,7 @@ namespace ADS_B_Display
             if (now - LastSeen >= purgeLimit)
                 return true; // Purge 대상
 
-            if (now - LastSeen >= ghostLimit)
-                IsGhost = true; // Ghost 항공기로 표시
+            IsGhost = now - LastSeen >= ghostLimit; // Ghost 항공기로 표시
 
             (VLatitude, VLongitude) = PredictPositionFlat(
                Latitude, Longitude,

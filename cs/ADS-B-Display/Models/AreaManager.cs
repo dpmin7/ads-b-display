@@ -1,10 +1,13 @@
 ﻿using ADS_B_Display;
+using ADS_B_Display.Models.Settings;
+using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Windows.Media;
 
 internal class AreaManager
 {
-    private static readonly List<Area> _areas = new List<Area>();
+    private static List<Area> _areas = new List<Area>();
     private static Area _tempArea = null;
 
     public static IReadOnlyList<Area> Areas => _areas.AsReadOnly();
@@ -17,10 +20,15 @@ internal class AreaManager
 
     private static bool _isInsertMode;
 
-    public AreaManager()
+    static AreaManager()
     {
         ResetTempArea();
         _isInsertMode = false;
+    }
+
+    public static void LoadArea(List<Area> areas)
+    {
+        _areas = areas.Where(area => area != null).ToList() ?? new List<Area>();
     }
 
     public static void AddArea(Area area)
@@ -57,18 +65,15 @@ internal class AreaManager
         return true;
     }
 
-    public static bool FinalizeTempAreaIfReady(string areaName, Color color, int minPoints = 3 )
+    public static bool FinalizeTempAreaIfReady(string areaName, Color color)
     {
-        if (_tempArea != null && _tempArea.NumPoints >= minPoints)
+        if (Area.Finalize(ref _tempArea, areaName, color))
         {
-            //_tempArea.Triangles = TrianglePoly.TriangulatePoly(_tempArea.Points.ToArray());
-            _tempArea.Triangles = TrianglePoly.TriangulatePolygon(_tempArea.Points.ToArray());
-            _tempArea.Name = areaName;
-            _tempArea.Color = color;
             AddArea(_tempArea);
             ResetTempArea();
             return true;
         }
+        
         return false;
     }
 

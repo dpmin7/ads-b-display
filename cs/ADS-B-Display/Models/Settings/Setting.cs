@@ -1,6 +1,7 @@
 ﻿using ADS_B_Display.Map;
 using ADS_B_Display.Map.MapSrc;
 using ADS_B_Display.Utils;
+using OpenTK;
 using OpenTK.Graphics.OpenGL;
 using System;
 using System.Collections.Generic;
@@ -8,6 +9,7 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Windows.Media;
 
 namespace ADS_B_Display.Models.Settings
 {
@@ -46,6 +48,18 @@ namespace ADS_B_Display.Models.Settings
             string jsonStr = JsonUtil.Serialize(_instance);
             File.WriteAllText(filePath, jsonStr, Encoding.UTF8);
         }
+
+        public static AreaOfInterest AreaToAreaConfig(Area area)
+        {
+            if (area == null) return null;
+            return new AreaOfInterest
+            {
+                Use = area.Use,
+                Name = area.Name,
+                Color = area.Color.ToString(),
+                Area = area.Points.Select(p => new Pos { X = p.X, Y = p.Y }).ToList()
+            };
+        }
     }
 
     internal class MapViewConfig
@@ -56,7 +70,7 @@ namespace ADS_B_Display.Models.Settings
         public bool IsInitialState => EyeX == 0 && EyeY == 0 && EyeH == 0;
     }
 
-    public class ControlSettings
+    public class ControlSettings : NotifyPropertyChangedBase
     {
         public TileServerType ServerType { get; set; } = TileServerType.GoogleMaps;
 
@@ -76,7 +90,7 @@ namespace ADS_B_Display.Models.Settings
 
 
         // Areas of Interest
-        public List<AreaList> AreaList { get; set; } = new List<AreaList>();
+        public List<AreaOfInterest> AreaList { get; set; } = new List<AreaOfInterest>();
 
         // ETC
         public string MapProvider { get; set; } = "GoogleMaps";
@@ -84,16 +98,27 @@ namespace ADS_B_Display.Models.Settings
         public double TimeToGoValue { get; set; } = 300; // 5 minutes in seconds
 
         public bool UseBigQuery { get; set; } = false;
-    }
 
-    public class AreaList
-    {
-        public string Name { get; set; }
-        public List<AreaOfInterest> AreaOfInterestList { get; set; } = new List<AreaOfInterest>();
+        public void UpdateUI()
+        {
+            OnPropertyChanged(nameof(DisplayMapEnabled));
+            OnPropertyChanged(nameof(PurgeDuration));
+            OnPropertyChanged(nameof(PurgeStale));
+            OnPropertyChanged(nameof(CycleImages));
+            OnPropertyChanged(nameof(RawAddress));
+            OnPropertyChanged(nameof(RawConnectOnStartup));
+            OnPropertyChanged(nameof(SbsAddress));
+            OnPropertyChanged(nameof(SbsConnectOnStartup));
+            OnPropertyChanged(nameof(MapProvider));
+            OnPropertyChanged(nameof(UseTimeToGo));
+            OnPropertyChanged(nameof(TimeToGoValue));
+            OnPropertyChanged(nameof(UseBigQuery));
+        }
     }
 
     public class AreaOfInterest
     {
+        public bool Use { get; set; }
         public string Name { get; set; }
         public List<Pos> Area { get; set; } = new List<Pos>();
         public string Color { get; set; } // 또는 System.Windows.Media.Color 등

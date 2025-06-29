@@ -1,7 +1,9 @@
-﻿using OpenTK;
+﻿using ADS_B_Display.Models.Settings;
+using OpenTK;
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using System.Windows.Media;
 
 namespace ADS_B_Display
@@ -59,6 +61,47 @@ namespace ADS_B_Display
         public bool ContainsAircraft(Aircraft aircraft)
         {
             return _aircraftSetInArea.Contains(aircraft);
+        }
+
+        public static Area AreaConfigToArea(AreaOfInterest areaConfig)
+        {
+            if (areaConfig == null) return null;
+            var color = (Color)ColorConverter.ConvertFromString(areaConfig.Color);
+            var area = new Area
+            {
+                Use = areaConfig.Use,
+                Points = areaConfig.Area.Select(p => new Vector3d(p.X, p.Y, 0)).ToList(),
+                NumPoints = areaConfig.Area.Count
+            };
+
+            if(Finalize(ref area, areaConfig.Name, color))
+            {   
+                return area;
+            }
+
+            return null;
+        }
+
+        private const int minPoints = 3;
+        public static bool Finalize(ref Area tempArea, string name, Color color)
+        {
+            if (tempArea != null && tempArea.NumPoints >= minPoints)
+            {
+                tempArea.Triangles = TrianglePoly.TriangulatePolygon(tempArea.Points.ToArray());
+                tempArea.Name = name;
+                tempArea.Color = color;
+                return true;
+            }
+
+            return false;
+        }
+
+        public void SetViewable(bool set)
+        {
+            foreach (var aircraft in _aircraftSetInArea)
+            {
+                aircraft.Viewable = set;
+            }
         }
     }
 

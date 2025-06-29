@@ -24,7 +24,7 @@ namespace ADS_B_Display.Views
 {
     internal class AircraftControlViewModel : NotifyPropertyChangedBase, IDisposable
     {
-        private static readonly NLog.Logger logger = NLog.LogManager.GetLogger("AircraftControlViewModel");
+        private static readonly NLog.Logger logger = NLog.LogManager.GetCurrentClassLogger();
 
         private SbsWorker _sbsWorker = null;
         private SbsWorker _rawWorker = null;
@@ -45,12 +45,21 @@ namespace ADS_B_Display.Views
             RegisterEvents();
 
             ControlSettings = Setting.Instance.ControlSettings;
+            if (ControlSettings == null)
+            {
+                ControlSettings = new ControlSettings();
+                Setting.Instance.ControlSettings = ControlSettings;
+            }
+
             OnChangeSetting();
 
             if (Enum.TryParse(ControlSettings.MapProvider, true, out TileServerType res))
                 SelectedTileServer = res;
             else
                 SelectedTileServer = TileServerType.GoogleMaps; // 기본값 설정
+
+            AreaManager.LoadArea(ControlSettings.AreaList.Select(areaConfig => Area.AreaConfigToArea(areaConfig)).ToList());
+                                                         
 
             Cmd_RawConnect = new DelegateCommand(RawConnect, CanRawConnect);
             Cmd_RawDisconnect = new DelegateCommand(RawDisconnect, CanRawDisconnect);
@@ -203,7 +212,6 @@ namespace ADS_B_Display.Views
         {
             if (SelectedArea != null)
             {
-
                 AreaManager.RemoveArea(SelectedArea);
                 AreaList.Remove(SelectedArea);
                 SelectedArea = null; // 선택 초기화
@@ -219,7 +227,7 @@ namespace ADS_B_Display.Views
             monitor.Show();
         }
 
-        private bool CanDeleteArea(object obj) => true;
+        private bool CanDeleteArea(object obj) => SelectedArea != null;
 
         private bool _isInsertMode;
         public bool IsInsertMode
@@ -233,6 +241,8 @@ namespace ADS_B_Display.Views
         {
             ControlSettings.MapProvider = SelectedTileServer.ToString();
             Setting.Instance.ControlSettings = ControlSettings;
+
+            Setting.Instance.ControlSettings.AreaList = AreaManager.Areas.Select(area => Setting.AreaToAreaConfig(area)).ToList();
         }
 
         private void RawRecord(object obj)
@@ -605,7 +615,7 @@ namespace ADS_B_Display.Views
                     popup.Close();
                     SbsConnectStatus = ConnectStatus.Connect;
 
-                    pingEcho.Start(host, port, 10000, PingEchoHandler);
+                    //pingEcho.Start(host, port, 10000, PingEchoHandler);
 
                 } else {
                     MessageBox.Show("Connection Timeout.");
@@ -727,37 +737,49 @@ namespace ADS_B_Display.Views
         private DateTime systemTime;
         public DateTime SystemTime { get => systemTime; set => SetProperty(ref systemTime, value); }
 
-        // Display
-        //private string icaoText;
-        //public string IcaoText { get => icaoText; set => SetProperty(ref icaoText, value); }
+        private bool isLocal;
+        public bool IsLocal
+        {
+            get => isLocal;
+            set
+            {
+                SetProperty(ref isLocal, value);
+                if (value)
+                {
+                    ControlSettings.SbsAddress = "128.237.96.41";
+                    ControlSettings.UpdateUI();
+                }
+            }
+        }
 
-        //private string flightText;
-        //public string FlightText { get => flightText; set => SetProperty(ref flightText, value); }
+        private bool isHub;
+        public bool IsHub
+        {
+            get => isHub;
+            set
+            {
+                SetProperty(ref isHub, value);
+                if (value)
+                {
+                    ControlSettings.SbsAddress = "data.adsbhub.org";
+                    ControlSettings.UpdateUI();
+                }
+            }
+        }
 
-        //private string latitudeStr;
-
-        //public string LatitudeStr { get => latitudeStr; set => SetProperty(ref latitudeStr, value); }
-
-        //private string longitudeStr;
-
-        //public string LongitudeStr { get => longitudeStr; set => SetProperty(ref longitudeStr, value); }
-
-        //private double speed;
-        //public double Speed { get => speed; set => SetProperty(ref speed, value); }
-
-        //private double vRate;
-        //public double VRate { get => vRate; set => SetProperty(ref vRate, value); }
-
-        //private double hdg;
-        //public double Hdg { get => hdg; set => SetProperty(ref hdg, value); }
-
-        //private double alt;
-        //public double Alt { get => alt; set => SetProperty(ref alt, value); }
-
-        //private long rawCnt;
-        //public long RawCnt { get => rawCnt; set => SetProperty(ref rawCnt, value); }
-
-        //private long sbsCnt;
-        //public long SbsCnt { get => sbsCnt; set => SetProperty(ref sbsCnt, value); }
+        private bool isEtc;
+        public bool IsEtc
+        {
+            get => isEtc;
+            set
+            {
+                SetProperty(ref isEtc, value);
+                if (value)
+                {
+                    ControlSettings.SbsAddress = "";
+                    ControlSettings.UpdateUI();
+                }
+            }
+        }
     }
 }

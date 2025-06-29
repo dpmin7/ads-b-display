@@ -633,7 +633,6 @@ namespace ADS_B_Display.Views
                         GL.End();
                     }
                 }
-                DrawOldTrack(data.TrackPoint.Items); // 이전 트랙 포인트 그리기
             }
         }
 
@@ -667,6 +666,7 @@ namespace ADS_B_Display.Views
             {
                 LatLon2XY(data.VLatitude, data.VLongitude, out double x, out double y);
                 Ntds2d.DrawTrackHook(x, y, airplaneScale * 0.5);
+                DrawOldTrack(data.TrackPoint.Items); // 이전 트랙 포인트 그리기
             }
             else
             {

@@ -1,4 +1,5 @@
 ﻿using ADS_B_Display.Models.CPA;
+using NLog;
 using NLog.Common;
 using System;
 using System.Collections.Generic;
@@ -11,6 +12,8 @@ namespace ADS_B_Display.Models
 {
     internal static class AircraftManager
     {
+        private static readonly NLog.Logger logger = NLog.LogManager.GetCurrentClassLogger();
+
         private static readonly Dictionary<uint, Aircraft> _aircraftTable
             = new Dictionary<uint, Aircraft>();
 
@@ -169,11 +172,15 @@ namespace ADS_B_Display.Models
             {
                 foreach (var aircraft in _aircraftTable.Values)
                 {
-
                     bool isInAnyArea = false;
                     foreach (var area in AreaManager.Areas)
                     {
-                        if(PointPolygonFilter.IsPointInArea(aircraft.Latitude,
+                        if (area.Use == false)
+                        {
+                            area.SetViewable(false);
+                            continue;
+                        }
+                        if (PointPolygonFilter.IsPointInArea(aircraft.Latitude,
                             aircraft.Longitude, area.Points.ToArray()))
                         {
                             if(area.AddAircraft(aircraft))

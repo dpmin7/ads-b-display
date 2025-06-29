@@ -23,7 +23,7 @@ namespace ADS_B_Display.Models
 {
     internal class PingEcho : IDisposable
     {
-        private static readonly NLog.Logger logger = NLog.LogManager.GetLogger("PingEcho");
+        private static readonly NLog.Logger logger = NLog.LogManager.GetCurrentClassLogger();
 
         private Timer _timer;
         private string _host;
