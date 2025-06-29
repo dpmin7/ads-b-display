@@ -34,9 +34,9 @@
                     <Run Text=", " />
                     <Run x:Name="eyeH" />
                     <Run Text=", " />
-                    <Run x:Name="Rightr" />
-                    <Run Text=", " />
                     <Run x:Name="Left" />
+                    <Run Text=", " />
+                    <Run x:Name="Right" />
                     <Run Text=", " />
                     <Run x:Name="Top" />
                     <Run Text=", " />

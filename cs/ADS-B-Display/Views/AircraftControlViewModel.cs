@@ -2,7 +2,6 @@
 using ADS_B_Display.Map.MapSrc;
 using ADS_B_Display.Models;
 using ADS_B_Display.Models.Settings;
-using ADS_B_Display.Properties;
 using ADS_B_Display.Utils;
 using ADS_B_Display.Views.Popup;
 using ADS_B_Display.Views.UserControls;
@@ -11,14 +10,12 @@ using OpenTK;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
-using System.Drawing;
 using System.IO;
 using System.Linq;
-using System.Text;
 using System.Threading;
-using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Input;
+using System.Windows.Media;
 using System.Windows.Threading;
 
 namespace ADS_B_Display.Views
@@ -846,9 +843,20 @@ namespace ADS_B_Display.Views
                 SetProperty(ref isEtc, value);
                 if (value)
                 {
-                    ControlSettings.SbsAddress = "";
+                    //ControlSettings.SbsAddress = "";
                     ControlSettings.UpdateUI();
                 }
+            }
+        }
+
+        private bool usePolygon;
+        public bool UsePolygon
+        {
+            get => usePolygon;
+            set
+            {
+                SetProperty(ref usePolygon, value);
+                AreaManager.UsePolygon = value;
             }
         }
     }

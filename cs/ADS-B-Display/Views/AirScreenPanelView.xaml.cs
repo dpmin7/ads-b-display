@@ -85,7 +85,6 @@ namespace ADS_B_Display.Views
 
             // aircrafe load
             AircraftDB.Init();
-
         }
 
         public void Dispose()

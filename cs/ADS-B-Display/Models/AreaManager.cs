@@ -17,6 +17,7 @@ internal class AreaManager
         get => _isInsertMode;
         set => _isInsertMode = value;
     }
+    public static bool UsePolygon { get; set; }
 
     private static bool _isInsertMode;
 

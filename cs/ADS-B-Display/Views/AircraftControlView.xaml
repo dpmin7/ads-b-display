@@ -434,7 +434,7 @@
                                     <CheckBox
                                         Margin="10,0,0,0"
                                         Content="Use BigQuery"
-                                        IsChecked="{Binding ControlSettings.UseBigQuery}" Checked="CheckBox_Checked" />
+                                        IsChecked="{Binding ControlSettings.UseBigQuery}" />
 
                                     <StackPanel HorizontalAlignment="Right" Orientation="Horizontal">
                                         <GroupBox
@@ -560,7 +560,15 @@
                 <TabItem Header="Track" Style="{StaticResource MahApps.Styles.TabItem}">
                     <StackPanel Orientation="Vertical">
                         <!--  ─── 8) Areas Of Interest ───  -->
-                        <GroupBox Header="Areas Of Interest">
+                        <GroupBox>
+                            <GroupBox.Header>
+                                <StackPanel>
+                                    <CheckBox
+                                        Margin="4,0,0,0"
+                                        Content="Areas Of Interest"
+                                        IsChecked="{Binding UsePolygon, UpdateSourceTrigger=PropertyChanged}" />
+                                </StackPanel>
+                            </GroupBox.Header>
                             <StackPanel Margin="8,10" Orientation="Vertical">
                                 <DataGrid
                                     Height="120"
@@ -574,7 +582,7 @@
                                     VerticalScrollBarVisibility="Auto">
 
                                     <DataGrid.Columns>
-                                        <DataGridTemplateColumn Header="Use" Width="Auto">
+                                        <DataGridTemplateColumn Width="Auto" Header="Use">
                                             <DataGridTemplateColumn.CellTemplate>
                                                 <DataTemplate>
                                                     <CheckBox
