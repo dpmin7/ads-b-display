@@ -137,6 +137,8 @@ namespace ADS_B_Display.Views
         private bool _isSbsRecording = false;
         private bool _isSbsPalying = false;
 
+        private IDisposable _mouseMoveSubscription;
+
         private bool CanRawRecord(object obj) => true;//RawConnectStatus == ConnectStatus.Connect; // connect 시에 _isRecord, isPlaying, isPlayStopped 초기화
         private bool CanRawRecordStop(object obj) => true;//RawConnectStatus == ConnectStatus.Connect; // connect 시에 _isRecord, isPlaying, isPlayStopped 초기화
         private bool CanRawPlay(object obj) => true;//RawConnectStatus == ConnectStatus.Disconnect && ;
@@ -256,6 +258,15 @@ namespace ADS_B_Display.Views
 
         public void Dispose()
         {
+            _timer?.Stop();
+            _timer = null;
+            _mouseMoveSubscription?.Dispose();
+            _mouseMoveSubscription = null;
+
+            // 항공기/영역 데이터 정리
+            AircraftManager.PurgeAll();
+            // AreaManager.ClearAll(); // 필요시
+
             ControlSettings.MapProvider = SelectedTileServer.ToString();
             Setting.Instance.ControlSettings = ControlSettings;
 
@@ -473,7 +484,7 @@ namespace ADS_B_Display.Views
 
         private void RegisterEvents()
         {
-            EventBus.Observe(EventIds.EvtMouseMoved).Subscribe(msg => UpdateMouseMove(msg));
+            _mouseMoveSubscription = EventBus.Observe(EventIds.EvtMouseMoved).Subscribe(msg => UpdateMouseMove(msg));
         }
 
         private void UpdateMouseMove(object msg)

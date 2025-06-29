@@ -38,7 +38,7 @@ namespace ADS_B_Display.Models
             _dataTimer.AutoReset = true;
             _dataTimer.Enabled = true;
 
-            CollisionRiskWorker.Start();
+            //CollisionRiskWorker.Start();
         }
         public static void AddCPAConflict(CPAConflictInfo conflict)
         {

@@ -543,5 +543,37 @@ namespace ADS_B_Display
             GL.Disable(EnableCap.Texture2D);
             GL.PopMatrix();
         }
+
+        public static void DisposeAllGLResources()
+        {
+            // 텍스처 해제
+            if (NumSprites > 0)
+                GL.DeleteTextures(NumSprites, TextureSprites);
+
+            // Display List 해제
+            if (AirTrackFriendList != 0) GL.DeleteLists(AirTrackFriendList, 1);
+            if (AirTrackHostileList != 0) GL.DeleteLists(AirTrackHostileList, 1);
+            if (AirTrackUnknownList != 0) GL.DeleteLists(AirTrackUnknownList, 1);
+            if (SurfaceTrackFriendList != 0) GL.DeleteLists(SurfaceTrackFriendList, 1);
+            if (TrackHookList != 0) GL.DeleteLists(TrackHookList, 1);
+
+            // VBO/EBO/텍스처 해제
+            if (circleVbo != 0) GL.DeleteBuffer(circleVbo);
+            if (airportVbo != 0) GL.DeleteBuffer(airportVbo);
+            if (airportEbo != 0) GL.DeleteBuffer(airportEbo);
+            if (airportTextId != 0) GL.DeleteTexture(airportTextId);
+
+            // 리소스 ID 초기화
+            NumSprites = 0;
+            AirTrackFriendList = 0;
+            AirTrackHostileList = 0;
+            AirTrackUnknownList = 0;
+            SurfaceTrackFriendList = 0;
+            TrackHookList = 0;
+            circleVbo = 0;
+            airportVbo = 0;
+            airportEbo = 0;
+            airportTextId = 0;
+        }
     }
 }

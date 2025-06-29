@@ -90,6 +90,15 @@ namespace ADS_B_Display.Views
 
         public void Dispose()
         {
+            _updateTimer?.Stop();
+            _updateTimer = null;
+            _delayTimer?.Stop();
+            _delayTimer?.Dispose();
+            _delayTimer = null;
+
+            // OpenGL 리소스 해제
+            Ntds2d.DisposeAllGLResources();
+
             Setting.Instance.MapConfig.EyeX = _earthView.Eye.X;
             Setting.Instance.MapConfig.EyeY = _earthView.Eye.Y;
             Setting.Instance.MapConfig.EyeH = _earthView.Eye.H;
