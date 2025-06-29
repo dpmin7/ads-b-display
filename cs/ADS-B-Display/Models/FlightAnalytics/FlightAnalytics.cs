@@ -25,11 +25,21 @@ namespace ADS_B_Display.Models.FlightAnalytics
 
         public void AnalyzeFlightProfile(string hexIdent)
         {
+            AnalyzeFlightProfileInternal(hexIdent, null);
+        }
+
+        public void AnalyzeFlightProfile(string hexIdent, string table)
+        {
+            AnalyzeFlightProfileInternal(hexIdent, table);
+        }
+
+        private void AnalyzeFlightProfileInternal(string hexIdent, string specificTable)
+        {
             Application.Current.Dispatcher.Invoke(async () =>
             {
                 try
                 {
-                    var flightData = await GetInterpolatedFlightDataAsync(hexIdent);
+                    var flightData = await GetInterpolatedFlightDataAsync(hexIdent, specificTable);
 
                     if (flightData.Count == 0)
                     {
@@ -53,22 +63,18 @@ namespace ADS_B_Display.Models.FlightAnalytics
 
                     var plt = plot.Plot;
 
-                    // Speed plot on left Y axis
                     var speedPlot = plt.Add.Scatter(times, speeds);
                     speedPlot.Label = "Speed (knots)";
 
-                    // Altitude plot on right Y axis
                     var rightAxis = plt.Axes.AddRightAxis();
                     var altPlot = plt.Add.Scatter(times, altitudes);
                     altPlot.Label = "Altitude (ft)";
                     altPlot.Axes.YAxis = rightAxis;
 
-                    // Format axes
                     plt.Axes.Bottom.TickGenerator = new ScottPlot.TickGenerators.DateTimeAutomatic();
                     plt.Axes.Left.Label.Text = "Speed (knots)";
                     rightAxis.Label.Text = "Altitude (ft)";
 
-                    // Legend and title
                     plt.Legend.IsVisible = true;
                     plt.Title($"Flight Info for {hexIdent}");
 
@@ -81,9 +87,9 @@ namespace ADS_B_Display.Models.FlightAnalytics
             });
         }
 
-        private async Task<List<(DateTime ts, double speed, double altitude)>> GetInterpolatedFlightDataAsync(string hexIdent)
+        private async Task<List<(DateTime ts, double speed, double altitude)>> GetInterpolatedFlightDataAsync(string hexIdent, string specificTable = null)
         {
-            var rawData = await FetchRawFlightData(hexIdent);
+            var rawData = await FetchRawFlightData(hexIdent, specificTable);
             if (!rawData.Any()) return new List<(DateTime, double, double)>();
 
             var sorted = rawData.OrderBy(x => x.ts).ToList();
@@ -98,7 +104,7 @@ namespace ADS_B_Display.Models.FlightAnalytics
             return result;
         }
 
-        private async Task<List<(DateTime ts, double? speed, double? altitude)>> FetchRawFlightData(string hexIdent)
+        private async Task<List<(DateTime ts, double? speed, double? altitude)>> FetchRawFlightData(string hexIdent, string specificTable = null)
         {
             var exePath = Assembly.GetExecutingAssembly().Location;
             var homeDir = Path.GetDirectoryName(exePath);
@@ -106,32 +112,53 @@ namespace ADS_B_Display.Models.FlightAnalytics
 
             var credential = GoogleCredential.FromFile(credentialPath);
             var client = BigQueryClient.Create(projectId, credential);
-            var dataset = client.GetDataset(datasetId);
-            var tables = dataset.ListTables();
-
             var results = new List<(DateTime, double?, double?)>();
 
-            foreach (var table in tables)
+            if (!string.IsNullOrEmpty(specificTable))
             {
                 string sql = $@"
                     SELECT Timestamp, GroundSpeed, Altitude
-                    FROM `{projectId}.{datasetId}.{table.Reference.TableId}`
+                    FROM `{projectId}.{datasetId}.{specificTable}`
                     WHERE HexIdent = '{hexIdent}'
                     ORDER BY Timestamp";
 
-                try
+                var query = await client.ExecuteQueryAsync(sql, parameters: null);
+                foreach (var row in query)
                 {
-                    var query = await client.ExecuteQueryAsync(sql, parameters: null);
-                    foreach (var row in query)
-                    {
-                        long ts = (long)row["Timestamp"];
-                        var dt = DateTimeOffset.FromUnixTimeMilliseconds(ts).DateTime;
-                        double? speed = row["GroundSpeed"]?.ToDouble();
-                        double? alt = row["Altitude"]?.ToDouble();
-                        results.Add((dt, speed, alt));
-                    }
+                    long ts = (long)row["Timestamp"];
+                    var dt = DateTimeOffset.FromUnixTimeMilliseconds(ts).DateTime;
+                    double? speed = row["GroundSpeed"]?.ToDouble();
+                    double? alt = row["Altitude"]?.ToDouble();
+                    results.Add((dt, speed, alt));
                 }
-                catch { }
+            }
+            else
+            {
+                var dataset = client.GetDataset(datasetId);
+                var tables = dataset.ListTables();
+
+                foreach (var table in tables)
+                {
+                    string sql = $@"
+                        SELECT Timestamp, GroundSpeed, Altitude
+                        FROM `{projectId}.{datasetId}.{table.Reference.TableId}`
+                        WHERE HexIdent = '{hexIdent}'
+                        ORDER BY Timestamp";
+
+                    try
+                    {
+                        var query = await client.ExecuteQueryAsync(sql, parameters: null);
+                        foreach (var row in query)
+                        {
+                            long ts = (long)row["Timestamp"];
+                            var dt = DateTimeOffset.FromUnixTimeMilliseconds(ts).DateTime;
+                            double? speed = row["GroundSpeed"]?.ToDouble();
+                            double? alt = row["Altitude"]?.ToDouble();
+                            results.Add((dt, speed, alt));
+                        }
+                    }
+                    catch { }
+                }
             }
 
             return results;

@@ -40,6 +40,8 @@ namespace ADS_B_Display.Views
 
         private Color AreaColor { get; set; }
 
+        private string _selectedBigQueryTable = null;
+
         public AircraftControlViewModel()
         {
             _sbsWorker = new SbsWorker(AircraftManager.ReceiveSBSMessage);
@@ -120,7 +122,7 @@ namespace ADS_B_Display.Views
             if (Aircraft == null)
                 return;
             var analyzer = new ADS_B_Display.Models.FlightAnalytics.FlightAnalytics();
-            analyzer.AnalyzeFlightProfile(Aircraft.HexAddr);
+            analyzer.AnalyzeFlightProfile(Aircraft.HexAddr, _selectedBigQueryTable);
         }
 
         private void ShowCpaDialog(object obj)
@@ -464,6 +466,8 @@ namespace ADS_B_Display.Views
                     return;
 
                 var selItem = win.SelectedItem;
+
+                _selectedBigQueryTable = selItem.Name;
 
                 _db = new BigQuery(selItem.Name);
                 _sbsWorker.Start(selItem.Name, true, _db);
