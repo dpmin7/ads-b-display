@@ -246,6 +246,12 @@ namespace ADS_B_Display
         public static void DrawAirplaneImage(double x, double y, double scale, double heading, int imageNum)
         {
             GL.PushMatrix();
+
+            // ✨ 1. 블렌딩 활성화
+            GL.Enable(EnableCap.Blend);
+            // ✨ 2. 블렌딩 방식 설정 (가장 일반적인 알파 블렌딩)
+            GL.BlendFunc(BlendingFactor.SrcAlpha, BlendingFactor.OneMinusSrcAlpha);
+
             GL.Enable(EnableCap.Texture2D);
             GL.BindTexture(TextureTarget.Texture2D, TextureSprites[imageNum]);
             GL.ShadeModel(ShadingModel.Flat);
@@ -260,6 +266,10 @@ namespace ADS_B_Display
             GL.End();
             GL.BindTexture(TextureTarget.Texture2D, 0);
             GL.Disable(EnableCap.Texture2D);
+
+            // ✨ 3. 다른 객체에 영향을 주지 않도록 블렌딩 비활성화
+            GL.Disable(EnableCap.Blend);
+
             GL.PopMatrix();
         }
 
