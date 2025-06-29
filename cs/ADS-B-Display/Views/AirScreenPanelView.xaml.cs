@@ -85,6 +85,7 @@ namespace ADS_B_Display.Views
 
             // aircrafe load
             AircraftDB.Init();
+
         }
 
         public void Dispose()
@@ -740,6 +741,19 @@ namespace ADS_B_Display.Views
             siny = Math.Sin((MapCenterLat * Math.PI) / 180.0);
             siny = Math.Min(Math.Max(siny, -0.9999), 0.9999);
             y = (Math.Log((1 + siny) / (1 - siny)) / (4 * Math.PI));
+        }
+
+        public void CenterMapTo(double latitude, double longitude)
+        {
+            MapCenterLat = latitude;
+            MapCenterLon = longitude;
+
+            SetMapCenter(out double x, out double y);
+            _earthView.Eye.X = x;
+            _earthView.Eye.Y = y;
+
+            UpdateRegion();
+            glControl.InvalidateVisual(); // 화면 갱신
         }
     }
 }

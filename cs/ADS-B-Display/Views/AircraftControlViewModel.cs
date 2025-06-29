@@ -89,6 +89,7 @@ namespace ADS_B_Display.Views
             MonitorCommand = new DelegateCommand(MonitorArea, CanMonitorArea);
 
             AreaList = new ObservableCollection<Area>(AreaManager.Areas);
+            Cmd_ShowCpaDialog = new DelegateCommand(ShowCpaDialog);
 
             _timer = new DispatcherTimer(DispatcherPriority.Background) {
                 Interval = TimeSpan.FromMilliseconds(250)
@@ -101,6 +102,22 @@ namespace ADS_B_Display.Views
             };
 
             _timer.Start();
+        }
+
+        private void ShowCpaDialog(object obj)
+        {
+            var dialog = new CPAConflictDialog();
+            dialog.Owner = Application.Current.MainWindow;
+            if (dialog.ShowDialog() == true)
+            {
+                var selected = dialog.SelectedConflict;
+                double lat = (selected.Lat1 + selected.Lat2) / 2;
+                double lon = (selected.Lon1 + selected.Lon2) / 2;
+
+                //airScreenViewControl.CenterMapTo(centerLat, centerLon);
+                //var screenView = this.AirScreenViewControl;
+                //screenView.CenterMapTo(lat, lon);
+            }
         }
 
         private void PolygonComplete(object obj)
@@ -492,6 +509,8 @@ namespace ADS_B_Display.Views
         public ICommand CancelCommand { get; }
         public ICommand DeleteCommand { get; }
         public ICommand MonitorCommand { get; }
+
+        public ICommand Cmd_ShowCpaDialog { get; }
         private void RawDisconnect(object obj)
         {
             if (RawConnectStatus == ConnectStatus.Disconnect)

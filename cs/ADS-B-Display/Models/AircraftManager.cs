@@ -3,6 +3,7 @@ using NLog;
 using NLog.Common;
 using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.Linq;
 using System.Timers;
@@ -26,6 +27,9 @@ namespace ADS_B_Display.Models
         private static long _purgeLimitMS = 30000; // 30초 (1분) 후에 Purge
         private static long _ghostLimitMS = 10000; // 10초 (1분) 후에 Purge
 
+        private static ObservableCollection<CPAConflictInfo> _cpaConflicts = new ObservableCollection<CPAConflictInfo>();
+        public static ObservableCollection<CPAConflictInfo> CPAConflicts => _cpaConflicts;
+
         static AircraftManager()
         {
             // Timer 설정: 1초마다 데이터 업데이트
@@ -35,6 +39,33 @@ namespace ADS_B_Display.Models
             _dataTimer.Enabled = true;
 
             CollisionRiskWorker.Start();
+        }
+        public static void AddCPAConflict(CPAConflictInfo conflict)
+        {
+            lock (lockObj)
+            {
+                _cpaConflicts.Add(conflict);
+            }
+        }
+
+        public static void ClearCPAConflicts()
+        {
+            lock (lockObj)
+            {
+                _cpaConflicts.Clear();
+            }
+        }
+
+        public static void UpdateCPAConflicts(List<CPAConflictInfo> newConflicts)
+        {
+            lock (lockObj)
+            {
+                _cpaConflicts.Clear();
+                foreach (var conflict in newConflicts)
+                {
+                    _cpaConflicts.Add(conflict);
+                }
+            }
         }
 
         internal static void SetPurgeLimitMS(long limitMS, long ghostLimitMS)
@@ -210,5 +241,25 @@ namespace ADS_B_Display.Models
         public uint ICAO_CPA { get; set; }
         public Dictionary<string, string> DepartureAirport { get; set; }
         public Dictionary<string, string> ArrivalAirport { get; set; }
+    }
+
+    public class CPAConflictInfo
+    {
+        public uint ICAO1 { get; set; }
+        public string HexAddr1 { get; set; }
+
+        public double Lat1 { get; set; }
+        public double Lon1 { get; set; }
+        public double Alt1 { get; set; }
+
+        public uint ICAO2 { get; set; }
+        public string HexAddr2 { get; set; }
+
+        public double Lat2 { get; set; }
+        public double Lon2 { get; set; }
+        public double Alt2 { get; set; }
+
+        public double TCPA_Seconds { get; set; }
+        public double CPADistance_NM { get; set; }
     }
 }

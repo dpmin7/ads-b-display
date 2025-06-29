@@ -105,6 +105,11 @@ namespace ADS_B_Display.Utils
         {
             _subjects.TryRemove(key, out _);
         }
+
+        internal static object Observe(object evtCenterMapTo)
+        {
+            throw new NotImplementedException();
+        }
     }
 
 }

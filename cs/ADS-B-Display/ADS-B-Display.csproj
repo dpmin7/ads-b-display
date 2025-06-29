@@ -234,6 +234,9 @@
     <Compile Include="Views\Popup\BigQueryListPopup.xaml.cs">
       <DependentUpon>BigQueryListPopup.xaml</DependentUpon>
     </Compile>
+    <Compile Include="Views\Popup\CPAConflictDialog.xaml.cs">
+      <DependentUpon>CPAConflictDialog.xaml</DependentUpon>
+    </Compile>
     <Compile Include="Views\UserControls\ConnectionSignal.xaml.cs">
       <DependentUpon>ConnectionSignal.xaml</DependentUpon>
     </Compile>
@@ -283,6 +286,10 @@
       <Generator>MSBuild:Compile</Generator>
     </Page>
     <Page Include="Views\Popup\BigQueryListPopup.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="Views\Popup\CPAConflictDialog.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>

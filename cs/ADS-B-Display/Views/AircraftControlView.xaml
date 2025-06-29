@@ -660,6 +660,11 @@
                                 HorizontalContentAlignment="Center"
                                 Text="{Binding TimeTogoValue, Mode=TwoWay, Converter={StaticResource secToTime}}" />
                             <!--<TextBlock Margin="8,0,0,0" Text="{Binding ElementName=sliderTimeTogo, Path=Value, Converter={StaticResource secToTime}, StringFormat='hh\\:mm\\:ss'}" />-->
+                            <Button
+                                Content="Collision Monitor"
+                                Margin="10,0,0,0"
+                                Padding="6,2"
+                                Command="{Binding Cmd_ShowCpaDialog}" />
                         </DockPanel>
 
                         <!--  Time-To-Go 슬라이더 + 값 표시  -->

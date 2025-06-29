@@ -29,7 +29,7 @@ namespace ADS_B_Display
         {
             if (!Dispatcher.CheckAccess())
             {
-                Dispatcher.Invoke(() => AppendLog(message));
+                Dispatcher.BeginInvoke(new Action(() => AppendLog(message)));
                 return;
             }
 
@@ -68,10 +68,10 @@ namespace ADS_B_Display
             }
             else
             {
-                _textBox.Dispatcher.Invoke(() => {
+                _textBox.Dispatcher.BeginInvoke((Action)(() => {
                     _textBox.AppendText(message);
                     _textBox.ScrollToEnd();
-                });
+                }));
             }
         }
     }

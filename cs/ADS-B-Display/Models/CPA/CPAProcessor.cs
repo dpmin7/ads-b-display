@@ -48,8 +48,8 @@ namespace ADS_B_Display.Models.CPA
             double thresholdForFilter = 85; //CPA 거리필터 임계값
             double thresholdForCPA_NM = 1;  //CPA 수평거리
             double thresholdForTcpa = 30;   //TCPA 시간
+            List<CPAConflictInfo> conflictList = new List<CPAConflictInfo>(); // ⚠️ 임시 리스트
 
-           
             Aircraft ac1 = null;
             Aircraft ac2 = null;
             for (int i = 0; i < count; i++)
@@ -81,6 +81,21 @@ namespace ADS_B_Display.Models.CPA
                            
                         if (cpaDistanceNm < thresholdForCPA_NM)
                         {
+                            CPAConflictInfo conflictInfo = new CPAConflictInfo();
+                            conflictInfo.ICAO1 = ac1.ICAO;
+                            conflictInfo.ICAO2 = ac2.ICAO;
+                            conflictInfo.HexAddr1 = ac1.HexAddr;
+                            conflictInfo.HexAddr2 = ac2.HexAddr;
+                            conflictInfo.Lat1 = ac1.Latitude;
+                            conflictInfo.Lat2 = ac2.Latitude;
+                            conflictInfo.Lon1 = ac1.Longitude;
+                            conflictInfo.Lon2 = ac2.Longitude; 
+                            conflictInfo.Alt1 = ac1.Altitude;
+                            conflictInfo.Alt2 = ac2.Altitude;  
+                            conflictInfo.TCPA_Seconds = tcpa;
+                            conflictInfo.CPADistance_NM = cpaDistanceNm;
+
+                            conflictList.Add(conflictInfo);
                             collisionCandidateCnt++;
                         }
                     }
@@ -88,6 +103,8 @@ namespace ADS_B_Display.Models.CPA
                 }
 
             }
+
+            AircraftManager.UpdateCPAConflicts(conflictList);
             cpaStopwatch.Stop();
              
             logger.Debug($"[CPA] Total aircrafts: {count}");
