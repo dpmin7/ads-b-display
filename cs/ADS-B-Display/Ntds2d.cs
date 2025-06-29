@@ -1,10 +1,16 @@
 ﻿using OpenTK.Graphics.OpenGL;
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.IO;
+using System.Linq;
+using System.Windows;
+using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using ADS_B_Display.Utils;
 
+// 참고: WPF 기능을 사용하므로, 프로젝트 파일(.csproj)에 <UseWPF>true</UseWPF> 설정과
+// WindowsBase, PresentationCore 라이브러리 참조가 필요합니다.
 namespace ADS_B_Display
 {
     /// <summary>
@@ -12,6 +18,7 @@ namespace ADS_B_Display
     /// </summary>
     public static class Ntds2d
     {
+        // --- 기존 멤버 변수 ---
         private const int NUM_SPRITES = 81;
         private const int SPRITE_WIDTH = 72;
         private const int SPRITE_HEIGHT = 72;
@@ -25,19 +32,65 @@ namespace ADS_B_Display
         private static int TrackHookList;
 
         private static int circleVbo = 0;
-        private static int circleCount = 0;
         private static int airportVbo = 0;
-        private static int airportVao = 0;
         private static int airportEbo = 0;
         private static int airportTextId = 0;
         private static bool airportVboInitialized = false;
 
-        /// <summary>
-        /// 비행기 스프라이트 시트에서 개별 이미지를 분할하여 텍스처로 생성합니다.
-        /// </summary>
+        // --- ✨ 텍스트 렌더링을 위해 새로 추가된 멤버 변수 ✨ ---
+        private static Dictionary<string, (int textureId, int width, int height)> textTextureCache = new Dictionary<string, (int, int, int)>();
+
+        // --- ✨ 텍스트 렌더링을 위한 헬퍼 함수 ✨ ---
+
+        private static BitmapSource CreateTextBitmapWpf(string text, string fontFamily, double fontSize, System.Windows.Media.Color textColor)
+        {
+            var formattedText = new FormattedText(
+                text, CultureInfo.CurrentCulture, FlowDirection.LeftToRight,
+                new Typeface(fontFamily), fontSize, new SolidColorBrush(textColor), 1.0
+            );
+
+            var drawingVisual = new DrawingVisual();
+            using (var drawingContext = drawingVisual.RenderOpen())
+            {
+                drawingContext.DrawText(formattedText, new Point(2, 0));
+            }
+
+            var bmp = new RenderTargetBitmap(
+                (int)Math.Ceiling(formattedText.Width) + 4, (int)Math.Ceiling(formattedText.Height),
+                96, 96, PixelFormats.Pbgra32
+            );
+
+            bmp.Render(drawingVisual);
+            bmp.Freeze();
+            return bmp;
+        }
+
+        private static (int textureId, int width, int height) CreateTextureFromBitmap(BitmapSource bitmap)
+        {
+            if (bitmap.Format != PixelFormats.Bgra32)
+                bitmap = new FormatConvertedBitmap(bitmap, PixelFormats.Bgra32, null, 0);
+
+            int width = bitmap.PixelWidth;
+            int height = bitmap.PixelHeight;
+            int stride = width * 4;
+            byte[] pixels = new byte[height * stride];
+            bitmap.CopyPixels(pixels, stride, 0);
+
+            int textureId = GL.GenTexture();
+            GL.BindTexture(TextureTarget.Texture2D, textureId);
+            GL.TexImage2D(TextureTarget.Texture2D, 0, PixelInternalFormat.Rgba, width, height, 0,
+                          OpenTK.Graphics.OpenGL.PixelFormat.Bgra, PixelType.UnsignedByte, pixels);
+
+            GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMinFilter, (int)TextureMinFilter.Linear);
+            GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMagFilter, (int)TextureMagFilter.Linear);
+            GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureWrapS, (int)TextureWrapMode.ClampToEdge);
+            GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureWrapT, (int)TextureWrapMode.ClampToEdge);
+            GL.BindTexture(TextureTarget.Texture2D, 0);
+            return (textureId, width, height);
+        }
+
         public static int MakeAirplaneImages()
         {
-            // 스프라이트 시트 파일 경로
             string path = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Symbols", "sprites-RGBA.png");
             var decoder = new PngBitmapDecoder(new Uri(path), BitmapCreateOptions.PreservePixelFormat, BitmapCacheOption.OnLoad);
             var sheet = decoder.Frames[0];
@@ -49,23 +102,24 @@ namespace ADS_B_Display
 
             GL.GenTextures(NUM_SPRITES, TextureSprites);
             NumSprites = 0;
-            for (int row = 0; row < 11; row++) {
-                for (int col = 0; col < 8; col++) {
-                    // 서브 이미지 버퍼
+            for (int row = 0; row < 11; row++)
+            {
+                for (int col = 0; col < 8; col++)
+                {
                     byte[] sub = new byte[SPRITE_WIDTH * SPRITE_HEIGHT * 4];
                     for (int y = 0; y < SPRITE_HEIGHT; y++)
-                        for (int x = 0; x < SPRITE_WIDTH; x++) {
+                        for (int x = 0; x < SPRITE_WIDTH; x++)
+                        {
                             int srcIndex = ((y + row * SPRITE_HEIGHT) * width + (x + col * SPRITE_WIDTH)) * 4;
                             int dstIndex = (y * SPRITE_WIDTH + x) * 4;
                             Array.Copy(sheetPixels, srcIndex, sub, dstIndex, 4);
                         }
 
-                    // 텍스처 생성
                     int texId = TextureSprites[NumSprites];
                     GL.BindTexture(TextureTarget.Texture2D, texId);
                     GL.PixelStore(PixelStoreParameter.UnpackAlignment, 1);
                     GL.TexImage2D(TextureTarget.Texture2D, 0, PixelInternalFormat.Rgba, SPRITE_WIDTH, SPRITE_HEIGHT, 0,
-                                  PixelFormat.Rgba, PixelType.UnsignedByte, sub);
+                                  OpenTK.Graphics.OpenGL.PixelFormat.Rgba, PixelType.UnsignedByte, sub);
                     GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMinFilter, (int)TextureMinFilter.Linear);
                     GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMagFilter, (int)TextureMagFilter.Linear);
                     GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureWrapS, (int)All.ClampToEdge);
@@ -80,9 +134,6 @@ namespace ADS_B_Display
             return NumSprites;
         }
 
-        /// <summary>
-        /// 친구 항공기 트랙 심볼 GL display list 생성
-        /// </summary>
         public static void MakeAirTrackFriend()
         {
             AirTrackFriendList = GL.GenLists(1);
@@ -95,7 +146,8 @@ namespace ADS_B_Display
             GL.BlendFunc(BlendingFactor.SrcAlpha, BlendingFactor.OneMinusSrcAlpha);
 
             GL.Begin(PrimitiveType.LineStrip);
-            for (int i = 0; i <= 50; i++) {
+            for (int i = 0; i <= 50; i++)
+            {
                 double angle = i * (double)Math.PI / 50f;
                 GL.Vertex2(Math.Cos(angle) * 20f, Math.Sin(angle) * 20f);
             }
@@ -107,9 +159,6 @@ namespace ADS_B_Display
             GL.EndList();
         }
 
-        /// <summary>
-        /// 적대 항공기 트랙 심볼 생성
-        /// </summary>
         public static void MakeAirTrackHostile()
         {
             AirTrackHostileList = GL.GenLists(1);
@@ -127,9 +176,6 @@ namespace ADS_B_Display
             GL.EndList();
         }
 
-        /// <summary>
-        /// 알 수 없음 트랙 심볼 생성
-        /// </summary>
         public static void MakeAirTrackUnknown()
         {
             AirTrackUnknownList = GL.GenLists(1);
@@ -148,9 +194,6 @@ namespace ADS_B_Display
             GL.EndList();
         }
 
-        /// <summary>
-        /// 포인트 심볼 생성
-        /// </summary>
         public static void MakePoint()
         {
             SurfaceTrackFriendList = GL.GenLists(1);
@@ -163,13 +206,15 @@ namespace ADS_B_Display
             GL.BlendFunc(BlendingFactor.SrcAlpha, BlendingFactor.OneMinusSrcAlpha);
 
             GL.Begin(PrimitiveType.LineStrip);
-            for (int i = 0; i < 100; i++) {
+            for (int i = 0; i < 100; i++)
+            {
                 double angle = i * 2f * (double)Math.PI / 100f;
                 GL.Vertex2(Math.Cos(angle) * 20f, Math.Sin(angle) * 20f);
             }
             GL.End();
             GL.Begin(PrimitiveType.LineStrip);
-            for (int i = 0; i < 100; i++) {
+            for (int i = 0; i < 100; i++)
+            {
                 double angle = i * 2f * (double)Math.PI / 100f;
                 GL.Vertex2(Math.Cos(angle) * 2f, Math.Sin(angle) * 2f);
             }
@@ -177,9 +222,6 @@ namespace ADS_B_Display
             GL.EndList();
         }
 
-        /// <summary>
-        /// 트랙 훅 심볼 생성
-        /// </summary>
         public static void MakeTrackHook()
         {
             TrackHookList = GL.GenLists(1);
@@ -192,7 +234,8 @@ namespace ADS_B_Display
             GL.BlendFunc(BlendingFactor.SrcAlpha, BlendingFactor.OneMinusSrcAlpha);
 
             GL.Begin(PrimitiveType.LineStrip);
-            for (int i = 0; i < 100; i++) {
+            for (int i = 0; i < 100; i++)
+            {
                 double angle = i * 2f * (double)Math.PI / 100f;
                 GL.Vertex2(Math.Cos(angle) * 60f, Math.Sin(angle) * 60f);
             }
@@ -200,9 +243,6 @@ namespace ADS_B_Display
             GL.EndList();
         }
 
-        /// <summary>
-        /// 비행기 이미지를 화면에 그리기
-        /// </summary>
         public static void DrawAirplaneImage(double x, double y, double scale, double heading, int imageNum)
         {
             GL.PushMatrix();
@@ -225,78 +265,61 @@ namespace ADS_B_Display
 
         public static void DrawAirplaneImage(double x, double y, double h, double scale, double heading, int imageNum, bool isGhost)
         {
-            if (!isGhost) {
+            if (!isGhost)
+            {
                 (double r, double g, double b) color = AltitudeToColor.GetAltitudeColorRGB(h);
-                GL.Color4(color.r, color.g, color.b, 0.8f); // 색상 설정 0.8f
-            } else {
-                GL.Color4(0.5f, 0.5f, 0.5f, 0.8f); // 색상 설정 0.8f
+                GL.Color4(color.r, color.g, color.b, 0.8f);
+            }
+            else
+            {
+                GL.Color4(0.5f, 0.5f, 0.5f, 0.8f);
             }
             DrawAirplaneImage(x, y, scale, heading, imageNum);
         }
 
-        /// <summary>
-        /// 친구 트랙 심볼 그리기
-        /// </summary>
         public static void DrawAirTrackFriend(double x, double y)
         {
             GL.PushMatrix(); GL.Translate(x, y, 0f); GL.CallList(AirTrackFriendList); GL.PopMatrix();
         }
 
-        /// <summary>
-        /// 적대 트랙 심볼 그리기
-        /// </summary>
         public static void DrawAirTrackHostile(double x, double y)
         {
             GL.PushMatrix(); GL.Translate(x, y, 0f); GL.CallList(AirTrackHostileList); GL.PopMatrix();
         }
 
-        /// <summary>
-        /// 알 수 없음 트랙 심볼 그리기
-        /// </summary>
         public static void DrawAirTrackUnknown(double x, double y)
         {
             GL.PushMatrix(); GL.Translate(x, y, 0f); GL.CallList(AirTrackUnknownList); GL.PopMatrix();
         }
 
-        /// <summary>
-        /// 점 심볼 그리기
-        /// </summary>
         public static void DrawPoint(double x, double y)
         {
             GL.PushMatrix(); GL.Translate(x, y, 0f); GL.CallList(SurfaceTrackFriendList); GL.PopMatrix();
         }
 
-        /// <summary>
-        /// 트랙 훅 심볼 그리기
-        /// </summary>
         public static void DrawTrackHook(double x, double y, double scale = 1)
         {
             GL.Color4(1f, 1f, 0f, 1f);
             GL.PushMatrix();
             GL.Translate(x, y, 0f);
-            GL.Scale(scale, scale, 1f); // 크기 조절 추가
-            GL.LineWidth((float)(1.5 * scale)); // 기본 두께 1.5를 scale에 따라 조절
+            GL.Scale(scale, scale, 1f);
+            GL.LineWidth((float)(1.5 * scale));
             GL.CallList(TrackHookList);
             GL.PopMatrix();
         }
 
-        /// <summary>
-        /// 레이더 커버리지 영역 그리기 (타원형)
-        /// </summary>
         public static void DrawRadarCoverage(double xc, double yc, double major, double minor)
         {
             GL.Begin(PrimitiveType.TriangleFan);
             GL.Vertex2(xc, yc);
-            for (int i = 0; i <= 360; i += 5) {
+            for (int i = 0; i <= 360; i += 5)
+            {
                 double rad = (double)Math.PI * i / 180f;
                 GL.Vertex2(xc + major * Math.Cos(rad), yc + minor * Math.Sin(rad));
             }
             GL.End();
         }
 
-        /// <summary>
-        /// 선 렌더링 (두 점 연결)
-        /// </summary>
         public static void DrawLeader(double x1, double y1, double x2, double y2)
         {
             GL.Begin(PrimitiveType.LineStrip);
@@ -309,49 +332,41 @@ namespace ADS_B_Display
         {
             GL.LineWidth((float)width);
             DrawLeader(x1, y1, x2, y2);
-            GL.LineWidth(1f); // 기본 두께로 되돌리기
+            GL.LineWidth(1f);
         }
 
         public static void DrawLeader(double x1, double y1, double x2, double y2, double width, (double r, double g, double b) color)
         {
             GL.Color4((float)color.r, (float)color.g, (float)color.b, 1f);
             DrawLeader(x1, y1, x2, y2, width);
-            GL.Color4(1f, 1f, 1f, 1f); // 기본 색상으로 되돌리기
+            GL.Color4(1f, 1f, 1f, 1f);
         }
 
-        /// <summary>
-        /// 목적지 점 계산
-        /// </summary>
         public static void ComputeTimeToGoPosition(double timeToGo, double xs, double ys, double xv, double yv, out double xe, out double ye)
         {
             xe = xs + (xv / 3600f) * timeToGo;
             ye = ys + (yv / 3600f) * timeToGo;
         }
 
-        /// <summary>
-        /// 다각형 형태의 선 그리기
-        /// </summary>
         public static void DrawLines(int resolution, double[] xpts, double[] ypts)
         {
             GL.Begin(PrimitiveType.Lines);
-            for (int i = 0; i < resolution; i++) {
+            for (int i = 0; i < resolution; i++)
+            {
                 GL.Vertex3(xpts[i], ypts[i], 0.1);
                 GL.Vertex3(xpts[(i + 1) % resolution], ypts[(i + 1) % resolution], 0.1);
             }
             GL.End();
         }
 
-        /// <summary>
-        /// 여러 개의 원을 VBO를 사용해 그리기
-        /// </summary>
         public static void DrawCirclesVBO(List<(double cx, double cy, double r)> circles, int segments = 12)
         {
             if (circleVbo == 0)
                 GL.GenBuffers(1, out circleVbo);
 
-            int vertsPerCircle = segments + 2; // 중심점 + segments + 끝점
+            int vertsPerCircle = segments + 2;
             int totalVerts = circles.Count * vertsPerCircle;
-            float[] vertexData = new float[totalVerts * 2]; // (x, y)
+            float[] vertexData = new float[totalVerts * 2];
 
             int index = 0;
             foreach (var (cx, cy, r) in circles)
@@ -375,7 +390,7 @@ namespace ADS_B_Display
             GL.EnableClientState(ArrayCap.VertexArray);
             GL.VertexPointer(2, VertexPointerType.Float, 0, IntPtr.Zero);
 
-            GL.Color4(1.0f, 1.0f, 1.0f, 1.0f); // 흰색
+            GL.Color4(1.0f, 1.0f, 1.0f, 1.0f);
             for (int i = 0; i < circles.Count; i++)
             {
                 GL.DrawArrays(PrimitiveType.TriangleFan, i * vertsPerCircle, vertsPerCircle);
@@ -400,14 +415,7 @@ namespace ADS_B_Display
 
         public static void DrawLinkedPointsWithCircles(double x1, double y1, double x2, double y2, float scale)
         {
-            // GL.Color4(0.0f, 0.0f, 0.0f, 1.0f); // 검은색
-            // 점1 원
-            // DrawCircleOutline(x1, y1, radius, segments);
-
-            // 점2 원
-            // DrawCircleOutline(x2, y2, radius, segments);
-            GL.Color4(1.0f, 0.0f, 0.0f, 1.0f); // 빨간색
-            // 선 연결
+            GL.Color4(1.0f, 0.0f, 0.0f, 1.0f);
             GL.LineWidth(2f * scale);
             GL.Begin(PrimitiveType.Lines);
             GL.Vertex2(x1, y1);
@@ -417,17 +425,14 @@ namespace ADS_B_Display
 
         public static int LoadTextureFromFile(string filePath)
         {
-            // PngBitmapDecoder를 사용하여 이미지 로드
             var decoder = new PngBitmapDecoder(new Uri(filePath), BitmapCreateOptions.PreservePixelFormat, BitmapCacheOption.OnLoad);
             var bitmap = decoder.Frames[0];
             int width = bitmap.PixelWidth;
             int height = bitmap.PixelHeight;
-            int stride = width * 4; // 픽셀당 4바이트 (RGBA)
-
+            int stride = width * 4;
             byte[] pixels = new byte[height * stride];
             bitmap.CopyPixels(pixels, stride, 0);
 
-            // --- OpenGL 표준에 맞게 이미지 데이터를 상하로 뒤집는 로직 (핵심!) ---
             byte[] flippedPixels = new byte[height * stride];
             for (int y = 0; y < height; y++)
             {
@@ -435,14 +440,12 @@ namespace ADS_B_Display
                 int dstIndex = (height - 1 - y) * stride;
                 Array.Copy(pixels, srcIndex, flippedPixels, dstIndex, stride);
             }
-            // --- 뒤집기 완료 ---
 
             int textureId = GL.GenTexture();
             GL.BindTexture(TextureTarget.Texture2D, textureId);
 
-            // 뒤집힌 픽셀 데이터(flippedPixels)를 사용
             GL.TexImage2D(TextureTarget.Texture2D, 0, PixelInternalFormat.Rgba, width, height, 0,
-                            PixelFormat.Bgra, PixelType.UnsignedByte, flippedPixels);
+                          OpenTK.Graphics.OpenGL.PixelFormat.Bgra, PixelType.UnsignedByte, flippedPixels);
 
             GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMinFilter, (int)TextureMinFilter.Linear);
             GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMagFilter, (int)TextureMagFilter.Linear);
@@ -452,129 +455,216 @@ namespace ADS_B_Display
 
             return textureId;
         }
+
         private static void InitAirportVBO()
         {
             if (airportVboInitialized) return;
 
-            // 텍스처 데이터가 이제 정상이므로, 좌표도 표준으로 사용합니다.
-            // (좌하단: 0,0), (우상단: 1,1)
             float[] quadVertices = {
-                +1f, +1f,   1f, 1f,
-                -1f, +1f,   0f, 1f,
+                 // positions // texCoords
+                 1f,  1f,   1f, 1f,
+                -1f,  1f,   0f, 1f,
                 -1f, -1f,   0f, 0f,
-                +1f, -1f,   1f, 0f
+                 1f, -1f,   1f, 0f
             };
-
-            // 인덱스는 삼각형 2개를 올바르게 정의하도록 수정
-            uint[] indices = {
-                2, 3, 0,
-                2, 0, 1 
-            };
+            uint[] indices = { 0, 1, 2, 2, 3, 0 };
 
             airportVbo = GL.GenBuffer();
             airportEbo = GL.GenBuffer();
 
             GL.BindBuffer(BufferTarget.ArrayBuffer, airportVbo);
             GL.BufferData(BufferTarget.ArrayBuffer, quadVertices.Length * sizeof(float), quadVertices, BufferUsageHint.StaticDraw);
-
             GL.BindBuffer(BufferTarget.ElementArrayBuffer, airportEbo);
             GL.BufferData(BufferTarget.ElementArrayBuffer, indices.Length * sizeof(uint), indices, BufferUsageHint.StaticDraw);
 
             string texturePath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Symbols", "tower-64.png");
             if (File.Exists(texturePath))
             {
-                airportTextId = LoadTextureFromFile(texturePath); // 수정된 함수 호출
+                airportTextId = LoadTextureFromFile(texturePath);
             }
             else
             {
                 Console.WriteLine($"Error: Texture file not found at {texturePath}");
                 airportTextId = 0;
             }
-
             airportVboInitialized = true;
         }
 
         public static void DrawAirportVBO(double x, double y, double scale)
         {
+            // 이 버전은 이제 텍스트 없는 버전으로 남겨둡니다.
             InitAirportVBO();
-
-            // 텍스처 로딩에 실패했다면 그리지 않음
             if (airportTextId == 0) return;
 
             GL.PushMatrix();
             GL.Translate(x, y, 0f);
             GL.Scale(24f * scale, 24f * scale, 1f);
-
             GL.Enable(EnableCap.Texture2D);
+            GL.Enable(EnableCap.Blend);
+            GL.BlendFunc(BlendingFactor.SrcAlpha, BlendingFactor.OneMinusSrcAlpha);
+
+            GL.BindTexture(TextureTarget.Texture2D, airportTextId);
+            GL.Color4(1f, 1f, 1f, 1f);
+            GL.EnableClientState(ArrayCap.VertexArray);
+            GL.EnableClientState(ArrayCap.TextureCoordArray);
+            GL.BindBuffer(BufferTarget.ArrayBuffer, airportVbo);
+            GL.BindBuffer(BufferTarget.ElementArrayBuffer, airportEbo);
+            int stride = 4 * sizeof(float);
+            GL.VertexPointer(2, VertexPointerType.Float, stride, 0);
+            GL.TexCoordPointer(2, TexCoordPointerType.Float, stride, (IntPtr)(2 * sizeof(float)));
+            GL.DrawElements(PrimitiveType.Triangles, 6, DrawElementsType.UnsignedInt, 0);
+            GL.DisableClientState(ArrayCap.VertexArray);
+            GL.DisableClientState(ArrayCap.TextureCoordArray);
+            GL.BindBuffer(BufferTarget.ArrayBuffer, 0);
+            GL.BindBuffer(BufferTarget.ElementArrayBuffer, 0);
+            GL.BindTexture(TextureTarget.Texture2D, 0);
+            GL.Disable(EnableCap.Texture2D);
+            GL.Disable(EnableCap.Blend);
+            GL.PopMatrix();
+        }
+
+        /// <summary>
+        /// VBO를 사용하여 공항 아이콘과 상단에 텍스트를 함께 그립니다.
+        /// </summary>
+        /// <param name="x">중심 X 좌표</param>
+        /// <param name="y">중심 Y 좌표</param>
+        /// <param name="scale">전체 크기 배율</param>
+        /// <param name="text">아이콘 위에 표시할 텍스트</param>
+        /// <param name="textColor">텍스트 색상</param>
+        /// <param name="textBackgroundColor">텍스트 배경색 (기본값: 없음)</param>
+        public static void DrawAirportVBO(double x, double y, double scale, string text, System.Windows.Media.Color textColor, System.Windows.Media.Color? textBackgroundColor = null)
+        {
+            InitAirportVBO();
+            if (string.IsNullOrEmpty(text))
+            {
+                // 텍스트가 없으면 기존 함수를 호출합니다.
+                DrawAirportVBO(x, y, scale);
+                return;
+            }
+            if (airportTextId == 0) return;
+
+            // 텍스트 텍스처를 캐시에서 가져오거나 새로 생성합니다.
+            // (참고: 텍스트 색상별로 캐싱하려면 키를 `(text, textColor)` 조합으로 변경해야 합니다.)
+            if (!textTextureCache.TryGetValue(text, out var textTexture))
+            {
+                var textBitmap = CreateTextBitmapWpf(text, "Arial", 16, textColor);
+                textTexture = CreateTextureFromBitmap(textBitmap);
+                textTextureCache[text] = textTexture;
+            }
+
+            // --- 그리기 시작 ---
+            GL.PushMatrix();
+            GL.Translate(x, y, 0.0);
+
+            GL.Enable(EnableCap.Blend);
+            GL.BlendFunc(BlendingFactor.SrcAlpha, BlendingFactor.OneMinusSrcAlpha);
+
+            // --- 1. 공항 아이콘 그리기 ---
+            GL.Enable(EnableCap.Texture2D);
+            GL.Color4(1.0f, 1.0f, 1.0f, 1.0f);
+            GL.PushMatrix();
+            GL.Scale(24f * scale, 24f * scale, 1.0);
             GL.BindTexture(TextureTarget.Texture2D, airportTextId);
 
-            GL.Color4(1f, 1f, 1f, 1f); // 흰색으로 설정하여 텍스처 본연의 색이 나오게 함
-
-            // --- 레거시 VBO 그리기를 위한 설정 ---
-
-            // 1. 필요한 ClientState 활성화
             GL.EnableClientState(ArrayCap.VertexArray);
             GL.EnableClientState(ArrayCap.TextureCoordArray);
 
-            // 2. VBO와 EBO 바인딩
             GL.BindBuffer(BufferTarget.ArrayBuffer, airportVbo);
             GL.BindBuffer(BufferTarget.ElementArrayBuffer, airportEbo);
-
-            // 3. 데이터 포인터 설정 (VBO 데이터의 구조를 OpenGL에 알려줌)
-            int stride = 4 * sizeof(float); // (x, y, u, v) 4개의 float
-                                            // 정점 위치 데이터는 VBO의 시작(offset 0)부터 2개의 float
+            int stride = 4 * sizeof(float);
             GL.VertexPointer(2, VertexPointerType.Float, stride, 0);
-            // 텍스처 좌표 데이터는 정점 데이터 뒤(offset 2 * sizeof(float))부터 2개의 float
-            GL.TexCoordPointer(2, TexCoordPointerType.Float, stride, 2 * sizeof(float));
+            GL.TexCoordPointer(2, TexCoordPointerType.Float, stride, (IntPtr)(2 * sizeof(float)));
+            GL.DrawElements(PrimitiveType.Triangles, 6, DrawElementsType.UnsignedInt, IntPtr.Zero);
 
-            // 4. 그리기 호출
-            GL.DrawElements(PrimitiveType.Triangles, 6, DrawElementsType.UnsignedInt, 0);
-
-            // 5. 사용이 끝난 ClientState 비활성화
             GL.DisableClientState(ArrayCap.VertexArray);
             GL.DisableClientState(ArrayCap.TextureCoordArray);
-
-            // 6. 버퍼 바인딩 해제
             GL.BindBuffer(BufferTarget.ArrayBuffer, 0);
             GL.BindBuffer(BufferTarget.ElementArrayBuffer, 0);
+            GL.PopMatrix(); // 아이콘 스케일 행렬 복원
 
-            // --- 설정 끝 ---
+            // --- 2. 텍스트 그리기 ---
+            if (textTexture.textureId > 0)
+            {
+                // 텍스트 크기 및 위치 계산
+                float textHeight = (float)(18f * scale); // 월드 좌표계 기준 텍스트 높이
+                float textWidth = textHeight * textTexture.width / textTexture.height; // 종횡비 유지
+                float iconTopY = (float)(24f * scale); // 아이콘의 최상단 Y 좌표
+                float textMargin = (float)(5f * scale);  // 아이콘과 텍스트 사이 간격
+                float textQuadX = -textWidth / 2.0f; // 텍스트를 수평 중앙에 위치
+                float textQuadY = iconTopY + textMargin; // 텍스트의 하단 Y 좌표
 
+                // --- 2a. 텍스트 배경 그리기 (색상이 지정된 경우) ---
+                if (textBackgroundColor.HasValue)
+                {
+                    GL.Disable(EnableCap.Texture2D); // 텍스처 비활성화 (단색 사각형을 위함)
+                    var bgColor = textBackgroundColor.Value;
+                    GL.Color4(bgColor.R / 255.0f, bgColor.G / 255.0f, bgColor.B / 255.0f, bgColor.A / 255.0f);
+
+                    float padding = (float)(3.0f * scale); // 배경 여백
+
+                    GL.Begin(PrimitiveType.Quads);
+                    GL.Vertex2(textQuadX - padding, textQuadY - padding);            // 좌하단
+                    GL.Vertex2(textQuadX + textWidth + padding, textQuadY - padding);            // 우하단
+                    GL.Vertex2(textQuadX + textWidth + padding, textQuadY + textHeight + padding); // 우상단
+                    GL.Vertex2(textQuadX - padding, textQuadY + textHeight + padding); // 좌상단
+                    GL.End();
+
+                    GL.Enable(EnableCap.Texture2D); // 텍스트를 위해 텍스처 다시 활성화
+                }
+
+                // --- 2b. 텍스트 자체 그리기 ---
+                GL.Color4(1.0f, 1.0f, 1.0f, 1.0f); // 텍스처 자체 색상을 사용하기 위해 흰색으로 설정
+                GL.BindTexture(TextureTarget.Texture2D, textTexture.textureId);
+
+                GL.Begin(PrimitiveType.Quads);
+                GL.TexCoord2(0, 1); GL.Vertex2(textQuadX, textQuadY);            // 좌하단
+                GL.TexCoord2(1, 1); GL.Vertex2(textQuadX + textWidth, textQuadY);            // 우하단
+                GL.TexCoord2(1, 0); GL.Vertex2(textQuadX + textWidth, textQuadY + textHeight); // 우상단
+                GL.TexCoord2(0, 0); GL.Vertex2(textQuadX, textQuadY + textHeight); // 좌상단
+                GL.End();
+            }
+
+            // --- 정리 ---
             GL.BindTexture(TextureTarget.Texture2D, 0);
             GL.Disable(EnableCap.Texture2D);
-            GL.PopMatrix();
+            GL.Disable(EnableCap.Blend);
+            GL.PopMatrix(); // 전체 이동 행렬 복원
         }
 
         public static void DisposeAllGLResources()
         {
-            // 텍스처 해제
             if (NumSprites > 0)
                 GL.DeleteTextures(NumSprites, TextureSprites);
+            NumSprites = 0;
 
-            // Display List 해제
             if (AirTrackFriendList != 0) GL.DeleteLists(AirTrackFriendList, 1);
             if (AirTrackHostileList != 0) GL.DeleteLists(AirTrackHostileList, 1);
             if (AirTrackUnknownList != 0) GL.DeleteLists(AirTrackUnknownList, 1);
             if (SurfaceTrackFriendList != 0) GL.DeleteLists(SurfaceTrackFriendList, 1);
             if (TrackHookList != 0) GL.DeleteLists(TrackHookList, 1);
 
-            // VBO/EBO/텍스처 해제
-            if (circleVbo != 0) GL.DeleteBuffer(circleVbo);
-            if (airportVbo != 0) GL.DeleteBuffer(airportVbo);
-            if (airportEbo != 0) GL.DeleteBuffer(airportEbo);
-            if (airportTextId != 0) GL.DeleteTexture(airportTextId);
-
-            // 리소스 ID 초기화
-            NumSprites = 0;
             AirTrackFriendList = 0;
             AirTrackHostileList = 0;
             AirTrackUnknownList = 0;
             SurfaceTrackFriendList = 0;
             TrackHookList = 0;
+
+            if (circleVbo != 0) GL.DeleteBuffer(circleVbo);
+            if (airportVbo != 0) GL.DeleteBuffer(airportVbo);
+            if (airportEbo != 0) GL.DeleteBuffer(airportEbo);
+            if (airportTextId != 0) GL.DeleteTexture(airportTextId);
+
             circleVbo = 0;
             airportVbo = 0;
             airportEbo = 0;
             airportTextId = 0;
+
+            // 캐시된 텍스트 텍스처들도 모두 해제합니다.
+            if (textTextureCache.Count > 0)
+            {
+                GL.DeleteTextures(textTextureCache.Count, textTextureCache.Values.Select(t => t.textureId).ToArray());
+                textTextureCache.Clear();
+            }
         }
     }
 }

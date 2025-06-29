@@ -607,7 +607,8 @@ namespace ADS_B_Display.Views
                 if (lat > 85.0511 || lat < -85.0511) continue;
 
                 LatLon2XY(lat, lon, out double x, out double y);
-                Ntds2d.DrawAirportVBO(x, y, airplaneScale * 0.6);
+                var semiTransparentBlack = System.Windows.Media.Color.FromArgb(128, 0, 0, 0);
+                Ntds2d.DrawAirportVBO(x, y, airplaneScale * 0.6, row["Name"], System.Windows.Media.Colors.White, semiTransparentBlack);
             }
         }
 

@@ -1,8 +1,8 @@
 ﻿using ADS_B_Display.Utils;
 using System;
 using System.Collections.Generic;
-using System.Net.Http;
 using System.Threading.Tasks;
+using System.IO;
 
 namespace ADS_B_Display
 {
@@ -12,32 +12,27 @@ namespace ADS_B_Display
         private static List<Dictionary<string, string>> routes;
         private static HashSet<string> uniqueAirportCodes = new HashSet<string>();
 
-        private const string airportsUrl = "https://vrs-standing-data.adsb.lol/airports.csv";
-        private const string routesUrl = "https://vrs-standing-data.adsb.lol/routes.csv";
-
         static AirportDB()
         {
             Task.Run(() =>
             {
-                HttpClient _httpClient = new HttpClient();
+                string airportsPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Airport", "airports.csv");
+                string routesPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Airport", "routes.csv");
 
-                var airportsResponse = _httpClient.GetAsync(airportsUrl).Result;
-                if (!airportsResponse.IsSuccessStatusCode)
-                {
+                if (!File.Exists(airportsPath))
                     return;
-                }
 
-                var airportsData = airportsResponse.Content.ReadAsStringAsync().Result;
-                airports = CsvUtil.Parse(airportsData);
+                string airportData = File.ReadAllText(airportsPath);
 
-                var routesResponse = _httpClient.GetAsync(routesUrl).Result;
-                if (!routesResponse.IsSuccessStatusCode)
-                {
+                airports = CsvUtil.Parse(airportData);
+
+                if (!File.Exists(routesPath))
                     return;
-                }
 
-                var routesData = routesResponse.Content.ReadAsStringAsync().Result;
+                string routesData = File.ReadAllText(routesPath);
+
                 routes = CsvUtil.Parse(routesData);
+
                 SetUniqueAirportCodes();
             });
         }
