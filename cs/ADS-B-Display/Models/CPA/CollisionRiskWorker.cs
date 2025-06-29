@@ -11,6 +11,7 @@ namespace ADS_B_Display.Models.CPA
     {
         private static bool _isRunning = false;
         private static CancellationTokenSource _cts;
+        
 
         public static void Start()
         {
@@ -18,6 +19,7 @@ namespace ADS_B_Display.Models.CPA
 
             _isRunning = true;
             _cts = new CancellationTokenSource();
+            var processor = new CPAProcessor();
 
             Task.Run(async () =>
             {
@@ -25,7 +27,7 @@ namespace ADS_B_Display.Models.CPA
                 {
                     try
                     {
-                        CPAProcessor.CalculateAllCPA();
+                        processor.CalculateAllCPA();
                     }
                     catch (Exception ex)
                     {

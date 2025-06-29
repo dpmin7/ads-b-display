@@ -161,9 +161,12 @@
     <Compile Include="Controllers\MVVM.cs" />
     <Compile Include="Models\AreaManager.cs" />
     <Compile Include="Models\CPA\CollisionRiskWorker.cs" />
+    <Compile Include="Models\CPA\CPACsComputer.cs" />
     <Compile Include="Models\CPA\CPAInterop.cs" />
+    <Compile Include="Models\CPA\CPAInteropComputer.cs" />
     <Compile Include="Models\CPA\CPAProcessor.cs" />
     <Compile Include="Models\BigQuery.cs" />
+    <Compile Include="Models\CPA\ICPAComputer.cs" />
     <Compile Include="Models\PingEcho.cs" />
     <Compile Include="Models\PointPolygonFilter.cs" />
     <Compile Include="Models\Settings\Setting.cs" />
