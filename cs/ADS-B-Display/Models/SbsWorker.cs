@@ -25,7 +25,7 @@ namespace ADS_B_Display
         private long _lastTime;
         private int _playBackSpeed = 1;
 
-        private readonly Func<string, uint> OnMessageReceived;
+        private readonly Func<string, long, uint> OnMessageReceived;
 
         private Action OnFinished;
 
@@ -35,7 +35,7 @@ namespace ADS_B_Display
         //private BigQuery bigQuery;
         private IDbWriterReader _dbWriterReader;
 
-        public SbsWorker(Func<string, uint> onMessageReceived)
+        public SbsWorker(Func<string, long, uint> onMessageReceived)
         {
             OnMessageReceived = onMessageReceived;
         }
@@ -240,7 +240,7 @@ namespace ADS_B_Display
                     if (string.IsNullOrEmpty(row))
                         continue;
 
-                    OnMessageReceived?.Invoke(row);
+                    OnMessageReceived?.Invoke(row, time);
                 }
             }
             catch (Exception ex)
@@ -272,7 +272,7 @@ namespace ADS_B_Display
                         if (string.IsNullOrEmpty(rawLine))
                             continue;
 
-                        uint acio = OnMessageReceived?.Invoke(rawLine) ?? 0;
+                        uint acio = OnMessageReceived?.Invoke(rawLine, time) ?? 0;
                         PostProcess(acio);
                     }
                 }
@@ -308,7 +308,7 @@ namespace ADS_B_Display
 
             _dbWriterReader?.WriteRow(timestamp, msg);
 
-            uint acio = OnMessageReceived?.Invoke(msg) ?? 0;
+            uint acio = OnMessageReceived?.Invoke(msg, timestamp) ?? 0;
             PostProcess(acio);
         }
 

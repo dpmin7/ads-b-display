@@ -18,7 +18,7 @@ namespace ADS_B_Display
 
         public static DateTime ConvertMsecToDateTime(long msec)
         {
-            return DateTimeOffset.FromUnixTimeMilliseconds(msec).UtcDateTime;
+            return DateTimeOffset.FromUnixTimeMilliseconds(msec).LocalDateTime;
         }
     }
 }

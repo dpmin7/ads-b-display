@@ -221,6 +221,14 @@
                         Grid.Row="11"
                         Style="{StaticResource ValueText}"
                         Text="{Binding Aircraft.LastSeen, StringFormat='yyyy-MM-dd HH:mm:ss', Converter={StaticResource msToTime}}" />
+                    <Button
+                        Grid.RowSpan="100"
+                        Grid.ColumnSpan="100"
+                        Width="100"
+                        HorizontalAlignment="Right"
+                        VerticalAlignment="Bottom"
+                        Command="{Binding Cmd_Analytics}"
+                        Content="Analytics" />
                 </Grid>
             </GroupBox>
 
@@ -426,7 +434,7 @@
                                     <CheckBox
                                         Margin="10,0,0,0"
                                         Content="Use BigQuery"
-                                        IsChecked="{Binding ControlSettings.UseBigQuery}" />
+                                        IsChecked="{Binding ControlSettings.UseBigQuery}" Checked="CheckBox_Checked" />
 
                                     <StackPanel HorizontalAlignment="Right" Orientation="Horizontal">
                                         <GroupBox
@@ -670,10 +678,10 @@
                                 Text="{Binding TimeTogoValue, Mode=TwoWay, Converter={StaticResource secToTime}}" />
                             <!--<TextBlock Margin="8,0,0,0" Text="{Binding ElementName=sliderTimeTogo, Path=Value, Converter={StaticResource secToTime}, StringFormat='hh\\:mm\\:ss'}" />-->
                             <Button
-                                Content="Collision Monitor"
                                 Margin="10,0,0,0"
                                 Padding="6,2"
-                                Command="{Binding Cmd_ShowCpaDialog}" />
+                                Command="{Binding Cmd_ShowCpaDialog}"
+                                Content="Collision Monitor" />
                         </DockPanel>
 
                         <!--  Time-To-Go 슬라이더 + 값 표시  -->

@@ -88,6 +88,8 @@ namespace ADS_B_Display.Views
 
             Cmd_PolygonComplete = new DelegateCommand(PolygonComplete);
 
+            Cmd_Analytics = new DelegateCommand(Analytics, CanAnalytics);
+
             InsertCommand = new DelegateCommand(InsertArea, CanInsertArea);
             CompleteCommand = new DelegateCommand(CompleteArea, CanCompleteArea);
             CancelCommand = new DelegateCommand(CancelArea, CanCancelArea);
@@ -108,6 +110,22 @@ namespace ADS_B_Display.Views
             };
 
             _timer.Start();
+        }
+
+        private bool CanAnalytics(object obj)
+        {
+            if (Aircraft == null || ControlSettings.UseBigQuery == false)
+                return false;
+
+            return true;
+        }
+
+        private void Analytics(object obj)
+        {
+            if (Aircraft == null)
+                return;
+            var analyzer = new ADS_B_Display.Models.FlightAnalytics.FlightAnalytics();
+            analyzer.AnalyzeFlightProfile(Aircraft.HexAddr);
         }
 
         private void ShowCpaDialog(object obj)
@@ -535,6 +553,7 @@ namespace ADS_B_Display.Views
         public ICommand Cmd_SbsPlayStop { get; }
         public ICommand Cmd_Purge { get; }
         public ICommand Cmd_PolygonComplete { get; }
+        public ICommand Cmd_Analytics { get; }
         //
         public ICommand InsertCommand { get; }
         public ICommand CompleteCommand { get; }

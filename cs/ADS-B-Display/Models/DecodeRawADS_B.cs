@@ -590,9 +590,9 @@ namespace ADS_B_Display
             0x000000, 0x000000, 0x000000, 0x000000, 0x000000, 0x000000, 0x000000, 0x000000
         };
 
-        public static void RawToAircraft(ModeSMessage mm, ref Aircraft a)
+        public static void RawToAircraft(ModeSMessage mm, ref Aircraft a, long time)
         {
-            AircraftDecoder.RawToAircraft(mm, ref a);
+            AircraftDecoder.RawToAircraft(mm, ref a, time);
         }
 
         static class AircraftDecoder
@@ -721,9 +721,9 @@ namespace ADS_B_Display
                     a.Longitude -= 360.0;
             }
 
-            public static void RawToAircraft(ModeSMessage mm, ref Aircraft a)
+            public static void RawToAircraft(ModeSMessage mm, ref Aircraft a, long currentTime)
             {
-                long currentTime = TimeFunctions.GetCurrentTimeInMsec();
+                //long currentTime = TimeFunctions.GetCurrentTimeInMsec();
                 a.LastSeen = currentTime;
                 a.NumMessagesRaw++;
 

@@ -29,5 +29,10 @@ namespace ADS_B_Display.Views
         {
             (DataContext as IDisposable)?.Dispose();
         }
+
+        private void CheckBox_Checked(object sender, RoutedEventArgs e)
+        {
+
+        }
     }
 }

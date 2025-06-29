@@ -147,7 +147,7 @@ namespace ADS_B_Display.Models
             }
         }
 
-        internal static uint ReceiveSBSMessage(string msgLine)
+        internal static uint ReceiveSBSMessage(string msgLine, long time)
         {
             // 필드를 분리
             string[] SBS_Fields = SBSMessage.SplitSbsFields(msgLine);
@@ -172,7 +172,7 @@ namespace ADS_B_Display.Models
             _onRightBottomLon = rightBottomLon;
         }
 
-        internal static uint ReceiveRawMessage(string msgLine)
+        internal static uint ReceiveRawMessage(string msgLine, long time)
         {
             ModeSMessage modeSMessage = new ModeSMessage();
             var status = DecodeRawAdsB.Decode_RAW_message(msgLine, ref modeSMessage);
@@ -185,7 +185,7 @@ namespace ADS_B_Display.Models
 
             uint addr = (uint)((modeSMessage.AA[0] << 16) | (modeSMessage.AA[1] << 8) | modeSMessage.AA[2]);
             var aircraft = GetOrAdd(addr); // Aircraft 객체를 가져오거나 생성
-            DecodeRawAdsB.RawToAircraft(modeSMessage, ref aircraft);
+            DecodeRawAdsB.RawToAircraft(modeSMessage, ref aircraft, time);
 
             return addr; // Raw 메시지 처리는 아직 구현되지 않음
         }
