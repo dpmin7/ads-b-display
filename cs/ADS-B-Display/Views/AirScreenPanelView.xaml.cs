@@ -712,7 +712,7 @@ namespace ADS_B_Display.Views
             {
                 LatLon2XY(ddLat, ddLon, out double dScrX, out double dScrY);
                 LatLon2XY(daLat, daLon, out double aScrX, out double aScrY);
-                Ntds2d.DrawLinkedPointsWithCircles(dScrX, dScrY, aScrX, aScrY);
+                Ntds2d.DrawLinkedPointsWithCircles(dScrX, dScrY, aScrX, aScrY, (float)airplaneScale);
             }
         }
 

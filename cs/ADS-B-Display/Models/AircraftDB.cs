@@ -15,10 +15,7 @@ namespace ADS_B_Display
 
     public static class AircraftDB
     {
-        private static Dictionary<uint, Dictionary<string, string>> aircrafts = new Dictionary<uint, Dictionary<string, string>>();
         private static Dictionary<uint, AircraftData> _aircraftDataTable;
-
-        private static readonly string[] HelicopterTypes = { "H1P", "H2P", "H1T", "H2T" };
 
         private struct ICAORange
         {
@@ -276,7 +273,7 @@ namespace ADS_B_Display
         {
             Task.Run(() =>
             {
-                string fullPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "AircraftDB", "aircraftDatabase.csv");
+                string fullPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "AircraftDB", "aircraftDatabase_new.csv");
 
                 if (!File.Exists(fullPath))
                     return;
@@ -285,8 +282,6 @@ namespace ADS_B_Display
 
                 List<Dictionary<string, string>> parseData = CsvUtil.Parse(data);
                 _aircraftDataTable = CreateAircraftDictionary(parseData);
-
-                Console.WriteLine("end!!");
             });
         }
 

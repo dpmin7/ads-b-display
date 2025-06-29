@@ -398,16 +398,17 @@ namespace ADS_B_Display
             GL.End();
         }
 
-        public static void DrawLinkedPointsWithCircles(double x1, double y1, double x2, double y2, double radius = 40.0, int segments = 50)
+        public static void DrawLinkedPointsWithCircles(double x1, double y1, double x2, double y2, float scale)
         {
-            GL.Color4(0.0f, 0.0f, 0.0f, 1.0f); // 검은색
+            // GL.Color4(0.0f, 0.0f, 0.0f, 1.0f); // 검은색
             // 점1 원
-            DrawCircleOutline(x1, y1, radius, segments);
+            // DrawCircleOutline(x1, y1, radius, segments);
 
             // 점2 원
-            DrawCircleOutline(x2, y2, radius, segments);
+            // DrawCircleOutline(x2, y2, radius, segments);
             GL.Color4(1.0f, 0.0f, 0.0f, 1.0f); // 빨간색
             // 선 연결
+            GL.LineWidth(2f * scale);
             GL.Begin(PrimitiveType.Lines);
             GL.Vertex2(x1, y1);
             GL.Vertex2(x2, y2);
