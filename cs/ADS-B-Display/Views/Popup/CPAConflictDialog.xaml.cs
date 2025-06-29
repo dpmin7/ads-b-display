@@ -38,20 +38,26 @@ namespace ADS_B_Display.Views
 
         private void OnConflictChanged(object sender, NotifyCollectionChangedEventArgs e)
         {
-            Dispatcher.Invoke(() =>
+            if (!Dispatcher.CheckAccess())
             {
-                CpaDataGrid.ItemsSource = AircraftManager.CPAConflicts
-                    .OrderBy(c => c.TCPA_Seconds) // ✅ TCPA 기준 정렬
-                    .Select((c, i) => new CPAConflictDisplayModel
-                    {
-                        Index = i + 1,
-                        HexAddr1 = c.HexAddr1,
-                        HexAddr2 = c.HexAddr2,
-                        TCPA_Seconds = c.TCPA_Seconds,
-                        CPADistance_NM = c.CPADistance_NM,
-                        Raw = c
-                    }).ToList();
-            });
+                // UI 스레드가 아니면 BeginInvoke로 비동기 안전하게 넘김
+                Dispatcher.BeginInvoke(new Action(() => OnConflictChanged(sender, e)));
+                return;
+            }
+
+            // UI 스레드에서 실행 중이므로 안전하게 UI 접근 가능
+            var snapshot = AircraftManager.CPAConflicts.ToList(); // Snapshot으로 동시성 문제 방지
+            CpaDataGrid.ItemsSource = snapshot
+                .OrderBy(c => c.TCPA_Seconds)
+                .Select((c, i) => new CPAConflictDisplayModel
+                {
+                    Index = i + 1,
+                    HexAddr1 = c.HexAddr1,
+                    HexAddr2 = c.HexAddr2,
+                    TCPA_Seconds = c.TCPA_Seconds,
+                    CPADistance_NM = c.CPADistance_NM,
+                    Raw = c
+                }).ToList();
         }
         protected override void OnClosed(EventArgs e)
         {

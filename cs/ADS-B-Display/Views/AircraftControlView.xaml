@@ -566,7 +566,16 @@
                                     VerticalScrollBarVisibility="Auto">
 
                                     <DataGrid.Columns>
-                                        <DataGridCheckBoxColumn Binding="{Binding Use}" Header="Use" />
+                                        <DataGridTemplateColumn Header="Use" Width="Auto">
+                                            <DataGridTemplateColumn.CellTemplate>
+                                                <DataTemplate>
+                                                    <CheckBox
+                                                        HorizontalAlignment="Center"
+                                                        VerticalAlignment="Center"
+                                                        IsChecked="{Binding Use, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                                                </DataTemplate>
+                                            </DataGridTemplateColumn.CellTemplate>
+                                        </DataGridTemplateColumn>
                                         <DataGridTemplateColumn Header="Color">
                                             <DataGridTemplateColumn.CellTemplate>
                                                 <DataTemplate>

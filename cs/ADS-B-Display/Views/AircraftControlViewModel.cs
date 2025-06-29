@@ -11,6 +11,7 @@ using OpenTK;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Drawing;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -36,6 +37,10 @@ namespace ADS_B_Display.Views
         private DispatcherTimer _timer = null;
 
         private PingEcho pingEcho = new PingEcho();
+
+        private string _tempAreaName { get; set; }
+
+        private Color AreaColor { get; set; }
 
         public AircraftControlViewModel()
         {
@@ -172,6 +177,17 @@ namespace ADS_B_Display.Views
             ((DelegateCommand)InsertCommand).RaiseCanExecuteChanged();
             ((DelegateCommand)CompleteCommand).RaiseCanExecuteChanged();
             ((DelegateCommand)CancelCommand).RaiseCanExecuteChanged();
+
+            //AreaRegisterPopup popup = new AreaRegisterPopup();
+            //popup.Owner = Application.Current.MainWindow;
+            //popup.WindowStartupLocation = WindowStartupLocation.CenterOwner;
+            //var res = popup.ShowDialog();
+            //if (res == true)
+            //{
+            //    var name = popup.AreaName;
+            //    var color = popup.AreaColor;
+            //    AreaManager.FinalizeTempAreaIfReady(name, color);
+            //}
         }
 
         private bool CanInsertArea(object obj) => !_canCompleteOrCancel;

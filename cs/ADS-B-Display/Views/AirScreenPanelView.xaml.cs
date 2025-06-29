@@ -364,9 +364,9 @@ namespace ADS_B_Display.Views
                 return;
 
             if (_mapDisplay)
-                GL.ClearColor(0.0f, 0.0f, 0.0f, 0.0f); // 검은색 배경
+                GL.ClearColor(0.0f, 0.0f, 0.0f, 1.0f); // 검은색 배경
             else
-                GL.ClearColor(BG_INTENSITY, BG_INTENSITY, BG_INTENSITY, 0.0f); // 배경색 강도에 따라 설정
+                GL.ClearColor(BG_INTENSITY, BG_INTENSITY, BG_INTENSITY, 1.0f); // 배경색 강도에 따라 설정
 
             GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit); // 화면 지우기
 
@@ -510,32 +510,44 @@ namespace ADS_B_Display.Views
 
         private void DrawTempArea()
         {
+
             var tempArea = AreaManager.TempArea;
             if (tempArea == null || tempArea.NumPoints <= 0) return;
 
+            GL.PushAttrib(AttribMask.ColorBufferBit | AttribMask.CurrentBit | AttribMask.LineBit | AttribMask.PointBit);
+
+            GL.Disable(EnableCap.Blend); // 블렌딩 끄기
+            GL.Disable(EnableCap.LineStipple); // 선 패턴 끄기
+
             GL.Color4(1f, 1f, 1f, 1f);
-            GL.PointSize(3f);
+            GL.LineWidth(4f);
+            GL.PointSize(4f);
             var adj = new Vector2d[tempArea.NumPoints];
             for (int i = 0; i < tempArea.NumPoints; i++)
                 LatLon2XY(tempArea.Points[i].Y, tempArea.Points[i].X, out adj[i].X, out adj[i].Y);
 
+            GL.Color4(1f, 1f, 1f, 1f);
             GL.Begin(PrimitiveType.Points);
             foreach (var pt in adj) GL.Vertex2(pt.X, pt.Y);
             GL.End();
 
+            GL.Color4(1f, 1f, 1f, 1f);
             GL.Begin(PrimitiveType.LineStrip);
             foreach (var pt in adj) GL.Vertex2(pt.X, pt.Y);
             GL.End();
+
+            GL.PopAttrib();
         }
 
         private void DrawSavedAreas()
         {
+            GL.PushAttrib(AttribMask.CurrentBit);
             foreach (var area in AreaManager.Areas)
             {
                 var color = area.Color;
                 GL.Enable(EnableCap.PolygonOffsetFill);
                 GL.PolygonOffset(1.0f, 1.0f);
-                GL.Color4(color.R / 255f, color.G / 255f, color.B / 255f, 0.4f);
+                GL.Color4(color.R / 255f, color.G / 255f, color.B / 255f, 0.3f);
 
                 // 영역 내부 삼각형 채우기
                 GL.Begin(PrimitiveType.Triangles);
@@ -575,6 +587,8 @@ namespace ADS_B_Display.Views
                     GL.LineWidth(2f);
                 }
             }
+
+            GL.PopAttrib();
         }
 
         private void DrawAirports()
@@ -605,7 +619,7 @@ namespace ADS_B_Display.Views
             {
                 if (!data.HaveLatLon) continue;
                 if (AreaManager.Areas.Count > 0 && data.Viewable == false) continue;
-
+                GL.PushAttrib(AttribMask.CurrentBit);
                 GL.Color4(1f, 1f, 1f, 1f);
                 LatLon2XY(data.VLatitude, data.VLongitude, out double scrX, out double scrY);
 
@@ -643,6 +657,7 @@ namespace ADS_B_Display.Views
                         GL.End();
                     }
                 }
+                GL.PopAttrib();
             }
         }
 
@@ -672,6 +687,7 @@ namespace ADS_B_Display.Views
             var hook = AircraftManager.TrackHook;
             if (!hook.Valid_CC) return;
 
+            GL.PushAttrib(AttribMask.CurrentBit);
             if (AircraftManager.TryGet(hook.ICAO_CC, out var data))
             {
                 LatLon2XY(data.VLatitude, data.VLongitude, out double x, out double y);
@@ -682,6 +698,7 @@ namespace ADS_B_Display.Views
             {
                 hook.Valid_CC = false;
             }
+            GL.PopAttrib();
         }
 
         private void DrawFlightRoute()
