@@ -617,7 +617,7 @@ namespace ADS_B_Display.Views
             foreach (var data in aircraftTable)
             {
                 if (!data.HaveLatLon) continue;
-                if (AreaManager.Areas.Count > 0 && data.Viewable == false) continue;
+                if (AreaManager.UsePolygon == true && data.Viewable == false) continue;
                 GL.PushAttrib(AttribMask.CurrentBit);
                 GL.Color4(1f, 1f, 1f, 1f);
                 LatLon2XY(data.VLatitude, data.VLongitude, out double scrX, out double scrY);
