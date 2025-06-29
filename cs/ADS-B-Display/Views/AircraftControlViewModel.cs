@@ -83,8 +83,6 @@ namespace ADS_B_Display.Views
 
             Cmd_Purge = new DelegateCommand(Purge);
 
-            Cmd_PolygonComplete = new DelegateCommand(PolygonComplete);
-
             Cmd_Analytics = new DelegateCommand(Analytics, CanAnalytics);
 
             InsertCommand = new DelegateCommand(InsertArea, CanInsertArea);
@@ -138,18 +136,6 @@ namespace ADS_B_Display.Views
                 //airScreenViewControl.CenterMapTo(centerLat, centerLon);
                 //var screenView = this.AirScreenViewControl;
                 //screenView.CenterMapTo(lat, lon);
-            }
-        }
-
-        private void PolygonComplete(object obj)
-        {
-            AreaRegisterPopup popup = new AreaRegisterPopup();
-            popup.Owner = Application.Current.MainWindow;
-            popup.WindowStartupLocation = WindowStartupLocation.CenterOwner;
-            var res = popup.ShowDialog();
-            if (res == true) {
-                var name = popup.AreaName;
-                var color = popup.AreaColor;
             }
         }
 
