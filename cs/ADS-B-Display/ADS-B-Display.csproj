@@ -192,6 +192,7 @@
     <Compile Include="Models\CPA\CPAInteropComputer.cs" />
     <Compile Include="Models\CPA\CPAProcessor.cs" />
     <Compile Include="Models\BigQuery.cs" />
+	<Compile Include="Models\IDbWriterReader.cs" />
     <Compile Include="Models\CPA\ICPAComputer.cs" />
     <Compile Include="Models\FlightAnalytics\FlightAnalytics.cs" />
     <Compile Include="Models\PingEcho.cs" />

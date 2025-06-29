@@ -37,6 +37,7 @@ namespace ADS_B_Display.Views
         private DispatcherTimer _timer = null;
 
         private PingEcho pingEcho = new PingEcho();
+        IDbWriterReader _db;
 
         private string _tempAreaName { get; set; }
 
@@ -387,7 +388,8 @@ namespace ADS_B_Display.Views
                 // 2-1) BigQuery 이용하여 녹화
                 try
                 {
-                    _sbsWorker.RecordOn(path, ControlSettings.UseBigQuery);
+                    _db = new BigQuery("");
+                    _sbsWorker.RecordOn(path, ControlSettings.UseBigQuery, _db);
                 } catch (Exception ex)
                 {
                     MessageBox.Show($"Can not open the recorded file.:\n{ex.Message}",
@@ -439,6 +441,7 @@ namespace ADS_B_Display.Views
 
             try {
                 _sbsWorker.RecordOff(ControlSettings.UseBigQuery);
+                _db = null;
                 _isSbsRecording = false;
             } catch (Exception ex) {
                 MessageBox.Show($"SBS 기록 파일을 닫는 동안 오류가 발생했습니다:\n{ex.Message}",
@@ -461,7 +464,8 @@ namespace ADS_B_Display.Views
 
                 var selItem = win.SelectedItem;
 
-                _sbsWorker.Start(selItem.Name, true);
+                _db = new BigQuery(selItem.Name);
+                _sbsWorker.Start(selItem.Name, true, _db);
             }
             else
             {
@@ -495,6 +499,7 @@ namespace ADS_B_Display.Views
                 return;
 
             _sbsWorker.Stop(ControlSettings.UseBigQuery);
+            _db = null;
             _isSbsPalying = false;
         }
 

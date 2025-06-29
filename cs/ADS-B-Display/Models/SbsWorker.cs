@@ -1,4 +1,4 @@
-﻿using ADS_B_Display.Models;
+﻿using Google.Apis.Bigquery.v2.Data;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -10,6 +10,7 @@ using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Interop;
 using System.Windows.Threading;
+using ADS_B_Display.Models;
 
 namespace ADS_B_Display
 {
@@ -30,21 +31,23 @@ namespace ADS_B_Display
 
         public StreamWriter RecordStream;
 
-        private bool _useBigQuery = false;
-        private BigQuery bigQuery;
+        private bool _useDb = false;
+        //private BigQuery bigQuery;
+        private IDbWriterReader _dbWriterReader;
 
         public SbsWorker(Func<string, uint> onMessageReceived)
         {
             OnMessageReceived = onMessageReceived;
         }
 
-        public bool Start(string path, bool useBigQuery = false)
+        public bool Start(string path, bool useDb = false, IDbWriterReader dbWriterReader = null)
         {
             try {
                 _first = true;
                 _running = true;
                 _filePath = path;
-                _useBigQuery = useBigQuery;
+                _useDb = useDb;
+                _dbWriterReader = dbWriterReader;
                 _thread = new Thread(Run) { IsBackground = true };
                 _thread.Start();
 
@@ -81,13 +84,19 @@ namespace ADS_B_Display
             }
         }
 
-        public void RecordOn(string path, bool useBigQuery = false)
+        public void RecordOn(string path, bool _useDb = false, IDbWriterReader dbWriterReader = null)
         {
-            if (useBigQuery) // BigQuery Mode
+            if (_useDb)
             {
-                bigQuery = new BigQuery("", useBigQuery);
-                bigQuery.SetPathBigQueryCsvFileName();
-                bigQuery.CreateCsvWriter();
+                if (dbWriterReader == null)
+                {
+                    Console.WriteLine("DB Writer/Reader is not initialized.");
+                    return;
+                }
+
+                _dbWriterReader = dbWriterReader;
+                _dbWriterReader.SetPathCsvFileName();
+                _dbWriterReader.CreateCsvWriter();
             }
             else // File Mode
             {
@@ -98,20 +107,20 @@ namespace ADS_B_Display
             }
         }
 
-        public void RecordOff(bool useBigQuery = false)
+        public void RecordOff(bool useDb = false)
         {
-            if (useBigQuery) // BigQuery Mode
+            if (_useDb)
             {
                 try
                 {
-                    bigQuery.Close();
-                    bigQuery = null;
+                    _dbWriterReader.Close();
+                    _dbWriterReader = null;
 
-                    MessageBox.Show("BigQuery End");
+                    MessageBox.Show("DB End");
                 }
                 catch (Exception ex)
                 {
-                    MessageBox.Show($"BigQuery 기록 파일을 닫는 동안 오류가 발생했습니다:\n{ex.Message}",
+                    MessageBox.Show($"DB 기록 파일을 닫는 동안 오류가 발생했습니다:\n{ex.Message}",
                                     "Error", MessageBoxButton.OK, MessageBoxImage.Error);
                 }
             }
@@ -131,9 +140,9 @@ namespace ADS_B_Display
             } 
         }
 
-        public void Stop(bool useBigQuery = false)
+        public void Stop(bool useDb = false)
         {   
-            RecordOff(useBigQuery); // 레코딩 중에 멈추면 레코딩 종료부터 하자.
+            RecordOff(useDb); // 레코딩 중에 멈추면 레코딩 종료부터 하자.
             _running = false;
             if (_tcpClient != null)
             {
@@ -151,9 +160,9 @@ namespace ADS_B_Display
         {
             AircraftManager.PurgeAll();
 
-            if (_useBigQuery == true)
+            if (_useDb == true)
             {
-                RunBigQueryMode();
+                RunDatabaseMode();
                 return;
             }
             
@@ -170,41 +179,38 @@ namespace ADS_B_Display
             }
         }
 
-        private void RunBigQueryMode()
+        private void RunDatabaseMode()
         {
-            bigQuery = new BigQuery(_filePath, true);
-
-            bigQuery.SetPathBigQueryCsvFileName();
-
+            _dbWriterReader.SetPathCsvFileName();
 #if true
-            bigQuery.DeleteAllCsvFiles();
+            _dbWriterReader.DeleteAllCsvFiles();
 
-            // BigQuery 데이터 읽기 (Query에서 CSV 파일 읽기)
-            bigQuery.ReadBigQueryData();
+            // Database 데이터 읽기 (Query 해서 CSV 파일 읽기)
+            _dbWriterReader.ReadDataFromDatabase();
 #endif
-            if (bigQuery == null)
+            if (_dbWriterReader == null)
             {
                 return;
             }
 
-            // BigQuery CSV 리더 생성
-            bigQuery.CreateCsvReader();
+            // Database CSV 리더 생성
+            _dbWriterReader.CreateCsvReader();
 
             try
             {
                 while (_running)
                 {
-                    if (bigQuery == null)
+                    if (_dbWriterReader == null)
                     {
                         break;
                     }
 
-                    string rawLine = bigQuery.ReadRow();
+                    string rawLine = _dbWriterReader.ReadRow();
 
                     // 파일이 더 이상 없거나, 읽을 데이터가 없으면 종료
                     if (rawLine == null)
                     {
-                        MessageBox.Show("BigQuery Playback End");
+                        MessageBox.Show("Database Playback End");
                         break;
                     }
 
@@ -239,7 +245,7 @@ namespace ADS_B_Display
             }
             catch (Exception ex)
             {
-                MessageBox.Show("BigQuery Playback Error: " + ex.Message);
+                MessageBox.Show("Database Playback Error: " + ex.Message);
             }
 
             OnFinished?.Invoke();
@@ -300,7 +306,7 @@ namespace ADS_B_Display
             RecordStream?.WriteLine(timestamp);
             RecordStream?.WriteLine(msg);
 
-            bigQuery?.WriteRow(timestamp, msg);
+            _dbWriterReader?.WriteRow(timestamp, msg);
 
             uint acio = OnMessageReceived?.Invoke(msg) ?? 0;
             PostProcess(acio);

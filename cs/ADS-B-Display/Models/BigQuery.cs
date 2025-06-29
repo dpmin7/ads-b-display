@@ -9,17 +9,16 @@ using System.Linq;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using ADS_B_Display.Models;
 
 namespace ADS_B_Display.Models
 {
-    public class BigQuery : IDisposable
+    public class BigQuery : IDbWriterReader
     {
         private const string CredentialFilename = "YourJsonFile.json";
-
         private const string ProjectId = "scs-lg-arch-5";
         private const string DatasetId = "SBS_Data";
 
-        private bool _useBigQuery = false;
         private string _TableId;
 
         private Process _pyProcess = null;
@@ -38,13 +37,12 @@ namespace ADS_B_Display.Models
         public StreamWriter CsvWriter { get; private set; }
         public StreamReader CsvReader { get; private set; }
 
-        public BigQuery(string tableId, bool useBigQuery = false)
+        public BigQuery(string tableId)
         {
             WriteRowCount = 0;
             ReadRowCount = 0;
             FileCount = 0;
             CsvWriter = null;
-            _useBigQuery = useBigQuery;
             _TableId = tableId;
 
             // 실행 파일의 상위 폴더 경로 구하기
@@ -62,7 +60,7 @@ namespace ADS_B_Display.Models
             Console.WriteLine($"Set CredentialPath: {CredentialPath}");
         }
 
-        public void SetPathBigQueryCsvFileName()
+        public void SetPathCsvFileName()
         {   
             CsvFileName = $"BigQuery{FileCount}.csv";
             CsvFullPath = Path.Combine(CsvFolderPath, CsvFileName);
@@ -164,7 +162,7 @@ namespace ADS_B_Display.Models
             {
                 CsvReader.Close();
 
-                SetPathBigQueryCsvFileName();
+                SetPathCsvFileName();
 
                 // 다음 파일이 존재하면 열기, 없으면 종료 신호 반환
                 if (File.Exists(CsvFullPath))
@@ -200,16 +198,15 @@ namespace ADS_B_Display.Models
             {
                 CsvWriter.Close();
 
-                if (_useBigQuery)
-                    UploadToBigQuery();
+                UploadToBigQuery();
 
-                SetPathBigQueryCsvFileName();
+                SetPathCsvFileName();
                 CreateCsvWriter();
                 WriteRowCount = 0; // Reset after upload
             }
         }
 
-        public void ReadBigQueryData()
+        public void ReadDataFromDatabase()
         {
             string fullTablePath = "scs-lg-arch-5.SBS_Data." + _TableId;
             string initFileName = "BigQuery0.csv";
@@ -221,7 +218,7 @@ namespace ADS_B_Display.Models
                 bool success = await DownloadBigQueryToCsvAsync(CsvFolderPath, fullTablePath);
                 if (!success)
                 {
-                    Console.WriteLine("❌ BigQuery CSV download failed.");
+                    Console.WriteLine("BigQuery CSV download failed.");
                     return;
                 }
             });
@@ -244,7 +241,7 @@ namespace ADS_B_Display.Models
                 }
             }
 
-            Console.WriteLine("✅ BigQuery0.csv is ready to read.");
+            Console.WriteLine("BigQuery0.csv is ready to read.");
         }
 
         public void DeleteAllCsvFiles()
@@ -310,18 +307,18 @@ namespace ADS_B_Display.Models
 
                 using (FileStream stream = new FileStream(filepath, FileMode.Open, FileAccess.Read))
                 {
-                    Console.WriteLine("▶ Uploading CSV...");
+                    Console.WriteLine("Uploading CSV...");
                     BigQueryJob job = client.UploadCsv(tableRef, schema: null, input: stream, options: uploadOptions);
                     job.PollUntilCompleted();
                 }
 
                 File.Delete(filepath);
-                Console.WriteLine("▶ File deleted after successful upload: " + filename);
+                Console.WriteLine("File deleted after successful upload: " + filename);
                 return true;
             }
             catch (Exception ex)
             {
-                Console.WriteLine("▶ Upload failed: " + ex.Message);
+                Console.WriteLine("Upload failed: " + ex.Message);
                 return false;
             }
         }
@@ -361,7 +358,7 @@ namespace ADS_B_Display.Models
 
             string projectId = parts[0];
             BigQueryClient client = await BigQueryClient.CreateAsync(projectId);
-            Console.WriteLine("▶ BigQuery client initialized.");
+            Console.WriteLine("BigQuery client initialized.");
 
             int batchSize = 50000;
             int offset = 0;
@@ -370,7 +367,7 @@ namespace ADS_B_Display.Models
             while (true)
             {
                 string query = $"SELECT * FROM `{tableId}` ORDER BY timestamp ASC LIMIT {batchSize} OFFSET {offset}";
-                Console.WriteLine($"▶ Running query batch {batchIndex} (OFFSET={offset})...");
+                Console.WriteLine($"Running query batch {batchIndex} (OFFSET={offset})...");
 
                 BigQueryResults results;
                 try
@@ -386,7 +383,7 @@ namespace ADS_B_Display.Models
                 var rows = results.ToList();
                 if (rows.Count == 0)
                 {
-                    Console.WriteLine($"▶ No more rows. Total batches: {batchIndex}");
+                    Console.WriteLine($"No more rows. Total batches: {batchIndex}");
                     break;
                 }
 
@@ -414,7 +411,7 @@ namespace ADS_B_Display.Models
                     }
                     File.Move(tmpPath, finalPath);
 
-                    Console.WriteLine($"▶ Saved batch {batchIndex} → {finalPath}");
+                    Console.WriteLine($"Saved batch {batchIndex} → {finalPath}");
                 }
                 catch (Exception ex)
                 {
