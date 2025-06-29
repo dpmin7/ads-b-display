@@ -142,10 +142,20 @@ namespace ADS_B_Display.Map.MapSrc
         /// </summary>
         public int GetSplitLevel(double wlen, double plen)
         {
+            // wlen이 0에 가까우면 0으로 나누기 오류 및 무한대 발산을 막기 위해 조기 리턴
+            if (Math.Abs(wlen) < EPSILON) return 0;
+
             int lvl = 0;
-            while (true) {
-                if (plen / wlen / (1 << (lvl + 1)) < MIN_TEXTURE_DISTANCE)
+            while (true)
+            {
+                // ✨ --- 최종 해결책 --- ✨
+                // 계산 결과를 정수(int)로 강제 변환하여 부동 소수점 오차로 인한 레벨 변동을 방지합니다.
+                if ((int)(plen / wlen / (1 << (lvl + 1))) < (int)MIN_TEXTURE_DISTANCE)
                     return lvl;
+
+                // 무한 루프 방지를 위한 안전장치 (맵의 최대 지원 레벨에 맞춰 조절)
+                if (lvl >= 21) return 21;
+
                 lvl++;
             }
         }

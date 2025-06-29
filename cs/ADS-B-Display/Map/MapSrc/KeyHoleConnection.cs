@@ -32,16 +32,25 @@ namespace ADS_B_Display.Map.MapSrc
         /// </summary>
         protected override async Task Process(Tile tile)
         {
-            var response = await _httpClient.GetAsync(map.GetUrl(tile.X, tile.Y, tile.Level));
-            if (!response.IsSuccessStatusCode) {
-                tile.Null();
-                return;
-            }
-
-            var data = await response.Content.ReadAsByteArrayAsync();
-
+            HttpResponseMessage response = null;
             try
             {
+                response = await _httpClient.GetAsync(map.GetUrl(tile.X, tile.Y, tile.Level));
+                if (!response.IsSuccessStatusCode)
+                {
+                    tile.Null();
+                    return;
+                }
+
+                var data = await response.Content.ReadAsByteArrayAsync();
+
+                if (tile.IsOld)
+                {
+                    logger.Warn($"오래된 타일 로드 취소: z={tile.Level}, x={tile.X}, y={tile.Y}");
+                    tile.Null();
+                    return;
+                }
+
                 tile.Load(data, SaveStorage != null);
                 if (!tile.IsLoaded)
                     logger.Warn($"타일 로드 실패: z={tile.Level}, x={tile.X}, y={tile.Y}");
@@ -49,6 +58,10 @@ namespace ADS_B_Display.Map.MapSrc
             catch (Exception ex)
             {
                 logger.Error($"예외 발생: {ex.Message}");
+            }
+            finally
+            {
+                response?.Dispose();
             }
         }
     }

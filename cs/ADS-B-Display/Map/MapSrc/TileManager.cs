@@ -53,21 +53,27 @@ namespace ADS_B_Display.Map.MapSrc
         /// </summary>
         public int Cleanup()
         {
-            if (_textureCount <= DEFAULT_MAX_TEXTURES)
-                return 0;
-            var victim = FindTextureToDrop(_root, null);
-            if (victim == null)
-                return 0;
-            var parent = victim.GetParent();
-            for (int i = 0; i < 4; i++) {
-                if (parent.GetChild(i) == victim) {
-                    parent.SetChild(i, null);
-                    victim.Unload();
-                    _textureCount--;
-                    return 1;
+            int count = 0;
+            while (_textureCount > DEFAULT_MAX_TEXTURES)
+            {
+                var victim = FindTextureToDrop(_root, null);
+                if (victim == null)
+                    break;
+
+                var parent = victim.GetParent();
+                for (int i = 0; i < 4; i++)
+                {
+                    if (parent.GetChild(i) == victim)
+                    {
+                        parent.SetChild(i, null);
+                        victim.Unload(); // 이게 rawData 해제 핵심
+                        _textureCount--;
+                        count++;
+                        break;
+                    }
                 }
             }
-            return 0;
+            return count;
         }
 
         private TextureTile FindTextureToDrop(TextureTile cur, TextureTile best)

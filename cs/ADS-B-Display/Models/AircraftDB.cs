@@ -193,7 +193,6 @@ namespace ADS_B_Display
 
         private static int ConvertSpriteImage(string icaoaircrafttype)
         {
-            Console.WriteLine($"hanmin!! ConvertSpriteImage: {icaoaircrafttype}");
             switch (icaoaircrafttype)
             {
                 case "L1P":
