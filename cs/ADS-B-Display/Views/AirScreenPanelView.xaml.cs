@@ -157,6 +157,8 @@ namespace ADS_B_Display.Views
 
         private void glControl_PreviewMouseDown(object sender, MouseButtonEventArgs e)
         {
+            Mouse.Capture((UIElement)sender); // 마우스 캡처 설정
+
             // 마우스 좌표 구하기 (정수형으로 변환)
             int x = (int)e.GetPosition(glControl).X;
             int y = (int)e.GetPosition(glControl).Y;
@@ -249,6 +251,8 @@ namespace ADS_B_Display.Views
 
         private void glControl_PreviewMouseUp(object sender, MouseButtonEventArgs e)
         {
+            Mouse.Capture(null);
+
             // 마우스 왼쪽 버튼이 떼어졌을 때만 처리
             if (e.ChangedButton == MouseButton.Left)
             {
