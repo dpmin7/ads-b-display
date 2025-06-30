@@ -122,4 +122,5 @@ internal class AreaManager
         else
             return 0;  // Degenerate
     }
+
 }

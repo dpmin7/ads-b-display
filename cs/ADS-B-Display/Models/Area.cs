@@ -45,6 +45,7 @@ namespace ADS_B_Display
 
         public bool AddAircraft(Aircraft aircraft)
         {
+            aircraft.AreaName = Name;
             if (aircraft != null)
                 return _aircraftSetInArea.Add(aircraft); // 자동으로 중복 제거
             return  false;

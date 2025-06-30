@@ -10,6 +10,7 @@ using OpenTK;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Threading;
@@ -127,17 +128,44 @@ namespace ADS_B_Display.Views
 
         private void ShowCpaDialog(object obj)
         {
-            var dialog = new CPAConflictDialog();
-            dialog.Owner = Application.Current.MainWindow;
-            if (dialog.ShowDialog() == true)
+            try
             {
-                var selected = dialog.SelectedConflict;
-                double lat = (selected.Lat1 + selected.Lat2) / 2;
-                double lon = (selected.Lon1 + selected.Lon2) / 2;
+                var dialog = new CPAConflictDialog
+                {
+                    Owner = Application.Current.MainWindow
+                };
 
-                //airScreenViewControl.CenterMapTo(centerLat, centerLon);
-                //var screenView = this.AirScreenViewControl;
-                //screenView.CenterMapTo(lat, lon);
+                // 현재는 SelectedConflict를 사용하지 않으므로, 이벤트 등록 없이 Show만 실행
+                // 필요시 안전하게 처리하려면 다음처럼 작성 가능
+                /*
+                dialog.Closed += (sender, e) =>
+                {
+                    try
+                    {
+                        if (dialog.SelectedConflict != null)
+                        {
+                            var selected = dialog.SelectedConflict;
+                            double lat = (selected.Lat1 + selected.Lat2) / 2;
+                            double lon = (selected.Lon1 + selected.Lon2) / 2;
+
+                            // 예외 방지용: 지도 컴포넌트가 null이 아닌 경우에만 호출
+                            airScreenViewControl?.CenterMapTo(lat, lon);
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        // 예외 로그 기록 등
+                        Debug.WriteLine($"[CPA Dialog Closed] Exception: {ex.Message}");
+                    }
+                };
+                */
+
+                dialog.Show(); // 비동기 방식으로 열기
+            }
+            catch (Exception ex)
+            {
+                // 예외 발생 시에도 앱이 죽지 않도록 처리
+                Debug.WriteLine($"[ShowCpaDialog] Failed to show dialog: {ex.Message}");
             }
         }
 

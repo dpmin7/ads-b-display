@@ -38,7 +38,7 @@ namespace ADS_B_Display.Models
             _dataTimer.AutoReset = true;
             _dataTimer.Enabled = true;
 
-            //CollisionRiskWorker.Start();
+            CollisionRiskWorker.Start();
         }
         public static void AddCPAConflict(CPAConflictInfo conflict)
         {
@@ -261,5 +261,8 @@ namespace ADS_B_Display.Models
 
         public double TCPA_Seconds { get; set; }
         public double CPADistance_NM { get; set; }
+
+        public String AreaName1 { get; set; }
+        public String AreaName2 { get; set; }
     }
 }

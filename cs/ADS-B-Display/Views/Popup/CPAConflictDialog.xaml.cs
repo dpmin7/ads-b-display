@@ -32,6 +32,7 @@ namespace ADS_B_Display.Views
                     HexAddr2 = c.HexAddr2,
                     TCPA_Seconds = c.TCPA_Seconds,
                     CPADistance_NM = c.CPADistance_NM,
+                    AreaName1 = c.AreaName1,
                     Raw = c
                 }).ToList();
         }
@@ -56,6 +57,7 @@ namespace ADS_B_Display.Views
                     HexAddr2 = c.HexAddr2,
                     TCPA_Seconds = c.TCPA_Seconds,
                     CPADistance_NM = c.CPADistance_NM,
+                    AreaName1 = c.AreaName1,
                     Raw = c
                 }).ToList();
         }
@@ -70,14 +72,13 @@ namespace ADS_B_Display.Views
             if (CpaDataGrid.SelectedItem is CPAConflictDisplayModel selected)
             {
                 SelectedConflict = selected.Raw;
-                DialogResult = true;
             }
             Close();
         }
 
         private void CancelButton_Click(object sender, RoutedEventArgs e)
         {
-            DialogResult = false;
+            // DialogResult = false; ❌ 사용 금지
             Close();
         }
     }
@@ -91,6 +92,8 @@ namespace ADS_B_Display.Views
         public double TCPA_Seconds { get; set; }
         public double CPADistance_NM { get; set; }
 
+        public string AreaName1 { get; set; } // 추가
+        public string AreaName2 { get; set; } // 추가
         public CPAConflictInfo Raw { get; set; } // 내부 데이터 참조용
     }
 }

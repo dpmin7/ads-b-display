@@ -50,19 +50,21 @@ namespace ADS_B_Display.Models.CPA
             double thresholdForTcpa = 30;   //TCPA 시간
             List<CPAConflictInfo> conflictList = new List<CPAConflictInfo>(); // ⚠️ 임시 리스트
 
+            bool areaFilter = AreaManager.UsePolygon;
+
             Aircraft ac1 = null;
             Aircraft ac2 = null;
             for (int i = 0; i < count; i++)
             {
                 ac1 = aircraftArray[i];
-                if(!ac1.HaveAltitude)
+                if(!ac1.HaveAltitude || (areaFilter == true && ac1.Viewable==false))
                 {
                     continue;
                 }
                 for (int j = i + 1; j < count; j++)
                 {
                     ac2 = aircraftArray[j];
-                    if (!ac2.HaveAltitude)
+                    if (!ac2.HaveAltitude || (areaFilter == true && ac1.Viewable == false))
                     {
                         continue;
                     }
@@ -94,7 +96,8 @@ namespace ADS_B_Display.Models.CPA
                             conflictInfo.Alt2 = ac2.Altitude;  
                             conflictInfo.TCPA_Seconds = tcpa;
                             conflictInfo.CPADistance_NM = cpaDistanceNm;
-
+                            conflictInfo.AreaName1 = ac1.AreaName;
+                            conflictInfo.AreaName2 = ac1.AreaName;
                             conflictList.Add(conflictInfo);
                             collisionCandidateCnt++;
                         }

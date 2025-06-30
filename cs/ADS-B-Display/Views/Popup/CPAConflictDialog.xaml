@@ -27,6 +27,7 @@
                 <DataGridTextColumn Header="CPA Dist (NM)"
                     Binding="{Binding CPADistance_NM, StringFormat={}{0:F2} NM}"
                     Width="*" />
+                <DataGridTextColumn Header="Area" Binding="{Binding AreaName1}" Width="*"/>
             </DataGrid.Columns>
         </DataGrid>
 

@@ -31,6 +31,7 @@ namespace ADS_B_Display
         public bool HaveAltitude { get; set; }
         public bool HaveLatLon { get; set; }
 
+        public string AreaName { get; set; } = null;
         public AircraftData AircraftData { get; set; }
 
         public double VLatitude { get; set; } // virtual Latitude for Animation
