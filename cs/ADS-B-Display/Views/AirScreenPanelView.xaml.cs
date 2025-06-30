@@ -486,6 +486,10 @@ namespace ADS_B_Display.Views
                             var airportCodes = selectedRoute["AirportCodes"].Split('-');
                             AircraftManager.TrackHook.DepartureAirport = airportsInfo.FirstOrDefault(dict => dict.ContainsKey("ICAO") && dict["ICAO"] == airportCodes[0]);
                             AircraftManager.TrackHook.ArrivalAirport = airportsInfo.FirstOrDefault(dict => dict.ContainsKey("ICAO") && dict["ICAO"] == airportCodes[1]);
+                        } else
+                        {
+                            AircraftManager.TrackHook.DepartureAirport = null;
+                            AircraftManager.TrackHook.ArrivalAirport = null;
                         }
                     }
                 }
@@ -755,7 +759,9 @@ namespace ADS_B_Display.Views
             if (AircraftManager.TryGet(hook.ICAO_CC, out var data))
             {
                 LatLon2XY(data.VLatitude, data.VLongitude, out double x, out double y);
-                Ntds2d.DrawTrackHook(x, y, airplaneScale * 0.5);
+                GL.LineWidth((float)airplaneScale);
+                GL.Color4(1.0f, 1.0f, 0.0f, 1.0f); // 노란색
+                Ntds2d.DrawCircleOutline(x, y, 20.0, 50);
                 DrawOldTrack(data.TrackPoint.Items); // 이전 트랙 포인트 그리기
             }
             else

@@ -307,17 +307,6 @@ namespace ADS_B_Display
             GL.PushMatrix(); GL.Translate(x, y, 0f); GL.CallList(SurfaceTrackFriendList); GL.PopMatrix();
         }
 
-        public static void DrawTrackHook(double x, double y, double scale = 1)
-        {
-            GL.Color4(1f, 1f, 0f, 1f);
-            GL.PushMatrix();
-            GL.Translate(x, y, 0f);
-            GL.Scale(scale, scale, 1f);
-            GL.LineWidth((float)(1.5 * scale));
-            GL.CallList(TrackHookList);
-            GL.PopMatrix();
-        }
-
         public static void DrawRadarCoverage(double xc, double yc, double major, double minor)
         {
             GL.Begin(PrimitiveType.TriangleFan);
@@ -425,6 +414,7 @@ namespace ADS_B_Display
 
         public static void DrawLinkedPointsWithCircles(double x1, double y1, double x2, double y2, float scale, double radius = 20.0, int segments = 50)
         {
+            GL.LineWidth(2f * scale);
             GL.Color4(1.0f, 1.0f, 0.0f, 1.0f); // 노란색
             // 점1 원
             DrawCircleOutline(x1, y1, radius, segments);
@@ -433,7 +423,6 @@ namespace ADS_B_Display
             DrawCircleOutline(x2, y2, radius, segments);
 
             GL.Color4(1.0f, 0.0f, 0.0f, 1.0f);
-            GL.LineWidth(2f * scale);
             GL.Begin(PrimitiveType.Lines);
             GL.Vertex2(x1, y1);
             GL.Vertex2(x2, y2);
@@ -657,7 +646,7 @@ namespace ADS_B_Display
             // 점2 원
             DrawCircleOutline(p2_x, p2_y, 20.0, 50);
 
-            GL.Color4(1.0f, 1.0f, 1.0f, 1.0f); // 노란색
+            GL.Color4(1.0f, 1.0f, 1.0f, 1.0f); // 흰색
 
             // 1. 제어점(Control Point) 계산
             // 두 점의 중점을 구하고, 선분의 수직 방향으로 밀어내어 제어점을 만듭니다.
