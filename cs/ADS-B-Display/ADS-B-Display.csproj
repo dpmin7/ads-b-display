@@ -101,6 +101,27 @@
     <Reference Include="ScottPlot.WPF, Version=5.0.55.0, Culture=neutral, PublicKeyToken=86698dc10387c39e, processorArchitecture=MSIL">
       <HintPath>..\packages\ScottPlot.WPF.5.0.55\lib\net462\ScottPlot.WPF.dll</HintPath>
     </Reference>
+    <Reference Include="SharpVectors.Converters.Wpf, Version=1.8.4.2, Culture=neutral, PublicKeyToken=b532964b8548be77, processorArchitecture=MSIL">
+      <HintPath>..\packages\SharpVectors.Wpf.1.8.4.2\lib\net47\SharpVectors.Converters.Wpf.dll</HintPath>
+    </Reference>
+    <Reference Include="SharpVectors.Core, Version=1.8.4.2, Culture=neutral, PublicKeyToken=7407205e337c98ef, processorArchitecture=MSIL">
+      <HintPath>..\packages\SharpVectors.Wpf.1.8.4.2\lib\net47\SharpVectors.Core.dll</HintPath>
+    </Reference>
+    <Reference Include="SharpVectors.Css, Version=1.8.4.2, Culture=neutral, PublicKeyToken=7a46e3f532fdb787, processorArchitecture=MSIL">
+      <HintPath>..\packages\SharpVectors.Wpf.1.8.4.2\lib\net47\SharpVectors.Css.dll</HintPath>
+    </Reference>
+    <Reference Include="SharpVectors.Dom, Version=1.8.4.2, Culture=neutral, PublicKeyToken=517340b6277b1a7a, processorArchitecture=MSIL">
+      <HintPath>..\packages\SharpVectors.Wpf.1.8.4.2\lib\net47\SharpVectors.Dom.dll</HintPath>
+    </Reference>
+    <Reference Include="SharpVectors.Model, Version=1.8.4.2, Culture=neutral, PublicKeyToken=2236cfc76b505845, processorArchitecture=MSIL">
+      <HintPath>..\packages\SharpVectors.Wpf.1.8.4.2\lib\net47\SharpVectors.Model.dll</HintPath>
+    </Reference>
+    <Reference Include="SharpVectors.Rendering.Wpf, Version=1.8.4.2, Culture=neutral, PublicKeyToken=d0902381100df30e, processorArchitecture=MSIL">
+      <HintPath>..\packages\SharpVectors.Wpf.1.8.4.2\lib\net47\SharpVectors.Rendering.Wpf.dll</HintPath>
+    </Reference>
+    <Reference Include="SharpVectors.Runtime.Wpf, Version=1.8.4.2, Culture=neutral, PublicKeyToken=d16e717f0a981fb9, processorArchitecture=MSIL">
+      <HintPath>..\packages\SharpVectors.Wpf.1.8.4.2\lib\net47\SharpVectors.Runtime.Wpf.dll</HintPath>
+    </Reference>
     <Reference Include="SkiaSharp, Version=2.88.0.0, Culture=neutral, PublicKeyToken=0738eb9f132ed756, processorArchitecture=MSIL">
       <HintPath>..\packages\SkiaSharp.2.88.9\lib\net462\SkiaSharp.dll</HintPath>
     </Reference>
@@ -192,7 +213,7 @@
     <Compile Include="Models\CPA\CPAInteropComputer.cs" />
     <Compile Include="Models\CPA\CPAProcessor.cs" />
     <Compile Include="Models\BigQuery.cs" />
-	<Compile Include="Models\IDbWriterReader.cs" />
+    <Compile Include="Models\IDbWriterReader.cs" />
     <Compile Include="Models\CPA\ICPAComputer.cs" />
     <Compile Include="Models\FlightAnalytics\FlightAnalytics.cs" />
     <Compile Include="Models\PingEcho.cs" />
@@ -383,6 +404,7 @@
     <None Include="App.config" />
   </ItemGroup>
   <ItemGroup>
+    <Resource Include="Images\altitude_chart.svg" />
     <Content Include="Utils\BigQuery\ReadDataFromBigQuery.py" />
     <Content Include="Utils\BigQuery\DeleteDataInBigQuery.py" />
     <Content Include="Utils\BigQuery\SimpleCSVtoBigQuery.py" />
