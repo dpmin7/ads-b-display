@@ -423,8 +423,15 @@ namespace ADS_B_Display
             GL.End();
         }
 
-        public static void DrawLinkedPointsWithCircles(double x1, double y1, double x2, double y2, float scale)
+        public static void DrawLinkedPointsWithCircles(double x1, double y1, double x2, double y2, float scale, double radius = 20.0, int segments = 50)
         {
+            GL.Color4(1.0f, 1.0f, 0.0f, 1.0f); // 노란색
+            // 점1 원
+            DrawCircleOutline(x1, y1, radius, segments);
+
+            // 점2 원
+            DrawCircleOutline(x2, y2, radius, segments);
+
             GL.Color4(1.0f, 0.0f, 0.0f, 1.0f);
             GL.LineWidth(2f * scale);
             GL.Begin(PrimitiveType.Lines);
@@ -639,6 +646,47 @@ namespace ADS_B_Display
             GL.Disable(EnableCap.Texture2D);
             GL.Disable(EnableCap.Blend);
             GL.PopMatrix(); // 전체 이동 행렬 복원
+        }
+
+        public static void Draw2dCurve(double p1_x, double p1_y, double p2_x, double p2_y, double curvature, int segments)
+        {
+            GL.Color4(1.0f, 1.0f, 0.0f, 1.0f); // 노란색
+            // 점1 원
+            DrawCircleOutline(p1_x, p1_y, 20.0, 50);
+
+            // 점2 원
+            DrawCircleOutline(p2_x, p2_y, 20.0, 50);
+
+            GL.Color4(1.0f, 1.0f, 1.0f, 1.0f); // 노란색
+
+            // 1. 제어점(Control Point) 계산
+            // 두 점의 중점을 구하고, 선분의 수직 방향으로 밀어내어 제어점을 만듭니다.
+            double mid_x = (p1_x + p2_x) / 2;
+            double mid_y = (p1_y + p2_y) / 2;
+
+            double dx = p2_x - p1_x;
+            double dy = p2_y - p1_y;
+            double length = Math.Sqrt(dx * dx + dy * dy);
+
+            // 수직 벡터: (-dy, dx)
+            double ctrl_x = mid_x - dy * curvature;
+            double ctrl_y = mid_y + dx * curvature;
+
+            // 2. 2차 베지에 곡선 그리기
+            GL.Begin(PrimitiveType.LineStrip);
+            for (int i = 0; i <= segments; i++)
+            {
+                double t = (double)i / segments;
+                double a = (1 - t) * (1 - t);
+                double b = 2 * t * (1 - t);
+                double c = t * t;
+
+                double x = a * p1_x + b * ctrl_x + c * p2_x;
+                double y = a * p1_y + b * ctrl_y + c * p2_y;
+
+                GL.Vertex2(x, y);
+            }
+            GL.End();
         }
 
         public static void DisposeAllGLResources()
