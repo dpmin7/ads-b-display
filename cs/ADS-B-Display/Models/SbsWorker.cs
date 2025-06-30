@@ -182,32 +182,24 @@ namespace ADS_B_Display
         private void RunDatabaseMode()
         {
             _dbWriterReader.SetPathCsvFileName();
-#if true
             _dbWriterReader.DeleteAllCsvFiles();
 
-            // Database 데이터 읽기 (Query 해서 CSV 파일 읽기)
+            // BigQuery에서 데이터를 비동기로 큐에 쌓기 시작
             _dbWriterReader.ReadDataFromDatabase();
-#endif
-            if (_dbWriterReader == null)
-            {
-                return;
-            }
 
-            // Database CSV 리더 생성
-            _dbWriterReader.CreateCsvReader();
+            if (_dbWriterReader == null)
+                return;
 
             try
             {
                 while (_running)
                 {
                     if (_dbWriterReader == null)
-                    {
                         break;
-                    }
 
                     string rawLine = _dbWriterReader.ReadRow();
 
-                    // 파일이 더 이상 없거나, 읽을 데이터가 없으면 종료
+                    // 데이터가 모두 끝나면 null 반환
                     if (rawLine == null)
                     {
                         MessageBox.Show("Database Playback End");
@@ -218,7 +210,6 @@ namespace ADS_B_Display
                     if (string.IsNullOrWhiteSpace(rawLine) || rawLine.StartsWith("Timestamp,"))
                         continue;
 
-                    // 첫 번째 열(timestamp)와 나머지(row) 분리
                     var parts = rawLine.Split(new[] { ',' }, 2);
                     if (parts.Length < 2)
                         continue;
@@ -250,6 +241,78 @@ namespace ADS_B_Display
 
             OnFinished?.Invoke();
         }
+
+        //        private void RunDatabaseMode()
+        //        {
+        //            _dbWriterReader.SetPathCsvFileName();
+        //#if true
+        //            _dbWriterReader.DeleteAllCsvFiles();
+
+        //            // Database 데이터 읽기 (Query 해서 CSV 파일 읽기)
+        //            _dbWriterReader.ReadDataFromDatabase();
+        //#endif
+        //            if (_dbWriterReader == null)
+        //            {
+        //                return;
+        //            }
+
+        //            // Database CSV 리더 생성
+        //            _dbWriterReader.CreateCsvReader();
+
+        //            try
+        //            {
+        //                while (_running)
+        //                {
+        //                    if (_dbWriterReader == null)
+        //                    {
+        //                        break;
+        //                    }
+
+        //                    string rawLine = _dbWriterReader.ReadRow();
+
+        //                    // 파일이 더 이상 없거나, 읽을 데이터가 없으면 종료
+        //                    if (rawLine == null)
+        //                    {
+        //                        MessageBox.Show("Database Playback End");
+        //                        break;
+        //                    }
+
+        //                    // 빈 줄 또는 헤더는 건너뜀
+        //                    if (string.IsNullOrWhiteSpace(rawLine) || rawLine.StartsWith("Timestamp,"))
+        //                        continue;
+
+        //                    // 첫 번째 열(timestamp)와 나머지(row) 분리
+        //                    var parts = rawLine.Split(new[] { ',' }, 2);
+        //                    if (parts.Length < 2)
+        //                        continue;
+
+        //                    if (!long.TryParse(parts[0], out var time))
+        //                        continue;
+
+        //                    if (_first)
+        //                    {
+        //                        _first = false;
+        //                        _lastTime = time;
+        //                    }
+        //                    var _sleepTime = (int)(time - _lastTime);
+        //                    _lastTime = time;
+        //                    if (_sleepTime > 0)
+        //                        Thread.Sleep(_sleepTime / _playBackSpeed);
+
+        //                    string row = parts[1];
+        //                    if (string.IsNullOrEmpty(row))
+        //                        continue;
+
+        //                    OnMessageReceived?.Invoke(row, time);
+        //                }
+        //            }
+        //            catch (Exception ex)
+        //            {
+        //                MessageBox.Show("Database Playback Error: " + ex.Message);
+        //            }
+
+        //            OnFinished?.Invoke();
+        //        }
 
         private void RunFileMode()
         {

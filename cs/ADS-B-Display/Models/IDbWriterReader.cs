@@ -14,5 +14,6 @@ namespace ADS_B_Display.Models
         void Close();
         void DeleteAllCsvFiles();
         void ReadDataFromDatabase();
+        void StartPlayTiming();
     }
 }

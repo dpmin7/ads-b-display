@@ -1,6 +1,8 @@
-﻿using Google.Apis.Bigquery.v2.Data;
+﻿using ADS_B_Display.Models;
+using Google.Apis.Bigquery.v2.Data;
 using Google.Cloud.BigQuery.V2;
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
@@ -9,7 +11,6 @@ using System.Linq;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
-using ADS_B_Display.Models;
 
 namespace ADS_B_Display.Models
 {
@@ -36,6 +37,12 @@ namespace ADS_B_Display.Models
 
         public StreamWriter CsvWriter { get; private set; }
         public StreamReader CsvReader { get; private set; }
+
+        private BlockingCollection<string> _rowQueue = new BlockingCollection<string>(boundedCapacity: 100000); // 메모리 사용량 제한
+
+        // ... 기존 필드 ...
+        private Stopwatch _playToFirstRowStopwatch = new Stopwatch();
+        public long PlayToFirstRowElapsedMilliseconds { get; private set; } = -1;
 
         public BigQuery(string tableId)
         {
@@ -149,39 +156,46 @@ namespace ADS_B_Display.Models
                 _pyProcess.Kill(); // Python 프로세스 강제 종료
             }            
         }
-
         public string ReadRow()
         {
-            if (CsvReader == null)
-                return null;
-
-            string row = CsvReader.ReadLine();
-            ReadRowCount++;
-
-            if (ReadRowCount >= RowThreshold || row == null)
-            {
-                CsvReader.Close();
-
-                SetPathCsvFileName();
-
-                // 다음 파일이 존재하면 열기, 없으면 종료 신호 반환
-                if (File.Exists(CsvFullPath))
-                {
-                    CsvReader = new StreamReader(CsvFullPath);
-                    // 첫 줄이 헤더라면 건너뜀
-                    CsvReader.ReadLine();
-                    row = CsvReader.ReadLine();
-                    ReadRowCount++;
-                }
-                else
-                {
-                    CsvReader = null;
-                    return null; // 더 이상 읽을 파일이 없으므로 종료
-                }
-            }
-
-            return row ?? string.Empty;
+            string row;
+            if (_rowQueue.TryTake(out row, Timeout.Infinite))
+                return row;
+            return null;
         }
+
+        //public string ReadRow()
+        //{
+        //    if (CsvReader == null)
+        //        return null;
+
+        //    string row = CsvReader.ReadLine();
+        //    ReadRowCount++;
+
+        //    if (ReadRowCount >= RowThreshold || row == null)
+        //    {
+        //        CsvReader.Close();
+
+        //        SetPathCsvFileName();
+
+        //        // 다음 파일이 존재하면 열기, 없으면 종료 신호 반환
+        //        if (File.Exists(CsvFullPath))
+        //        {
+        //            CsvReader = new StreamReader(CsvFullPath);
+        //            // 첫 줄이 헤더라면 건너뜀
+        //            CsvReader.ReadLine();
+        //            row = CsvReader.ReadLine();
+        //            ReadRowCount++;
+        //        }
+        //        else
+        //        {
+        //            CsvReader = null;
+        //            return null; // 더 이상 읽을 파일이 없으므로 종료
+        //        }
+        //    }
+
+        //    return row ?? string.Empty;
+        //}
 
         public void WriteRow(long timestamp, string row)
         {
@@ -217,63 +231,125 @@ namespace ADS_B_Display.Models
             }
         }
 
+        // Play 버튼 클릭 시 호출
+        public void StartPlayTiming()
+        {
+            PlayToFirstRowElapsedMilliseconds = -1;
+            _playToFirstRowStopwatch.Restart();
+        }
+
         public void ReadDataFromDatabase()
         {
             string fullTablePath = "scs-lg-arch-5.SBS_Data." + _TableId;
-            string initFileName = "BigQuery0.csv";
-            string initFullPath = Path.Combine(CsvFolderPath, initFileName);
+            int batchSize = 50000;
+            int offset = 0;
+            bool isFirstBatch = true;
+            bool isFirstRow = true;
+            List<string> fieldNames = null;
 
-            // Task.Run으로 백그라운드 실행 (C# 7.3 async Main 불가)
-            Task.Run(async () =>
-            {
-                bool success = await DownloadBigQueryToCsvAsync(CsvFolderPath, fullTablePath);
-                if (!success)
-                {
-                    Console.WriteLine("BigQuery CSV download failed.");
-                    return;
-                }
-            });
+            // 기존 큐 비우기
+            _rowQueue = new BlockingCollection<string>(boundedCapacity: 100000);
 
-            // 최초 파일이 생성될 때까지 대기
-            while (true)
+            Task.Run(() =>
             {
-                try
+                var client = BigQueryClient.Create(ProjectId);
+
+                while (true)
                 {
-                    using (var stream = File.Open(initFullPath, FileMode.Open, FileAccess.Read, FileShare.None))
+                    string query = $"SELECT * FROM `{fullTablePath}` ORDER BY timestamp ASC LIMIT {batchSize} OFFSET {offset}";
+                    var results = client.ExecuteQuery(query, parameters: null);
+
+                    bool hasRow = false;
+                    foreach (var row in results)
                     {
-                        // 파일이 성공적으로 열리면 곧 닫고 탈출
-                        break;
-                    }
-                }
-                catch (IOException)
-                {
-                    Console.WriteLine("Waiting for BigQuery0.csv to be ready...");
-                    Thread.Sleep(1000);
-                }
-            }
+                        if (isFirstBatch)
+                        {
+                            fieldNames = results.Schema.Fields.Select(f => f.Name).ToList();
+                            _rowQueue.Add(string.Join(",", fieldNames)); // 헤더
+                            isFirstBatch = false;
+                        }
 
-            Console.WriteLine("BigQuery0.csv is ready to read.");
+                        string line = string.Join(",", fieldNames.Select(f => CsvEscape(row[f]?.ToString())));
+                        if (isFirstRow)
+                        {
+                            if (_playToFirstRowStopwatch.IsRunning)
+                            {
+                                _playToFirstRowStopwatch.Stop();
+                                PlayToFirstRowElapsedMilliseconds = _playToFirstRowStopwatch.ElapsedMilliseconds;
+                                Console.WriteLine($"Play~BigQuery 첫 row까지 소요 시간: {PlayToFirstRowElapsedMilliseconds} ms");
+                            }
+                            isFirstRow = false;
+                        }
+                        _rowQueue.Add(line);
+                        hasRow = true;
+                    }
+
+                    if (!hasRow)
+                        break;
+
+                    offset += batchSize;
+                }
+                _rowQueue.CompleteAdding(); // 데이터 끝 신호
+            });
         }
+
+        //public void ReadDataFromDatabase()
+        //{
+        //    string fullTablePath = "scs-lg-arch-5.SBS_Data." + _TableId;
+        //    string initFileName = "BigQuery0.csv";
+        //    string initFullPath = Path.Combine(CsvFolderPath, initFileName);
+
+        //    // Task.Run으로 백그라운드 실행 (C# 7.3 async Main 불가)
+        //    Task.Run(async () =>
+        //    {
+        //        bool success = await DownloadBigQueryToCsvAsync(CsvFolderPath, fullTablePath);
+        //        if (!success)
+        //        {
+        //            Console.WriteLine("BigQuery CSV download failed.");
+        //            return;
+        //        }
+        //    });
+
+        //    // 최초 파일이 생성될 때까지 대기
+        //    while (true)
+        //    {
+        //        try
+        //        {
+        //            using (var stream = File.Open(initFullPath, FileMode.Open, FileAccess.Read, FileShare.None))
+        //            {
+        //                // 파일이 성공적으로 열리면 곧 닫고 탈출
+        //                break;
+        //            }
+        //        }
+        //        catch (IOException)
+        //        {
+        //            Console.WriteLine("Waiting for BigQuery0.csv to be ready...");
+        //            Thread.Sleep(1000);
+        //        }
+        //    }
+
+        //    Console.WriteLine("BigQuery0.csv is ready to read.");
+        //}
 
         public void DeleteAllCsvFiles()
         {
-            try
-            {
-                if (Directory.Exists(CsvFolderPath))
-                {
-                    var csvFiles = Directory.GetFiles(CsvFolderPath, "BigQuery*.csv");
-                    foreach (var file in csvFiles)
-                    {
-                        File.Delete(file);
-                    }
+            //try
+            //{
+            //    if (Directory.Exists(CsvFolderPath))
+            //    {
+            //        var csvFiles = Directory.GetFiles(CsvFolderPath, "BigQuery*.csv");
+            //        foreach (var file in csvFiles)
+            //        {
+            //            File.Delete(file);
+            //        }
 
-                    Console.WriteLine($"Delete All csv files");
-                }
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"Error deleting CSV files: {ex.Message}");
-            }
+            //        Console.WriteLine($"Delete All csv files");
+            //    }
+            //}
+            //catch (Exception ex)
+            //{
+            //    Console.WriteLine($"Error deleting CSV files: {ex.Message}");
+            //}
         }
 
         private bool UploadCsvToBigQuery(string credentialFolder, string filename, string tableId)

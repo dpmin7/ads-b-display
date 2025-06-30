@@ -498,6 +498,7 @@ namespace ADS_B_Display.Views
                 _selectedBigQueryTable = selItem.Name;
 
                 _db = new BigQuery(selItem.Name);
+                _db.StartPlayTiming();
                 _sbsWorker.Start(selItem.Name, true, _db);
             }
             else
