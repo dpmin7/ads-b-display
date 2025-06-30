@@ -93,4 +93,22 @@ namespace ADS_B_Display.Views.Converters
             throw new NotImplementedException();
         }
     }
+
+    public class DevideConverter : IValueConverter
+    {
+        public double Denominator { get; set; } = 1.0; // 기본값
+        public double Numerator { get; set; } = 1.0; // 자식 요소의 크기 조정 비율
+        public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+        {
+            if (value is double d && Denominator != 0) // 0으로 나누는 것을 방지
+            {
+                return  d * (Numerator / Denominator);
+            }
+            return value; // 변환할 수 없는 경우 원래 값을 반환
+        }
+        public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+        {
+            throw new NotImplementedException();
+        }
+    }
 }
