@@ -1,9 +1,12 @@
 ﻿using ADS_B_Display;
+using ADS_B_Display.Map.MapSrc;
 using ADS_B_Display.Models;
+using OpenTK;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Security.Policy;
+using System.Windows.Media.Media3D;
 
 namespace ADS_B_Display
 {
@@ -37,6 +40,7 @@ namespace ADS_B_Display
             set {
                 _Latitude = value;
                 VLatitude = value; // virtual Latitude for Animation
+                SetLatNormalized(value); // Normalize latitude
             }
         }
 
@@ -47,6 +51,7 @@ namespace ADS_B_Display
             set {
                 _Longitude = value;
                 VLongitude = value; // virtual Latitude for Animation
+                SetLonNormalized(value); // Normalize longitude
             }
         }
 
@@ -60,7 +65,42 @@ namespace ADS_B_Display
             }
         }
 
-        public TimedTrackQueue<AircraftTrackPoint> TrackPoint { get; set; } = new TimedTrackQueue<AircraftTrackPoint>(TimeSpan.FromSeconds(30)); // can remove after 30sec
+        // Normalized coordinates (–0.5 … +0.5)
+        private double _nx; // longitude (wrapped)
+        private double _ny; // latitude  (clamped)
+
+
+        private void SetLatNormalized(double latDeg)
+        {
+            // Clamp latitude to Mercator legal range (≈ ±85.05112878°)
+            const double MAX_LAT = 85.05112878;
+            latDeg = Math.Max(Math.Min(latDeg, MAX_LAT), -MAX_LAT);
+            _ny = latDeg / 180.0; // roughly –0.472 … +0.472
+        }
+
+        private void SetLonNormalized(double lonDeg)
+        {
+            // Wrap longitude to –180..+180
+            lonDeg = ((lonDeg + 180.0) % 360.0 + 360.0) % 360.0 - 180.0;
+            _nx = lonDeg / 360.0; // –0.5 … +0.5
+        }
+
+        /// <summary>
+        /// Returns true if this point is visible in the current Eye view.
+        /// Caller가 이미 계산한 xSpan/ySpan 값을 전달하면 중복 계산을 피할 수 있다.
+        /// </summary>
+        public bool IsOnScreen(Eye eye, double xSpan, double ySpan)
+        {
+            // ── longitude wrap‑around distance ──
+            double dx = Math.Abs(_nx - eye.X);
+            if (dx > 0.5) dx = 1.0 - dx;   // choose shorter arc
+
+            bool inLon = dx <= xSpan * 0.5;
+            bool inLat = Math.Abs(_ny - eye.Y) <= ySpan * 0.5;
+            return inLon && inLat;
+        }
+
+        public TimedTrackQueue<AircraftTrackPoint> TrackPoint { get; set; } = new TimedTrackQueue<AircraftTrackPoint>(TimeSpan.FromSeconds(3600)); // 1시간 동안의 TrackPoint를 유지 
 
         public bool HaveSpeedAndHeading { get; set; }
         public double Heading { get; set; }

@@ -1,7 +1,6 @@
-﻿<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+﻿<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
     <ResourceDictionary.MergedDictionaries>
-        <!--테마 변경시 VisualStudio Style을 변경해야 XamlEditor에 반영된다.-->
-        <ResourceDictionary Source="pack://application:,,,/Application;component/Views/Style/Generic.xaml"/>
+        <!--  테마 변경시 VisualStudio Style을 변경해야 XamlEditor에 반영된다.  -->
+        <!--<ResourceDictionary Source="pack://application:,,,/Application;component/Views/Style/Generic.xaml"/>-->
     </ResourceDictionary.MergedDictionaries>
 </ResourceDictionary>

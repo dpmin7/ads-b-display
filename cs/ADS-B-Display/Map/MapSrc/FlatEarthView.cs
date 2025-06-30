@@ -26,15 +26,15 @@ namespace ADS_B_Display.Map.MapSrc
         }
 
         private double aspect;
-        private double yspan;
-        private double xspan;
+        public double Yspan { get; private set; }
+        public double Xspan { get; private set; }
         private Region rgn;
         public override Region PreRender()
         {
             // x and y span of viewable size in global coords
             aspect = (double)_viewportWidth / _viewportHeight;
-            yspan = Eye.YSpan(aspect);
-            xspan = Eye.XSpan(aspect);
+            Yspan = Eye.YSpan(aspect);
+            Xspan = Eye.XSpan(aspect);
 
             // Region 생성
             rgn = new Region(
@@ -42,8 +42,8 @@ namespace ADS_B_Display.Map.MapSrc
                 new Vector3d((float)_viewportWidth, 0, 0),
                 new Vector3d((float)_viewportWidth, (float)_viewportHeight, 0),
                 new Vector3d(0, (float)_viewportHeight, 0),
-                new Vector2d((float)(Eye.X - xspan / 2.0), (float)(Eye.Y - yspan / 2.0)),
-                new Vector2d((float)(Eye.X + xspan / 2.0), (float)(Eye.Y + yspan / 2.0)),
+                new Vector2d((float)(Eye.X - Xspan / 2.0), (float)(Eye.Y - Yspan / 2.0)),
+                new Vector2d((float)(Eye.X + Xspan / 2.0), (float)(Eye.Y + Yspan / 2.0)),
                 new Vector3d(0, 0, 0),
                 new Vector3d((float)_viewportWidth, 0, 0),
                 new Vector3d((float)_viewportWidth, (float)_viewportHeight, 0),
@@ -51,10 +51,10 @@ namespace ADS_B_Display.Map.MapSrc
             );
 
             // calculate virtual coordinates for sides of world rectangle
-            double worldLeftVirtual = ((-0.5 - Eye.X) * _viewportWidth / xspan) + _viewportWidth / 2.0;
-            double worldRightVirtual = ((0.5 - Eye.X) * _viewportWidth / xspan) + _viewportWidth / 2.0;
-            double worldTopVirtual = ((0.5 - Eye.Y) * _viewportHeight / yspan) + _viewportHeight / 2.0;
-            double worldBottomVirtual = ((-0.5 - Eye.Y) * _viewportHeight / yspan) + _viewportHeight / 2.0;
+            double worldLeftVirtual = ((-0.5 - Eye.X) * _viewportWidth / Xspan) + _viewportWidth / 2.0;
+            double worldRightVirtual = ((0.5 - Eye.X) * _viewportWidth / Xspan) + _viewportWidth / 2.0;
+            double worldTopVirtual = ((0.5 - Eye.Y) * _viewportHeight / Yspan) + _viewportHeight / 2.0;
+            double worldBottomVirtual = ((-0.5 - Eye.Y) * _viewportHeight / Yspan) + _viewportHeight / 2.0;
 
             if (worldBottomVirtual > 0.0) {
                 rgn.V[0].Y = rgn.V[1].Y = (float)worldBottomVirtual;
@@ -78,7 +78,7 @@ namespace ADS_B_Display.Map.MapSrc
 
             // calculate virtual coordinates for sides of world rectangle
             // 이 값은 화면상에서 360도 월드의 폭이 몇 픽셀인지를 계산합니다.
-            double worldScreenWidth = _viewportWidth / xspan;
+            double worldScreenWidth = _viewportWidth / Xspan;
     
             // MainWindow의 Map_v, Map_w 업데이트 (기존과 동일)
     

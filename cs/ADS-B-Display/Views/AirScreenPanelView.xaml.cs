@@ -3,6 +3,7 @@ using ADS_B_Display.Map.MapSrc;
 using ADS_B_Display.Models;
 using ADS_B_Display.Models.Settings;
 using ADS_B_Display.Utils;
+using NLog;
 using OpenTK;
 using OpenTK.Graphics.OpenGL;
 using OpenTK.Wpf;
@@ -23,6 +24,25 @@ namespace ADS_B_Display.Views
     /// </summary>
     public partial class AirScreenPanelView : UserControl, IDisposable
     {
+        private static readonly Logger Logger = LogManager.GetCurrentClassLogger();
+
+        // ───────── Drag & Freeze 지원을 위한 신규 필드 ─────────
+        private bool __isDragging;              // 왼쪽 버튼으로 PAN 중인지
+        private bool _isDragging { get => __isDragging;
+            set
+            {
+                __isDragging = value;
+                Logger.Debug($"Dragging state changed: {__isDragging}");
+                if (value)
+                {
+                    _freezeTexId = -1; // 드래그 시작 시 캡처된 텍스처 초기화
+                }
+            }
+        }
+        private bool _pendingCapture = false;
+        private int _freezeTexId = -1;         // 캡처된 화면 텍스처
+        private int _freezeW, _freezeH;        // 텍스처 크기
+
         private int _MouseLeftDownX;
         private int _MouseLeftDownY;
         private int _MouseDownMask;
@@ -30,6 +50,9 @@ namespace ADS_B_Display.Views
         private const int LEFT_MOUSE_DOWN = 1; // 마우스 왼쪽 버튼 클릭 상태 플래그
         private const int RIGHT_MOUSE_DOWN = 2; // 마우스 오른쪽 버튼 클릭 상태 플래그
         private const int MIDDLE_MOUSE_DOWN = 4; // 마우스 가운데 버튼 클릭 상태 플래그
+
+        private int _dragOffsetX = 0;
+        private int _dragOffsetY = 0;
 
         // Map 관련 필드
         double Mw1, Mw2, Mh1, Mh2, xf, yf;
@@ -137,21 +160,22 @@ namespace ADS_B_Display.Views
             // 마우스 좌표 구하기 (정수형으로 변환)
             int x = (int)e.GetPosition(glControl).X;
             int y = (int)e.GetPosition(glControl).Y;
+
             // 마우스 왼쪽 버튼 클릭 확인
             if (e.ChangedButton == MouseButton.Left)
-            {
+            {   
+                _MouseLeftDownX = x;
+                _MouseLeftDownY = y;
+                _MouseDownMask |= LEFT_MOUSE_DOWN;
+
                 // Ctrl 키가 눌렸는지 확인
-                if ((System.Windows.Input.Keyboard.Modifiers & System.Windows.Input.ModifierKeys.Control) != 0)
+                if ((Keyboard.Modifiers & ModifierKeys.Control) != 0)
                 {
                     // Ctrl + 왼쪽 클릭 시 동작 (필요시 구현)
                 }
                 else
                 {
-                    // 필요한 전역 변수에 값 저장 (예시)
-                    _MouseLeftDownX = x;
-                    _MouseLeftDownY = y;
-                    _MouseDownMask |= LEFT_MOUSE_DOWN;
-
+                    _pendingCapture = true; // 캡처 플래그 설정만 수행
                     // EarthView의 StartDrag 호출
                     _earthView.StartDrag(x, y, EarthView.NAV_DRAG_PAN);
                 }
@@ -178,6 +202,13 @@ namespace ADS_B_Display.Views
             var pos = e.GetPosition(glControl);
             int x = (int)pos.X;
             int y = (int)pos.Y;
+
+            if ((_MouseDownMask & LEFT_MOUSE_DOWN) != 0 && _isDragging)
+            {
+                _dragOffsetX = x - _MouseLeftDownX;
+                _dragOffsetY = y - _MouseLeftDownY;
+                glControl.InvalidateVisual();
+            }
 
             // 화면 좌표계 변환 (Y축 뒤집기)
             int X1 = x;
@@ -219,9 +250,14 @@ namespace ADS_B_Display.Views
         private void glControl_PreviewMouseUp(object sender, MouseButtonEventArgs e)
         {
             // 마우스 왼쪽 버튼이 떼어졌을 때만 처리
-            if (e.ChangedButton == System.Windows.Input.MouseButton.Left)
+            if (e.ChangedButton == MouseButton.Left)
             {
                 _MouseDownMask &= ~LEFT_MOUSE_DOWN;
+                _isDragging = false;
+                _dragOffsetX = 0;
+                _dragOffsetY = 0;
+                ReleaseFreezeTexture();
+                glControl.InvalidateVisual();
             }
         }
 
@@ -359,21 +395,39 @@ namespace ADS_B_Display.Views
 
         private void glControl_Render(TimeSpan obj)
         {
-            if (!_isLoaded)
+            if (!_isLoaded) return;
+
+            if (_isDragging && _freezeTexId != -1)
+            {
+                // 캡처된 지도+항공기 이미지만 표시
+                GL.ClearColor(_mapDisplay ? 0f : BG_INTENSITY,
+                              _mapDisplay ? 0f : BG_INTENSITY,
+                              _mapDisplay ? 0f : BG_INTENSITY,
+                              1f);
+                GL.Clear(ClearBufferMask.ColorBufferBit);
+                DrawFreezeTexture();
                 return;
+            }
 
-            if (_mapDisplay)
-                GL.ClearColor(0.0f, 0.0f, 0.0f, 1.0f); // 검은색 배경
-            else
-                GL.ClearColor(BG_INTENSITY, BG_INTENSITY, BG_INTENSITY, 1.0f); // 배경색 강도에 따라 설정
+            // 평상시 실시간 렌더링
+            GL.ClearColor(_mapDisplay ? 0f : BG_INTENSITY,
+                          _mapDisplay ? 0f : BG_INTENSITY,
+                          _mapDisplay ? 0f : BG_INTENSITY,
+                          1f);
+            GL.Clear(ClearBufferMask.ColorBufferBit);
 
-            GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit); // 화면 지우기
+            _earthView.Animate();
+            _earthView.Render(_mapDisplay);
+            MapManager.Instance.ClearTitleManager();
+            DrawObject();
 
-            _earthView.Animate(); // 애니메이션 업데이트
-            _earthView.Render(_mapDisplay); // 지도 렌더링
-            MapManager.Instance.ClearTitleManager(); // 타일 매니저 정리
-
-            DrawObject(); // OpenGL 객체 그리기
+            if (_pendingCapture)
+            {
+                GL.Flush();
+                _pendingCapture = false;
+                CaptureFreezeTexture();
+                //CaptureWideFreezeTexture();
+            }
         }
 
         private void HookTrack(int x, int y, bool cpaHook)
@@ -614,9 +668,15 @@ namespace ADS_B_Display.Views
 
         private void DrawAircrafts()
         {
+            if (_isDragging) return;
+
+            Logger.Debug("DrawAircrafts()");
             var aircraftTable = AircraftManager.GetAll();
             foreach (var data in aircraftTable)
             {
+                if (data.IsOnScreen(_earthView.Eye, _earthView.Xspan, _earthView.Yspan))
+                    continue; // 화면에 표시되지 않는 항공기는 건너뜀
+
                 if (!data.HaveLatLon) continue;
                 if (AreaManager.UsePolygon == true && data.Viewable == false) continue;
                 GL.PushAttrib(AttribMask.CurrentBit);
@@ -780,6 +840,150 @@ namespace ADS_B_Display.Views
 
             UpdateRegion();
             glControl.InvalidateVisual(); // 화면 갱신
+        }
+
+        // ────────────────────────────────────────────────
+        // 화면 → 텍스처 캡처
+        private void CaptureFreezeTexture()
+        {
+            ReleaseFreezeTexture();
+
+            _freezeW = (int)glControl.ActualWidth;
+            _freezeH = (int)glControl.ActualHeight;
+            if (_freezeW <= 0 || _freezeH <= 0) return;
+
+            // 지도+항공기+오버레이까지 모두 렌더
+            GL.Clear(ClearBufferMask.ColorBufferBit);
+            _earthView.Render(_mapDisplay);
+            MapManager.Instance.ClearTitleManager();
+            DrawObject();
+
+            GL.Flush();
+
+            _isDragging = true;
+
+            _freezeTexId = GL.GenTexture();
+            GL.BindTexture(TextureTarget.Texture2D, _freezeTexId);
+            GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMinFilter, (int)TextureMinFilter.Linear);
+            GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMagFilter, (int)TextureMagFilter.Linear);
+
+            // ★ ClampToEdge 추가 (아래 두 줄)
+            GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureWrapS, (int)TextureWrapMode.ClampToEdge);
+            GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureWrapT, (int)TextureWrapMode.ClampToEdge);
+
+            GL.TexImage2D(TextureTarget.Texture2D, 0, PixelInternalFormat.Rgba,
+                          _freezeW, _freezeH, 0, PixelFormat.Rgba, PixelType.UnsignedByte, IntPtr.Zero);
+            GL.CopyTexSubImage2D(TextureTarget.Texture2D, 0, 0, 0, 0, 0, _freezeW, _freezeH);
+            GL.BindTexture(TextureTarget.Texture2D, 0);
+        }
+
+        private void CaptureWideFreezeTexture()
+        {
+            ReleaseFreezeTexture();
+
+            int captureW = (int)glControl.ActualWidth * 2;
+            int captureH = (int)glControl.ActualHeight * 2;
+
+            _freezeW = captureW;
+            _freezeH = captureH;
+            if (_freezeW <= 0 || _freezeH <= 0) return;
+
+            int[] oldViewport = new int[4];
+            GL.GetInteger(GetPName.Viewport, oldViewport);
+
+            GL.Viewport(0, 0, _freezeW, _freezeH);
+            _earthView.Resize(_freezeW, _freezeH);
+
+            GL.Clear(ClearBufferMask.ColorBufferBit);
+            _earthView.Render(_mapDisplay);
+            MapManager.Instance.ClearTitleManager();
+
+            GL.PushAttrib(AttribMask.AllAttribBits);
+            DrawObject();
+            GL.PopAttrib();
+
+            _pendingCapture = false;
+            _isDragging = true;
+
+            GL.Flush();
+
+            _freezeTexId = GL.GenTexture();
+            GL.BindTexture(TextureTarget.Texture2D, _freezeTexId);
+            GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMinFilter, (int)TextureMinFilter.Linear);
+            GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMagFilter, (int)TextureMagFilter.Linear);
+
+            // ★ ClampToEdge 추가 (아래 두 줄)
+            GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureWrapS, (int)TextureWrapMode.ClampToEdge);
+            GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureWrapT, (int)TextureWrapMode.ClampToEdge);
+
+            GL.TexImage2D(TextureTarget.Texture2D, 0, PixelInternalFormat.Rgba, _freezeW, _freezeH, 0, PixelFormat.Rgba, PixelType.UnsignedByte, IntPtr.Zero);
+            GL.CopyTexSubImage2D(TextureTarget.Texture2D, 0, 0, 0, 0, 0, _freezeW, _freezeH);
+            GL.BindTexture(TextureTarget.Texture2D, 0);
+
+            GL.Viewport(oldViewport[0], oldViewport[1], oldViewport[2], oldViewport[3]);
+            _earthView.Resize((int)glControl.ActualWidth, (int)glControl.ActualHeight);
+        }
+
+        private void ReleaseFreezeTexture()
+        {
+            if (_freezeTexId != -1)
+            {
+                GL.DeleteTexture(_freezeTexId);
+                _freezeTexId = -1;
+            }
+        }
+
+        // 텍스처를 화면에 덮어쓰기
+        private void DrawFreezeTexture()
+        {
+            int viewW = (int)glControl.ActualWidth;
+            int viewH = (int)glControl.ActualHeight;
+
+            int dx = _dragOffsetX;
+            int dy = _dragOffsetY;
+
+            // X축: 반대로 계산
+            int srcX = Math.Max(0, -dx);
+            int dstX = Math.Max(0, dx);
+
+            // Y축: 기존대로
+            int srcY = Math.Max(0, dy);
+            int dstY = Math.Max(0, -dy);
+
+            int copyW = Math.Min(_freezeW - srcX, viewW - dstX);
+            int copyH = Math.Min(_freezeH - srcY, viewH - dstY);
+
+            // 1. OpenGL 상태 명확화
+            GL.MatrixMode(MatrixMode.Projection);
+            GlUtil.Projection2D(0, 0, viewW, viewH);
+            GL.ClearColor(_mapDisplay ? 0f : BG_INTENSITY, _mapDisplay ? 0f : BG_INTENSITY, _mapDisplay ? 0f : BG_INTENSITY, 1f);
+            GL.Clear(ClearBufferMask.ColorBufferBit);
+
+            // 2. 실시간 지도 전체 그리기
+            _earthView.Render(_mapDisplay);
+
+            if (copyW > 0 && copyH > 0)
+            {
+                GL.Enable(EnableCap.Texture2D);
+                GL.Enable(EnableCap.Blend);
+                GL.BlendFunc(BlendingFactor.SrcAlpha, BlendingFactor.OneMinusSrcAlpha);
+                GL.BindTexture(TextureTarget.Texture2D, _freezeTexId);
+
+                float texX0 = (float)srcX / _freezeW;
+                float texY0 = (float)srcY / _freezeH;
+                float texX1 = (float)(srcX + copyW) / _freezeW;
+                float texY1 = (float)(srcY + copyH) / _freezeH;
+
+                GL.Begin(PrimitiveType.Quads);
+                GL.TexCoord2(texX0, texY0); GL.Vertex2(dstX, dstY);
+                GL.TexCoord2(texX1, texY0); GL.Vertex2(dstX + copyW, dstY);
+                GL.TexCoord2(texX1, texY1); GL.Vertex2(dstX + copyW, dstY + copyH);
+                GL.TexCoord2(texX0, texY1); GL.Vertex2(dstX, dstY + copyH);
+                GL.End();
+
+                GL.Disable(EnableCap.Texture2D);
+                GL.Disable(EnableCap.Blend);
+            }
         }
     }
 }
