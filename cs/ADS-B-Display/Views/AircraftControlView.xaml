@@ -6,6 +6,7 @@
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:iconPacks="http://metro.mahapps.com/winfx/xaml/iconpacks"
     xmlns:local="clr-namespace:ADS_B_Display.Views"
+    xmlns:mah="http://metro.mahapps.com/winfx/xaml/controls"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:svgc="http://sharpvectors.codeplex.com/svgc/"
     xmlns:usercontrols="clr-namespace:ADS_B_Display.Views.UserControls"
@@ -480,7 +481,7 @@
                                     <StackPanel Margin="10,0,0,0" Orientation="Horizontal">
                                         <!--  Record  -->
                                         <Button
-                                            Margin="0,0,4,0"
+                                            Margin="0,0,0,0"
                                             Background="Transparent"
                                             BorderBrush="Transparent"
                                             Command="{Binding Cmd_SbsRecord}"
@@ -504,60 +505,80 @@
                                                 <iconPacks:PackIconMaterial
                                                     Width="16"
                                                     Height="16"
+                                                    Background="Black"
                                                     Foreground="#555555"
                                                     Kind="Stop" />
                                             </StackPanel>
                                         </Button>
                                     </StackPanel>
                                 </StackPanel>
-
+                                <Grid Margin="20,10,0,10" Background="Transparent">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="auto" />
+                                        <ColumnDefinition />
+                                        <ColumnDefinition Width="auto" />
+                                    </Grid.ColumnDefinitions>
+                                    <!--  Time-To-Go 슬라이더 + 값 표시  -->
+                                    <StackPanel Orientation="Horizontal">
+                                        <!--  Play  -->
+                                        <Button
+                                            Background="Transparent"
+                                            BorderBrush="Transparent"
+                                            Command="{Binding Cmd_SbsPlay}"
+                                            Cursor="Hand">
+                                            <StackPanel HorizontalAlignment="Center" Orientation="Vertical">
+                                                <iconPacks:PackIconMaterial
+                                                    Width="16"
+                                                    Height="16"
+                                                    Foreground="#555555"
+                                                    Kind="Play" />
+                                            </StackPanel>
+                                        </Button>
+                                        <!--  Stop  -->
+                                        <Button
+                                            Background="Transparent"
+                                            BorderBrush="Transparent"
+                                            Command="{Binding Cmd_SbsPlayStop}"
+                                            Cursor="Hand">
+                                            <StackPanel HorizontalAlignment="Center" Orientation="Vertical">
+                                                <iconPacks:PackIconMaterial
+                                                    Width="16"
+                                                    Height="16"
+                                                    Foreground="#555555"
+                                                    Kind="Stop" />
+                                            </StackPanel>
+                                        </Button>
+                                    </StackPanel>
+                                    <Slider
+                                        Grid.Column="1"
+                                        Margin="10,2,10,0"
+                                        LargeChange="10"
+                                        Maximum="1800"
+                                        Minimum="0"
+                                        SmallChange="1"
+                                        TickFrequency="1"
+                                        Value="{Binding RemainTime}" />
+                                    <ComboBox
+                                        Grid.Column="2"
+                                        DisplayMemberPath="Name"
+                                        ItemsSource="{Binding Speeds}"
+                                        SelectedItem="{Binding SelSbsSpeed}" />
+                                </Grid>
                                 <!--  Icon Buttons  -->
                                 <StackPanel
                                     Margin="0,10,0,0"
                                     HorizontalAlignment="Right"
                                     Orientation="Vertical">
-
-
-                                    <StackPanel HorizontalAlignment="Right" Orientation="Horizontal">
+                                    <StackPanel
+                                        HorizontalAlignment="Right"
+                                        Orientation="Horizontal"
+                                        Visibility="Collapsed">
                                         <GroupBox
                                             Margin="10,0,0,0"
                                             Padding="4,2"
                                             Background="Transparent"
                                             Header="Play"
-                                            Style="{x:Null}">
-                                            <StackPanel Orientation="Horizontal">
-                                                <!--  Play  -->
-                                                <Button
-                                                    Margin="0,0,8,0"
-                                                    Background="Transparent"
-                                                    BorderBrush="Transparent"
-                                                    Command="{Binding Cmd_SbsPlay}"
-                                                    Cursor="Hand">
-                                                    <StackPanel HorizontalAlignment="Center" Orientation="Vertical">
-                                                        <iconPacks:PackIconMaterial
-                                                            Width="24"
-                                                            Height="24"
-                                                            Foreground="#555555"
-                                                            Kind="Play" />
-                                                    </StackPanel>
-                                                </Button>
-
-                                                <!--  Stop  -->
-                                                <Button
-                                                    Background="Transparent"
-                                                    BorderBrush="Transparent"
-                                                    Command="{Binding Cmd_SbsPlayStop}"
-                                                    Cursor="Hand">
-                                                    <StackPanel HorizontalAlignment="Center" Orientation="Vertical">
-                                                        <iconPacks:PackIconMaterial
-                                                            Width="24"
-                                                            Height="24"
-                                                            Foreground="#555555"
-                                                            Kind="Stop" />
-                                                    </StackPanel>
-                                                </Button>
-                                            </StackPanel>
-                                        </GroupBox>
+                                            Style="{x:Null}" />
                                     </StackPanel>
                                 </StackPanel>
 
@@ -600,7 +621,7 @@
                         </StackPanel>
                     </GroupBox>
                 </TabItem>
-                <TabItem Header="Track" Style="{StaticResource MahApps.Styles.TabItem.Aurora}">
+                <TabItem Header="Filter" Style="{StaticResource MahApps.Styles.TabItem.Aurora}">
                     <StackPanel Orientation="Vertical">
                         <!--  ─── 8) Areas Of Interest ───  -->
                         <GroupBox>
@@ -608,13 +629,13 @@
                                 <StackPanel>
                                     <CheckBox
                                         Margin="4,0,0,0"
-                                        Content="Areas Of Interest"
+                                        Content="AREA OF INTEREST"
                                         IsChecked="{Binding UsePolygon, UpdateSourceTrigger=PropertyChanged}" />
                                 </StackPanel>
                             </GroupBox.Header>
                             <StackPanel Margin="8,10" Orientation="Vertical">
                                 <DataGrid
-                                    Height="120"
+                                    Height="100"
                                     AutoGenerateColumns="False"
                                     BorderBrush="Gray"
                                     BorderThickness="1"
@@ -654,36 +675,6 @@
 
                                     </DataGrid.Columns>
                                 </DataGrid>
-                                <!--<ListView
-                                    x:Name="AreaListView"
-                                    Height="100"
-                                    BorderBrush="Gray"
-                                    BorderThickness="1"
-                                    ItemsSource="{Binding AreaList}"
-                                    ScrollViewer.VerticalScrollBarVisibility="Auto"
-                                    SelectedItem="{Binding SelectedArea, Mode=TwoWay}"
-                                    SelectionMode="Single">
-                                    <ListView.View>
-                                        <GridView>
-                                            <GridViewColumn
-                                                Width="160"
-                                                DisplayMemberBinding="{Binding AreaName}"
-                                                Header="Area" />
-                                            <GridViewColumn Width="80" Header="Color">
-                                                <GridViewColumn.CellTemplate>
-                                                    <DataTemplate>
-                                                        <Rectangle
-                                                            Width="20"
-                                                            Height="16"
-                                                            Fill="{Binding AreaColorBrush}"
-                                                            Stroke="Black"
-                                                            StrokeThickness="0.5" />
-                                                    </DataTemplate>
-                                                </GridViewColumn.CellTemplate>
-                                            </GridViewColumn>
-                                        </GridView>
-                                    </ListView.View>
-                                </ListView>-->
 
                                 <!--  Insert / Complete / Cancel / Delete 버튼  -->
                                 <UniformGrid Margin="0,8,0,0" Columns="5">
@@ -707,44 +698,149 @@
                                 </UniformGrid>
                             </StackPanel>
                         </GroupBox>
-                        <StackPanel Orientation="Horizontal">
-                            <TextBlock FontWeight="Bold" Text="CPA TIME:" />
-                            <TextBlock Margin="8,0,0,0" Text="NONE" />
-                        </StackPanel>
-                        <StackPanel Margin="0,2,0,0" Orientation="Horizontal">
-                            <TextBlock FontWeight="Bold" Text="CPA DISTANCE:" />
-                            <TextBlock Margin="8,0,0,0" Text="None" />
-                        </StackPanel>
 
-                        <DockPanel Margin="0,8,0,0" VerticalAlignment="Center">
-                            <CheckBox
-                                Content="Time-To-Go"
-                                FontWeight="Bold"
-                                IsChecked="{Binding UseTimeTogo}" />
-                            <TextBox
-                                Width="100"
-                                Margin="10,0,0,0"
-                                HorizontalAlignment="Left"
-                                HorizontalContentAlignment="Center"
-                                Text="{Binding TimeTogoValue, Mode=TwoWay, Converter={StaticResource secToTime}}" />
-                            <!--<TextBlock Margin="8,0,0,0" Text="{Binding ElementName=sliderTimeTogo, Path=Value, Converter={StaticResource secToTime}, StringFormat='hh\\:mm\\:ss'}" />-->
-                            <Button
-                                Margin="10,0,0,0"
-                                Padding="6,2"
-                                Command="{Binding Cmd_ShowCpaDialog}"
-                                Content="Collision Monitor" />
-                        </DockPanel>
+                        <GroupBox Header="Setting">
+                            <StackPanel Orientation="Vertical">
+                                <DockPanel Margin="0,8,0,0" VerticalAlignment="Center">
+                                    <CheckBox
+                                        Content="Time-To-Go"
+                                        FontWeight="Bold"
+                                        IsChecked="{Binding UseTimeTogo}" />
+                                    <TextBox
+                                        Width="100"
+                                        Margin="10,0,0,0"
+                                        HorizontalAlignment="Left"
+                                        HorizontalContentAlignment="Center"
+                                        Text="{Binding TimeTogoValue, Mode=TwoWay, Converter={StaticResource secToTime}}" />
+                                    <!--<TextBlock Margin="8,0,0,0" Text="{Binding ElementName=sliderTimeTogo, Path=Value, Converter={StaticResource secToTime}, StringFormat='hh\\:mm\\:ss'}" />-->
+
+                                </DockPanel>
+                                <Slider
+                                    x:Name="sliderTimeTogo"
+                                    Margin="0,0,20,0"
+                                    LargeChange="10"
+                                    Maximum="1800"
+                                    Minimum="0"
+                                    SmallChange="1"
+                                    TickFrequency="1"
+                                    Value="{Binding TimeTogoValue}" />
+                                <Grid Margin="0,4,0,0">
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition />
+                                        <RowDefinition />
+                                    </Grid.RowDefinitions>
+                                    <StackPanel Grid.Row="0" Orientation="Horizontal">
+                                        <CheckBox
+                                            Content="Speed : "
+                                            FontWeight="Bold"
+                                            IsChecked="{Binding UseSpeedFilter}" />
+                                        <TextBox
+                                            Width="60"
+                                            VerticalAlignment="Center"
+                                            Text="{Binding MinSpeed}" />
+                                        <TextBlock VerticalAlignment="Center" Text=" ~ " />
+                                        <TextBox
+                                            Width="60"
+                                            VerticalAlignment="Center"
+                                            Text="{Binding MaxSpeed}" />
+                                        <TextBlock VerticalAlignment="Center" Text=" KTS" />
+                                    </StackPanel>
+                                    <mah:RangeSlider
+                                        Grid.Row="1"
+                                        Margin="0,0,20,0"
+                                        IsSnapToTickEnabled="True"
+                                        LowerValue="{Binding MinSpeed, Mode=TwoWay}"
+                                        Maximum="3000"
+                                        Minimum="0"
+                                        TickFrequency="1"
+                                        UpperValue="{Binding MaxSpeed, Mode=TwoWay}" />
+                                </Grid>
+
+                                <Grid Margin="0,4,0,0">
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition />
+                                        <RowDefinition />
+                                    </Grid.RowDefinitions>
+                                    <StackPanel Grid.Row="0" Orientation="Horizontal">
+                                        <CheckBox
+                                            Content="Altitude : "
+                                            FontWeight="Bold"
+                                            IsChecked="{Binding UseAltitudeFilter}" />
+                                        <TextBlock
+                                            Width="60"
+                                            VerticalAlignment="Center"
+                                            FontWeight="Bold"
+                                            Text="Altitude : " />
+                                        <TextBox
+                                            Width="60"
+                                            VerticalAlignment="Center"
+                                            Text="{Binding MinAltitude}" />
+                                        <TextBlock VerticalAlignment="Center" Text=" ~ " />
+                                        <TextBox
+                                            Width="60"
+                                            VerticalAlignment="Center"
+                                            Text="{Binding MaxAltitude}" />
+                                        <TextBlock VerticalAlignment="Center" Text=" FT" />
+                                    </StackPanel>
+                                    <mah:RangeSlider
+                                        Grid.Row="1"
+                                        Margin="0,0,20,0"
+                                        IsSnapToTickEnabled="True"
+                                        LowerValue="{Binding MinAltitude, Mode=TwoWay}"
+                                        Maximum="50000"
+                                        Minimum="0"
+                                        TickFrequency="1"
+                                        UpperValue="{Binding MaxAltitude, Mode=TwoWay}" />
+                                </Grid>
+                                <Button
+                                    Grid.RowSpan="2"
+                                    Width="130"
+                                    Margin="10,0,10,0"
+                                    HorizontalAlignment="Right"
+                                    VerticalAlignment="Bottom"
+                                    Command="{Binding Cmd_SetAircraftType}">
+                                    <StackPanel Orientation="Horizontal">
+                                        <iconPacks:PackIconMaterial Kind="CogOutline" />
+                                        <TextBlock
+                                            Margin="4,0,0,0"
+                                            VerticalAlignment="Center"
+                                            FontSize="12"
+                                            Text="Aircraft Type" />
+                                    </StackPanel>
+                                </Button>
+                                <Separator Margin="6,10,10,0" />
+                                <Grid Margin="10,4">
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition />
+                                        <RowDefinition />
+                                    </Grid.RowDefinitions>
+                                    <StackPanel Orientation="Horizontal">
+                                        <TextBlock FontWeight="Bold" Text="CPA TIME:" />
+                                        <TextBlock Margin="8,0,0,0" Text="NONE" />
+                                    </StackPanel>
+                                    <StackPanel
+                                        Grid.Row="1"
+                                        Margin="0,2,0,0"
+                                        Orientation="Horizontal">
+                                        <TextBlock FontWeight="Bold" Text="CPA DISTANCE:" />
+                                        <TextBlock Margin="8,0,0,0" Text="None" />
+                                    </StackPanel>
+                                    <Button
+                                        Grid.RowSpan="2"
+                                        Width="130"
+                                        Margin="10,0,0,0"
+                                        HorizontalAlignment="Right"
+                                        VerticalAlignment="Bottom"
+                                        Command="{Binding Cmd_ShowCpaDialog}"
+                                        Content="Collision Monitor" />
+                                </Grid>
+                            </StackPanel>
+                        </GroupBox>
+
+
 
                         <!--  Time-To-Go 슬라이더 + 값 표시  -->
-                        <Slider
-                            x:Name="sliderTimeTogo"
-                            Margin="0,2,20,0"
-                            LargeChange="10"
-                            Maximum="1800"
-                            Minimum="0"
-                            SmallChange="1"
-                            TickFrequency="1"
-                            Value="{Binding TimeTogoValue}" />
+
                     </StackPanel>
                 </TabItem>
             </TabControl>

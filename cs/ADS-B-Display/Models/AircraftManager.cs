@@ -170,6 +170,15 @@ namespace ADS_B_Display.Models
                     {
                         keysToRemove.Add(kvp.Key);
                     }
+                    if (_speedFilter.IsValid(kvp.Value.Speed) &&
+                        _altitudeFilter.IsValid(kvp.Value.Altitude))
+                    {
+                        kvp.Value.Filtered = false;
+                    }
+                    else
+                    {
+                        kvp.Value.Filtered = true;
+                    }
                 }
 
                 // 두 번째 루프: Purge키로 aircraft 삭제
@@ -233,7 +242,28 @@ namespace ADS_B_Display.Models
             }
         }
 
-        
+        public static void UpdateSpeedFilter(bool use, double min, double max)
+        {
+            lock (lockObj)
+            {
+                _speedFilter.UseFilter = use;
+                _speedFilter.Min = min;
+                _speedFilter.Max = max;
+            }
+        }
+
+        public static void UpdateAltitudeFilter(bool use, double min, double max)
+        {
+            lock (lockObj)
+            {
+                _altitudeFilter.UseFilter = use;
+                _altitudeFilter.Min = min;
+                _altitudeFilter.Max = max;
+            }
+        }
+
+        private static Filter _speedFilter = new Filter();
+        private static Filter _altitudeFilter = new Filter();
 
         private static double _onLeftTopLat = 0.0;
         private static double _onRightBottomLat = 0.0;
@@ -328,5 +358,21 @@ namespace ADS_B_Display.Models
 
         public String AreaName1 { get; set; }
         public String AreaName2 { get; set; }
+    }
+
+    public class Filter
+    {
+        public bool UseFilter { get; set; } = false;
+        public double Min { get; set; } = 0.0;
+        public double Max { get; set; } = 3000.0;
+        
+        public bool IsValid(double value)
+        {
+            if (!UseFilter)
+                return true;
+            if (value < Min || value > Max)
+                return false;
+            return true;
+        }
     }
 }

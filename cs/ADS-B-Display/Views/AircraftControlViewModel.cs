@@ -23,6 +23,17 @@ using System.Windows.Threading;
 
 namespace ADS_B_Display.Views
 {
+    public class SpeedItem
+    {
+        public string Name { get; set; }
+        public int Speed { get; set; }
+        public SpeedItem(string name, int spped)
+        {
+            Name = name;
+            Speed = Speed;
+        }
+    }
+
     internal class AircraftControlViewModel : NotifyPropertyChangedBase, IDisposable
     {
         private static readonly NLog.Logger logger = NLog.LogManager.GetCurrentClassLogger();
@@ -33,6 +44,28 @@ namespace ADS_B_Display.Views
         //Area Insert Module
         private bool _canCompleteOrCancel = false;
         public ObservableCollection<Area> AreaList { get; }
+        public List<SpeedItem> Speeds { get; set; } = new List<SpeedItem>() { new SpeedItem("x1", 1), new SpeedItem("x2", 2), new SpeedItem("x3", 3), };
+        private SpeedItem selSbsSpeed;
+        private SpeedItem selRawSpeed;
+        public SpeedItem SelRawSpeed
+        {
+            get => selRawSpeed;
+            set
+            {
+                SetProperty(ref selRawSpeed, value);
+                _rawWorker.setPlayBackSpeed(value.Speed);
+            }
+        }
+        public SpeedItem SelSbsSpeed
+        {
+            get => selSbsSpeed;
+            set
+            {
+                SetProperty(ref selSbsSpeed, value);
+                _sbsWorker.setPlayBackSpeed(value.Speed);
+            }
+        }
+
         public List<Aircraft> ViewableAircraftList { get; private set; }
         private Area _selectedArea;
         private DispatcherTimer _timer = null;
@@ -51,6 +84,9 @@ namespace ADS_B_Display.Views
             _sbsWorker = new SbsWorker(new SBSParser());
             _rawWorker = new SbsWorker(new RawParser());
 
+            SelRawSpeed = Speeds[0];
+            SelSbsSpeed = Speeds[0];
+
             RegisterEvents();
 
             ControlSettings = Setting.Instance.ControlSettings;
@@ -68,7 +104,7 @@ namespace ADS_B_Display.Views
                 SelectedTileServer = TileServerType.GoogleMaps; // 기본값 설정
 
             AreaManager.LoadArea(ControlSettings.AreaList.Select(areaConfig => Area.AreaConfigToArea(areaConfig)).ToList());
-                                                         
+
 
             Cmd_RawConnect = new DelegateCommand(RawConnect, CanRawConnect);
             Cmd_RawDisconnect = new DelegateCommand(RawDisconnect, CanRawDisconnect);
@@ -101,10 +137,12 @@ namespace ADS_B_Display.Views
             ViewableAircraftList = new List<Aircraft>();
             Cmd_ShowCpaDialog = new DelegateCommand(ShowCpaDialog);
 
-            _timer = new DispatcherTimer(DispatcherPriority.Background) {
+            _timer = new DispatcherTimer(DispatcherPriority.Background)
+            {
                 Interval = TimeSpan.FromMilliseconds(250)
             };
-            _timer.Tick += (s, e) => {
+            _timer.Tick += (s, e) =>
+            {
                 ViewableAircraftList = AircraftManager.GetAllOnScreen();
                 NumOfViewableAircraft = ViewableAircraftList.Count;
                 NumOfAircraft = AircraftManager.Count();
@@ -177,7 +215,7 @@ namespace ADS_B_Display.Views
         }
 
         private bool _isRawRecording = false;
-        public bool IsRawRecording 
+        public bool IsRawRecording
         {
             get => _isRawRecording;
             set
@@ -192,7 +230,7 @@ namespace ADS_B_Display.Views
             }
         }
         private bool _isRawPalying = false;
-        public bool IsRawPalying 
+        public bool IsRawPalying
         {
             get => _isRawPalying;
             set
@@ -207,7 +245,8 @@ namespace ADS_B_Display.Views
             }
         }
         private bool _isSbsRecording = false;
-        public bool IsSbsRecording {
+        public bool IsSbsRecording
+        {
             get => _isSbsRecording;
             set
             {
@@ -221,7 +260,8 @@ namespace ADS_B_Display.Views
             }
         }
         private bool _isSbsPalying = false;
-        public bool IsSbsPalying {
+        public bool IsSbsPalying
+        {
             get => _isSbsPalying;
             set
             {
@@ -393,7 +433,8 @@ namespace ADS_B_Display.Views
                 return;
 
             // 2) 기록 중이 아니면, SaveFileDialog 띄워서 파일 경로 선택
-            var dlg = new SaveFileDialog {
+            var dlg = new SaveFileDialog
+            {
                 Title = "Raw Record file save",
                 Filter = "Raw Log (*.raw)|*.raw|모든 파일 (*.*)|*.*",
                 FileName = $"RawLog_{DateTime.Now:yyyyMMdd_HHmmss}.raw", // 기본 파일명 예시
@@ -401,15 +442,19 @@ namespace ADS_B_Display.Views
             };
 
             bool? result = dlg.ShowDialog();
-            if (result != true) {
+            if (result != true)
+            {
                 // 사용자가 취소했으면 아무 동작 없이 종료
                 return;
             }
 
             string path = dlg.FileName;
-            try {
+            try
+            {
                 _rawWorker.RecordOn(path, false);
-            } catch (Exception ex) {
+            }
+            catch (Exception ex)
+            {
                 MessageBox.Show($"Can not open the recorded file.:\n{ex.Message}",
                                 "Error", MessageBoxButton.OK, MessageBoxImage.Error);
                 _rawWorker.RecordOff();
@@ -424,10 +469,13 @@ namespace ADS_B_Display.Views
             if (_isRawRecording == false)
                 return;
 
-            try {
+            try
+            {
                 _rawWorker.RecordOff();
                 IsRawRecording = false;
-            } catch (Exception ex) {
+            }
+            catch (Exception ex)
+            {
                 MessageBox.Show($"Error occur while Raw record file is closing.:\n{ex.Message}",
                                 "Error", MessageBoxButton.OK, MessageBoxImage.Error);
             }
@@ -438,22 +486,30 @@ namespace ADS_B_Display.Views
             if (_isRawPalying == true)
                 return;
 
-            var dlg = new OpenFileDialog {
+            var dlg = new OpenFileDialog
+            {
                 Title = "Raw Record file save",
                 Filter = "Raw Log (*.raw)|*.raw|모든 파일 (*.*)|*.*",
                 FileName = $"RawLog_{DateTime.Now:yyyyMMdd_HHmmss}.raw", // 기본 파일명 예시
                 DefaultExt = ".raw"
             };
 
-            if (dlg.ShowDialog() == true) {
+            if (dlg.ShowDialog() == true)
+            {
                 string fileName = dlg.FileName;
-                if (!File.Exists(fileName)) {
+                if (!File.Exists(fileName))
+                {
                     MessageBox.Show("File " + fileName + " does not exist");
-                } else {
-                    try {
+                }
+                else
+                {
+                    try
+                    {
                         _rawWorker.Start(fileName);
                         IsRawPalying = true;
-                    } catch (Exception ex) {
+                    }
+                    catch (Exception ex)
+                    {
                         MessageBox.Show("Cannot open file " + fileName + "\n" + ex.Message);
                     }
                 }
@@ -470,8 +526,9 @@ namespace ADS_B_Display.Views
         }
 
         private void SbsRecord(object obj)
-        {   
-            if (SbsConnectStatus != ConnectStatus.Connect) {
+        {
+            if (SbsConnectStatus != ConnectStatus.Connect)
+            {
                 MessageBox.Show("SBS is not connected.");
                 return;
             }
@@ -485,7 +542,8 @@ namespace ADS_B_Display.Views
                 {
                     _db = new BigQueryConnector("");
                     _sbsWorker.RecordOn(path, ControlSettings.UseBigQuery, _db);
-                } catch (Exception ex)
+                }
+                catch (Exception ex)
                 {
                     MessageBox.Show($"Can not open the recorded file.:\n{ex.Message}",
                                     "Error", MessageBoxButton.OK, MessageBoxImage.Error);
@@ -496,7 +554,8 @@ namespace ADS_B_Display.Views
             else
             {
                 // 2-2) 기록 중이 아니면, SaveFileDialog 띄워서 파일 경로 선택
-                var dlg = new SaveFileDialog {
+                var dlg = new SaveFileDialog
+                {
                     Title = "SBS Record file save",
                     Filter = "SBS Log (*.sbs)|*.sbs|모든 파일 (*.*)|*.*",
                     FileName = $"SbsLog_{DateTime.Now:yyyyMMdd_HHmmss}.sbs", // 기본 파일명 예시
@@ -504,15 +563,19 @@ namespace ADS_B_Display.Views
                 };
 
                 bool? result = dlg.ShowDialog();
-                if (result != true) {
+                if (result != true)
+                {
                     // 사용자가 취소했으면 아무 동작 없이 종료
                     return;
                 }
 
                 path = dlg.FileName;
-                try {
+                try
+                {
                     _sbsWorker.RecordOn(path);
-                } catch (Exception ex) {
+                }
+                catch (Exception ex)
+                {
                     MessageBox.Show($"Can not open the recorded file.:\n{ex.Message}",
                                     "Error", MessageBoxButton.OK, MessageBoxImage.Error);
                     _sbsWorker.RecordOff();
@@ -528,10 +591,13 @@ namespace ADS_B_Display.Views
             if (_isSbsRecording == false)
                 return;
 
-            try {
+            try
+            {
                 _sbsWorker.RecordOff();
                 _db = null;
-            } catch (Exception ex) {
+            }
+            catch (Exception ex)
+            {
                 MessageBox.Show($"SBS 기록 파일을 닫는 동안 오류가 발생했습니다:\n{ex.Message}",
                                 "Error", MessageBoxButton.OK, MessageBoxImage.Error);
             }
@@ -575,21 +641,29 @@ namespace ADS_B_Display.Views
             }
             else
             {
-                var dlg = new OpenFileDialog {
+                var dlg = new OpenFileDialog
+                {
                     Title = "SBS Record file save",
                     Filter = "SBS Log (*.sbs)|*.sbs|모든 파일 (*.*)|*.*",
                     FileName = $"SbsLog_{DateTime.Now:yyyyMMdd_HHmmss}.sbs", // 기본 파일명 예시
                     DefaultExt = ".sbs"
                 };
 
-                if (dlg.ShowDialog() == true) {
+                if (dlg.ShowDialog() == true)
+                {
                     string fileName = dlg.FileName;
-                    if (!File.Exists(fileName)) {
+                    if (!File.Exists(fileName))
+                    {
                         MessageBox.Show("File " + fileName + " does not exist");
-                    } else {
-                        try {
+                    }
+                    else
+                    {
+                        try
+                        {
                             _sbsWorker.Start(fileName);
-                        } catch (Exception ex) {
+                        }
+                        catch (Exception ex)
+                        {
                             MessageBox.Show("Cannot open file " + fileName + "\n" + ex.Message);
                         }
                     }
@@ -655,10 +729,12 @@ namespace ADS_B_Display.Views
             if (RawConnectStatus == ConnectStatus.Disconnect)
                 return;
 
-            try {
+            try
+            {
                 _rawWorker.Stop();
                 RawConnectStatus = ConnectStatus.Disconnect;
-            } catch { }
+            }
+            catch { }
 
             pingEcho.Stop();
         }
@@ -670,7 +746,8 @@ namespace ADS_B_Display.Views
 
             // 연결 중이 아니면 TextBox에 입력된 host:port로 연결 시도
             string input = ControlSettings.RawAddress.Trim();
-            if (string.IsNullOrEmpty(input)) {
+            if (string.IsNullOrEmpty(input))
+            {
                 MessageBox.Show("Raw Connect 주소를 입력하세요. (예: 127.0.0.1:30002)", "Warning", MessageBoxButton.OK, MessageBoxImage.Warning);
                 return;
             }
@@ -680,37 +757,50 @@ namespace ADS_B_Display.Views
             // host와 port 분리
             string host;
             int port;
-            if (input.Contains(":")) {
+            if (input.Contains(":"))
+            {
                 var parts = input.Split(new[] { ':' }, 2);
                 host = parts[0];
-                if (!int.TryParse(parts[1], out port)) {
+                if (!int.TryParse(parts[1], out port))
+                {
                     MessageBox.Show("포트 번호가 올바르지 않습니다.", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
                     return;
                 }
-            } else {
+            }
+            else
+            {
                 // 포트 미입력 시 기본값 사용 (예: 30002)
                 host = input;
                 port = 30002;
             }
 
             // 비동기로 TCP 연결 시도
-            try {
-                var popup = new LoadingPopup() { WindowStartupLocation = WindowStartupLocation.CenterOwner,
-                                                 Owner = Application.Current.MainWindow };
+            try
+            {
+                var popup = new LoadingPopup()
+                {
+                    WindowStartupLocation = WindowStartupLocation.CenterOwner,
+                    Owner = Application.Current.MainWindow
+                };
                 popup.Closed += (s, e2) => { if (popup.IsCancelled) _rawCts.Cancel(); };
                 popup.Show();
                 RawConnectStatus = ConnectStatus.Error;
                 var res = await _rawWorker.Start(host, port, _rawCts.Token);
-                if (res) {
+                if (res)
+                {
                     popup.Close();
                     RawConnectStatus = ConnectStatus.Connect;
 
                     pingEcho.Start(host, port, 2000, PingEchoRawHandler);
-                } else {
+                }
+                else
+                {
                     MessageBox.Show("Connection Timeout.");
                     RawConnectStatus = ConnectStatus.Error;
                 }
-            } catch (Exception ex) {
+            }
+            catch (Exception ex)
+            {
                 logger.Error(ex);
                 _rawWorker.Stop();
                 RawConnectStatus = ConnectStatus.Disconnect;
@@ -742,7 +832,8 @@ namespace ADS_B_Display.Views
                 return;
 
             string input = ControlSettings.SbsAddress.Trim();
-            if (string.IsNullOrEmpty(input)) {
+            if (string.IsNullOrEmpty(input))
+            {
                 MessageBox.Show("SBS Connect 주소를 입력하세요. (예: data.adsbhub.org:30003)", "Warning", MessageBoxButton.OK, MessageBoxImage.Warning);
                 return;
             }
@@ -752,23 +843,29 @@ namespace ADS_B_Display.Views
             // host와 port 분리
             string host;
             int port;
-            if (input.Contains(":")) {
+            if (input.Contains(":"))
+            {
                 var parts = input.Split(new[] { ':' }, 2);
                 host = parts[0];
-                if (!int.TryParse(parts[1], out port)) {
+                if (!int.TryParse(parts[1], out port))
+                {
                     MessageBox.Show("포트 번호가 올바르지 않습니다.", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
                     return;
                 }
-            } else {
+            }
+            else
+            {
                 // 포트 미입력 시 기본값 사용 (예: 30003)
                 host = input;
                 port = 5002;
             }
 
-            try {
+            try
+            {
                 // 연결 후, 스트림에서 한 줄씩 읽어서 처리 (예시: OnSbsMessageReceived(rawLine))
-               
-                var popup = new LoadingPopup() {
+
+                var popup = new LoadingPopup()
+                {
                     WindowStartupLocation = WindowStartupLocation.CenterOwner,
                     Owner = Application.Current.MainWindow
                 };
@@ -776,16 +873,21 @@ namespace ADS_B_Display.Views
                 SbsConnectStatus = ConnectStatus.Error;
                 popup.Show();
                 var res = await _sbsWorker.Start(host, port, _sbsCts.Token);
-                if (res) {
+                if (res)
+                {
                     popup.Close();
                     SbsConnectStatus = ConnectStatus.Connect;
 
                     pingEcho.Start(host, port, 10000, PingEchoHandler);
 
-                } else {
+                }
+                else
+                {
                     MessageBox.Show("Connection Timeout.");
                 }
-            } catch (Exception ex) {
+            }
+            catch (Exception ex)
+            {
                 logger.Error(ex);
                 _sbsWorker.Stop();
                 SbsConnectStatus = ConnectStatus.Disconnect;
@@ -830,7 +932,8 @@ namespace ADS_B_Display.Views
         {
             if (AircraftManager.TrackHook.Valid_CC && AircraftManager.TryGet(AircraftManager.TrackHook.ICAO_CC, out Aircraft ac))
             {
-                if (Aircraft == null) {
+                if (Aircraft == null)
+                {
                     Aircraft = new AircraftForUI();
                 }
 
@@ -865,9 +968,11 @@ namespace ADS_B_Display.Views
 
         public List<TileServerType> TileServerTypeList { get; set; } = Enum.GetValues(typeof(TileServerType)).Cast<TileServerType>().ToList();
         private TileServerType selectedTileServer = TileServerType.GoogleMaps;
-        public TileServerType SelectedTileServer {
+        public TileServerType SelectedTileServer
+        {
             get => selectedTileServer;
-            set {
+            set
+            {
                 SetProperty(ref selectedTileServer, value);
                 MapManager.Instance.LoadMap(value);
             }
@@ -880,9 +985,11 @@ namespace ADS_B_Display.Views
         private string longitudeOfMouse;
         public string LongitudeOfMouse { get => longitudeOfMouse; set => SetProperty(ref longitudeOfMouse, value); }
 
-        public bool DisplayMapEnabled {
+        public bool DisplayMapEnabled
+        {
             get => ControlSettings.DisplayMapEnabled;
-            set {
+            set
+            {
                 ControlSettings.DisplayMapEnabled = value;
                 OnPropertyChanged(nameof(DisplayMapEnabled));
                 OnChangeSetting();
@@ -890,9 +997,11 @@ namespace ADS_B_Display.Views
         }
 
         private bool useTimeTogo;
-        public bool UseTimeTogo {
+        public bool UseTimeTogo
+        {
             get => ControlSettings.UseTimeToGo;
-            set {
+            set
+            {
                 ControlSettings.UseTimeToGo = value;
                 OnPropertyChanged(nameof(UseTimeTogo));
                 OnChangeSetting();
@@ -900,9 +1009,11 @@ namespace ADS_B_Display.Views
         }
 
         private double timeTogoValue;
-        public double TimeTogoValue {
+        public double TimeTogoValue
+        {
             get => ControlSettings.TimeToGoValue;
-            set {
+            set
+            {
                 ControlSettings.TimeToGoValue = value;
                 OnPropertyChanged(nameof(TimeTogoValue));
                 OnChangeSetting();
@@ -978,5 +1089,80 @@ namespace ADS_B_Display.Views
                 AreaManager.UsePolygon = value;
             }
         }
+
+
+        private bool useSpeedFilter = true;
+
+        public bool UseSpeedFilter
+        {
+            get => useSpeedFilter;
+            set
+            {
+                SetProperty(ref useSpeedFilter, value);
+                AircraftManager.UpdateSpeedFilter(useSpeedFilter, minSpeed, maxSpeed);
+            }
+        }
+
+        private double minSpeed = 0;
+
+        public double MinSpeed
+        {
+            get => minSpeed;
+            set
+            {
+                SetProperty(ref minSpeed, value);
+                AircraftManager.UpdateSpeedFilter(useSpeedFilter, minSpeed, maxSpeed);
+            }
+        }
+
+        private double maxSpeed = 3000;
+
+        public double MaxSpeed
+        {
+            get => maxSpeed;
+            set
+            {
+                SetProperty(ref maxSpeed, value);
+                AircraftManager.UpdateSpeedFilter(useSpeedFilter, minSpeed, maxSpeed);
+            }
+        }
+
+        private double minAltitude = 0;
+
+        public double MinAltitude
+        {
+            get => minAltitude;
+            set
+            {
+                SetProperty(ref minAltitude, value);
+                AircraftManager.UpdateAltitudeFilter(useAltitudeFilter, minAltitude, maxAltitude);
+            }
+        }
+
+        private double maxAltitude = 50000;
+
+        public double MaxAltitude
+        {
+            get => maxAltitude;
+            set
+            {
+                SetProperty(ref maxAltitude, value);
+                AircraftManager.UpdateAltitudeFilter(useAltitudeFilter, minAltitude, maxAltitude);
+            }
+        }
+
+        private bool useAltitudeFilter = true;
+
+        public bool UseAltitudeFilter
+        {
+            get => useAltitudeFilter;
+            set
+            {
+                SetProperty(ref useAltitudeFilter, value);
+                AircraftManager.UpdateAltitudeFilter(useAltitudeFilter, minAltitude, maxAltitude);
+            }
+        }
+
+        
     }
 }

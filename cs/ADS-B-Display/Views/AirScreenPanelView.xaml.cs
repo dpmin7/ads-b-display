@@ -783,6 +783,7 @@ namespace ADS_B_Display.Views
 
                 if (!data.HaveLatLon) continue;
                 if (AreaManager.UsePolygon == true && data.Viewable == false) continue;
+                if (data.Filtered) continue; // 필터링된 항공기는 건너뜀
                 GL.PushAttrib(AttribMask.CurrentBit);
                 GL.Color4(1f, 1f, 1f, 1f);
                 LatLon2XY(data.VLatitude, data.VLongitude, out double scrX, out double scrY);
