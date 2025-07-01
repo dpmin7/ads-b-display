@@ -91,7 +91,6 @@ namespace ADS_B_Display.Map.MapSrc
             if (_pixels == null)
             {
                 // 아직 픽셀 데이터가 로드되지 않았을 수 있습니다.
-                Console.WriteLine("Warning: AdjustBrightness called before loading pixel data.");
                 return;
             }
 

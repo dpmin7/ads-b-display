@@ -58,6 +58,9 @@ namespace ADS_B_Display
                 _state.Running = true;
                 _state.First = true;
                 _state.LastTime = 0;
+
+                AircraftManager.PurgeAll();
+
                 if (useDb && dbConnector != null)
                     _inputSource = new DatabaseConnector(dbConnector);
                 else
@@ -85,6 +88,9 @@ namespace ADS_B_Display
                 _state.Running = true;
                 _state.First = true;
                 _state.LastTime = 0;
+
+                AircraftManager.PurgeAll();
+
                 _inputSource = new TcpConnector(host, port);
                 await _inputSource.StartAsync(_internalOnMessageReceived, _playBackSpeed, ct, _state);
                 return true;

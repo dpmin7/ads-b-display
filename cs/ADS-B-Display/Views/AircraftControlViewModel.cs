@@ -385,8 +385,6 @@ namespace ADS_B_Display.Views
             if (_isRawPalying == true)
                 return;
 
-            //AircraftManager.PurgeAll();
-
             var dlg = new OpenFileDialog {
                 Title = "Raw Record file save",
                 Filter = "Raw Log (*.raw)|*.raw|모든 파일 (*.*)|*.*",
@@ -497,8 +495,6 @@ namespace ADS_B_Display.Views
         {
             if (_isSbsPalying == true)
                 return;
-
-            //AircraftManager.PurgeAll();
 
             if (ControlSettings.UseBigQuery)
             {
