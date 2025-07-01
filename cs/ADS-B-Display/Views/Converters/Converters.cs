@@ -6,6 +6,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Data;
+using System.Windows.Media;
 using System.Windows.Media.Imaging;
 
 namespace ADS_B_Display.Views.Converters
@@ -166,6 +167,26 @@ namespace ADS_B_Display.Views.Converters
                 return null;
             }
             
+            return null;
+        }
+
+        public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+        {
+            throw new NotImplementedException();
+        }
+    }
+
+    public class BoolToBrushConverter : IValueConverter
+    {
+        public Brush TrueBrush { get; set; } = Brushes.Red;
+        public Brush FalseBrush { get; set; } = Brushes.Gray;
+        public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+        {
+            if (value is bool val)
+            {
+                return val ? TrueBrush : FalseBrush;
+            }
+
             return null;
         }
 

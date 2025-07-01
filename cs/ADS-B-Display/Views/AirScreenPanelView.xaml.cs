@@ -833,25 +833,35 @@ namespace ADS_B_Display.Views
             }
         }
 
-        private void DrawOldTrack(IList<AircraftTrackPoint> items)
+        private void DrawOldTrack(Aircraft aircraft)
         {
             // 항공기 트랙 포인트 그리기
-            if (items.Count >= 2)
+            if (aircraft.TrackPoint.Items.Count >= 1)
             {
-                AircraftTrackPoint prev = items[1];
-                double scrX1, scrY1, scrX2, scrY2;
-                for (int i = 1; i < items.Count; i++)
+                AircraftTrackPoint tp;
+                AircraftTrackPoint prev;
+                int i = 0;
+                for (; i < aircraft.TrackPoint.Items.Count-1; i++)
                 {
-                    var tp = items[i];
-                    if (tp.Latitude == 0 && tp.Longitude == 0)
-                        continue;
-                    LatLon2XY(prev.Latitude, prev.Longitude, out scrX1, out scrY1);
-                    LatLon2XY(tp.Latitude, tp.Longitude, out scrX2, out scrY2);
-                    Ntds2d.DrawLeader(scrX1, scrY1, scrX2, scrY2, 1.0f, AltitudeToColor.GetAltitudeColorRGB(tp.Altitude));
+                    prev = aircraft.TrackPoint.Items[i];
+                    tp = aircraft.TrackPoint.Items[i+1];
 
-                    prev = tp;
+                    DrawTrack(prev, tp, tp.Altitude);
                 }
+                prev = aircraft.TrackPoint.Items[i];
+                DrawTrack(prev, new AircraftTrackPoint(aircraft.VLatitude, aircraft.VLongitude, aircraft.Altitude, 0), aircraft.TrackPoint.Items[i].Altitude);
             }
+        }
+
+        private void DrawTrack(AircraftTrackPoint prev, AircraftTrackPoint tp, double alt)
+        {
+            double scrX1, scrY1, scrX2, scrY2;
+
+            LatLon2XY(prev.Latitude, prev.Longitude, out scrX1, out scrY1);
+            LatLon2XY(tp.Latitude, tp.Longitude, out scrX2, out scrY2);
+            Ntds2d.DrawLeader(scrX1, scrY1, scrX2, scrY2, 1.0f, AltitudeToColor.GetAltitudeColorRGB(alt));
+
+            
         }
 
         private void DrawTrackHook()
@@ -866,7 +876,7 @@ namespace ADS_B_Display.Views
                 GL.LineWidth((float)airplaneScale);
                 GL.Color4(1.0f, 1.0f, 0.0f, 1.0f); // 노란색
                 Ntds2d.DrawCircleOutline(x, y, 20.0, 50);
-                DrawOldTrack(data.TrackPoint.Items); // 이전 트랙 포인트 그리기
+                DrawOldTrack(data); // 이전 트랙 포인트 그리기
                 //aircraftPopup.HorizontalOffset = x + 10; // +10은 약간 오른쪽 오프셋
                 //aircraftPopup.VerticalOffset = y - 20;   // 위로 살짝
 

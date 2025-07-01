@@ -147,8 +147,11 @@ namespace ADS_B_Display
         {
             if (AircraftManager.TryGet(acio, out var aircraft))
             {
-                aircraft.TrackPoint.Enqueue(new AircraftTrackPoint(
+                if (aircraft.HaveLatLon)
+                {
+                    aircraft.AddTrackPoint(new AircraftTrackPoint(
                     aircraft.Latitude, aircraft.Longitude, aircraft.Altitude, aircraft.LastSeen));
+                }
             }
         }
     }

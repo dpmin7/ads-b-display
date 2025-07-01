@@ -75,17 +75,17 @@ namespace ADS_B_Display.Views
             Cmd_SbsConnect = new DelegateCommand(SbsConnect, CanSbsConnect);
             Cmd_SbsDisconnect = new DelegateCommand(SbsDisconnect, CanSbsDisconnect);
 
-            Cmd_RawRecord = new DelegateCommand(RawRecord, CanRawRecord);
-            Cmd_RawRecordStop = new DelegateCommand(RawRecordStop, CanRawRecordStop);
+            Cmd_RawRecord = new DelegateCommand(RawRecord);
+            Cmd_RawRecordStop = new DelegateCommand(RawRecordStop);
 
-            Cmd_RawPlay = new DelegateCommand(RawPlay, CanRawPlay);
-            Cmd_RawPlayStop = new DelegateCommand(RawPlayStop, CanRawPlayStop);
+            Cmd_RawPlay = new DelegateCommand(RawPlay);
+            Cmd_RawPlayStop = new DelegateCommand(RawPlayStop);
 
-            Cmd_SbsRecord = new DelegateCommand(SbsRecord, CanSbsRecord);
-            Cmd_SbsRecordStop = new DelegateCommand(SbsRecordStop, CanSbsRecordStop);
+            Cmd_SbsRecord = new DelegateCommand(SbsRecord);
+            Cmd_SbsRecordStop = new DelegateCommand(SbsRecordStop);
 
-            Cmd_SbsPlay = new DelegateCommand(SbsPlay, CanSbsPlay);
-            Cmd_SbsPlayStop = new DelegateCommand(SbsPlayStop, CanSbsPlayStop);
+            Cmd_SbsPlay = new DelegateCommand(SbsPlay);
+            Cmd_SbsPlayStop = new DelegateCommand(SbsPlayStop);
 
             Cmd_Purge = new DelegateCommand(Purge);
 
@@ -177,20 +177,75 @@ namespace ADS_B_Display.Views
         }
 
         private bool _isRawRecording = false;
+        public bool IsRawRecording 
+        {
+            get => _isRawRecording;
+            set
+            {
+                if (_isRawRecording != value)
+                {
+                    _isRawRecording = value;
+                    OnPropertyChanged(nameof(IsRawRecording));
+                    ((DelegateCommand)Cmd_RawRecordStop).RaiseCanExecuteChanged();
+                    ((DelegateCommand)Cmd_RawPlay).RaiseCanExecuteChanged();
+                }
+            }
+        }
         private bool _isRawPalying = false;
+        public bool IsRawPalying 
+        {
+            get => _isRawPalying;
+            set
+            {
+                if (_isRawPalying != value)
+                {
+                    _isRawPalying = value;
+                    OnPropertyChanged(nameof(IsRawPalying));
+                    ((DelegateCommand)Cmd_RawPlayStop).RaiseCanExecuteChanged();
+                    ((DelegateCommand)Cmd_RawRecord).RaiseCanExecuteChanged();
+                }
+            }
+        }
         private bool _isSbsRecording = false;
+        public bool IsSbsRecording {
+            get => _isSbsRecording;
+            set
+            {
+                if (_isSbsRecording != value)
+                {
+                    _isSbsRecording = value;
+                    OnPropertyChanged(nameof(IsSbsRecording));
+                    ((DelegateCommand)Cmd_SbsRecordStop).RaiseCanExecuteChanged();
+                    ((DelegateCommand)Cmd_SbsPlay).RaiseCanExecuteChanged();
+                }
+            }
+        }
         private bool _isSbsPalying = false;
+        public bool IsSbsPalying {
+            get => _isSbsPalying;
+            set
+            {
+                if (_isSbsPalying != value)
+                {
+                    _isSbsPalying = value;
+                    OnPropertyChanged(nameof(IsSbsPalying));
+                    ((DelegateCommand)Cmd_SbsPlayStop).RaiseCanExecuteChanged();
+                    ((DelegateCommand)Cmd_SbsRecord).RaiseCanExecuteChanged();
+                }
+            }
+        }
 
         private IDisposable _mouseMoveSubscription;
 
-        private bool CanRawRecord(object obj) => true;//RawConnectStatus == ConnectStatus.Connect; // connect 시에 _isRecord, isPlaying, isPlayStopped 초기화
-        private bool CanRawRecordStop(object obj) => true;//RawConnectStatus == ConnectStatus.Connect; // connect 시에 _isRecord, isPlaying, isPlayStopped 초기화
-        private bool CanRawPlay(object obj) => true;//RawConnectStatus == ConnectStatus.Disconnect && ;
-        private bool CanRawPlayStop(object obj) => true;// !_isRawRecording;
-        private bool CanSbsRecord(object obj) => true;//!_isRawRecording;
-        private bool CanSbsRecordStop(object obj) => true;//!_isRawRecording;
-        private bool CanSbsPlay(object obj) => true;//!_isRawRecording;
-        private bool CanSbsPlayStop(object obj) => true;//!_isRawRecording;
+        private bool CanRawRecord(object obj) => !IsRawRecording && RawConnectStatus == ConnectStatus.Connect;//RawConnectStatus == ConnectStatus.Connect; // connect 시에 _isRecord, isPlaying, isPlayStopped 초기화
+        private bool CanRawRecordStop(object obj) => IsRawRecording && RawConnectStatus == ConnectStatus.Connect;//RawConnectStatus == ConnectStatus.Connect; // connect 시에 _isRecord, isPlaying, isPlayStopped 초기화
+        private bool CanRawPlay(object obj) => !IsRawPalying && RawConnectStatus == ConnectStatus.Disconnect;//RawConnectStatus == ConnectStatus.Disconnect && ;
+        private bool CanRawPlayStop(object obj) => IsRawPalying && RawConnectStatus == ConnectStatus.Disconnect;// !_isRawRecording;
+
+        private bool CanSbsRecord(object obj) => !IsSbsRecording && SbsConnectStatus == ConnectStatus.Connect;//!_isRawRecording;
+        private bool CanSbsRecordStop(object obj) => IsSbsRecording && SbsConnectStatus == ConnectStatus.Connect;//!_isRawRecording;
+        private bool CanSbsPlay(object obj) => !IsSbsPalying && SbsConnectStatus == ConnectStatus.Disconnect;//!_isRawRecording;
+        private bool CanSbsPlayStop(object obj) => IsSbsPalying && SbsConnectStatus == ConnectStatus.Disconnect;//!_isRawRecording;
 
         public Area SelectedArea
         {
@@ -361,9 +416,7 @@ namespace ADS_B_Display.Views
                 return;
             }
 
-            // 4) 녹화를 시작했다는 안내 메시지 (선택 사항)
-            MessageBox.Show($"Start Raw record:\n{path}", "Info", MessageBoxButton.OK, MessageBoxImage.Information);
-            _isRawRecording = true;
+            IsRawRecording = true;
         }
 
         private void RawRecordStop(object obj)
@@ -373,7 +426,7 @@ namespace ADS_B_Display.Views
 
             try {
                 _rawWorker.RecordOff();
-                _isRawRecording = false;
+                IsRawRecording = false;
             } catch (Exception ex) {
                 MessageBox.Show($"Error occur while Raw record file is closing.:\n{ex.Message}",
                                 "Error", MessageBoxButton.OK, MessageBoxImage.Error);
@@ -399,7 +452,7 @@ namespace ADS_B_Display.Views
                 } else {
                     try {
                         _rawWorker.Start(fileName);
-                        _isRawPalying = true;
+                        IsRawPalying = true;
                     } catch (Exception ex) {
                         MessageBox.Show("Cannot open file " + fileName + "\n" + ex.Message);
                     }
@@ -413,7 +466,7 @@ namespace ADS_B_Display.Views
                 return;
 
             _rawWorker.Stop();
-            _isRawPalying = false;
+            IsRawPalying = false;
         }
 
         private void SbsRecord(object obj)
@@ -439,9 +492,6 @@ namespace ADS_B_Display.Views
                     _sbsWorker.RecordOff();
                     return;
                 }
-
-                // 3) 녹화를 시작했다는 안내 메시지 (선택 사항)
-                MessageBox.Show($"Start SBS record:\nQuery", "Info", MessageBoxButton.OK, MessageBoxImage.Information);
             }
             else
             {
@@ -468,12 +518,9 @@ namespace ADS_B_Display.Views
                     _sbsWorker.RecordOff();
                     return;
                 }
-
-                // 4) 녹화를 시작했다는 안내 메시지 (선택 사항)
-                MessageBox.Show($"Start SBS record:\n{path}", "Info", MessageBoxButton.OK, MessageBoxImage.Information);
             }
 
-            _isSbsRecording = true;
+            IsSbsRecording = true;
         }
 
         private void SbsRecordStop(object obj)
@@ -484,10 +531,13 @@ namespace ADS_B_Display.Views
             try {
                 _sbsWorker.RecordOff();
                 _db = null;
-                _isSbsRecording = false;
             } catch (Exception ex) {
                 MessageBox.Show($"SBS 기록 파일을 닫는 동안 오류가 발생했습니다:\n{ex.Message}",
                                 "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+            finally
+            {
+                IsSbsRecording = false;
             }
         }
 
@@ -501,7 +551,7 @@ namespace ADS_B_Display.Views
                 var items = BigQueryConnector.GetTableLists();
                 if (items == null)
                 {
-                    _isSbsPalying = false;
+                    IsSbsPalying = false;
                     return;
                 }
                 var win = new BigQueryListPopup(items);
@@ -509,7 +559,10 @@ namespace ADS_B_Display.Views
                 win.WindowStartupLocation = WindowStartupLocation.CenterOwner;
                 var res = win.ShowDialog();
                 if (res == false)
+                {
+                    IsSbsPalying = false;
                     return;
+                }
 
                 var selItem = win.SelectedItem;
 
@@ -543,7 +596,7 @@ namespace ADS_B_Display.Views
                 }
             }
 
-            _isSbsPalying = true;
+            IsSbsPalying = true;
         }
 
         private void SbsPlayStop(object obj)
@@ -553,7 +606,7 @@ namespace ADS_B_Display.Views
 
             _sbsWorker.Stop(ControlSettings.UseBigQuery);
             _db = null;
-            _isSbsPalying = false;
+            IsSbsPalying = false;
         }
 
         private void RegisterEvents()
@@ -655,6 +708,7 @@ namespace ADS_B_Display.Views
                     pingEcho.Start(host, port, 2000, PingEchoRawHandler);
                 } else {
                     MessageBox.Show("Connection Timeout.");
+                    RawConnectStatus = ConnectStatus.Error;
                 }
             } catch (Exception ex) {
                 logger.Error(ex);

@@ -14,6 +14,7 @@
     d:DesignWidth="360"
     mc:Ignorable="d">
     <UserControl.Resources>
+        <converters:BoolToBrushConverter x:Key="btb" TrueBrush="Red" />
         <converters:StringToUri x:Key="S2Uri" />
         <converters:DoubleToLatitude x:Key="D2Lat" />
         <converters:DoubleToLongitude x:Key="D2Lon" />
@@ -337,7 +338,7 @@
                                     <StackPanel Orientation="Horizontal">
                                         <!--  Record  -->
                                         <Button
-                                            Margin="0,0,0,0"
+                                            Margin="10,0,4,0"
                                             Background="Transparent"
                                             BorderBrush="Transparent"
                                             Command="{Binding Cmd_RawRecord}"
@@ -346,7 +347,7 @@
                                                 <iconPacks:PackIconMaterial
                                                     Width="16"
                                                     Height="16"
-                                                    Foreground="#555555"
+                                                    Foreground="{Binding IsRawRecording, Converter={StaticResource btb}}"
                                                     Kind="Record" />
                                             </StackPanel>
                                         </Button>
@@ -415,7 +416,7 @@
                         <GroupBox Header="SBS Connection">
                             <StackPanel Margin="8,10" Orientation="Vertical">
 
-                                <StackPanel Margin="20,0,0,4" Orientation="Horizontal">
+                                <DockPanel Margin="20,0,0,4">
                                     <RadioButton
                                         Margin="4,0,10,0"
                                         Content="Local"
@@ -425,20 +426,25 @@
                                         Content="HUB"
                                         IsChecked="{Binding IsHub}" />
                                     <RadioButton Content="ETC." IsChecked="{Binding IsEtc}" />
-                                    <CheckBox Margin="20,0,0,0" IsChecked="{Binding ControlSettings.UseBigQuery}">
-                                        <StackPanel Orientation="Horizontal">
-                                            <svgc:SvgViewbox
-                                                x:Name="img"
-                                                Height="18"
-                                                Margin="0"
-                                                HorizontalAlignment="Right"
-                                                VerticalAlignment="Bottom"
-                                                Source="/Images/BigQuery-Logo-SVG_006.svg"
-                                                Stretch="Uniform" />
-                                            <TextBlock Margin="4,0,0,0" Text="Goggle" />
-                                        </StackPanel>
-                                    </CheckBox>
-                                </StackPanel>
+                                    <StackPanel
+                                        HorizontalAlignment="Right"
+                                        DockPanel.Dock="Right"
+                                        Orientation="Horizontal">
+                                        <svgc:SvgViewbox
+                                            x:Name="img"
+                                            Height="18"
+                                            Margin="0"
+                                            HorizontalAlignment="Right"
+                                            VerticalAlignment="Bottom"
+                                            Source="/Images/BigQuery-Logo-SVG_006.svg"
+                                            Stretch="Uniform" />
+                                        <TextBlock Margin="4,0,0,0" Text="BigQuery" />
+                                        <CheckBox
+                                            Margin="4,0,-6,0"
+                                            DockPanel.Dock="Right"
+                                            IsChecked="{Binding ControlSettings.UseBigQuery}" />
+                                    </StackPanel>
+                                </DockPanel>
                                 <!--  Connection Status + Buttons  -->
                                 <DockPanel Margin="0,0,0,8" LastChildFill="True">
                                     <!--  Signal Light  -->
@@ -471,10 +477,10 @@
                                         Command="{Binding Cmd_SbsDisconnect}"
                                         Content="Disconnect" />
 
-                                    <StackPanel Orientation="Horizontal">
+                                    <StackPanel Margin="10,0,0,0" Orientation="Horizontal">
                                         <!--  Record  -->
                                         <Button
-                                            Margin="0,0,0,0"
+                                            Margin="0,0,4,0"
                                             Background="Transparent"
                                             BorderBrush="Transparent"
                                             Command="{Binding Cmd_SbsRecord}"
@@ -483,7 +489,7 @@
                                                 <iconPacks:PackIconMaterial
                                                     Width="16"
                                                     Height="16"
-                                                    Foreground="#555555"
+                                                    Foreground="{Binding IsSbsRecording, Converter={StaticResource btb}}"
                                                     Kind="Record" />
                                             </StackPanel>
                                         </Button>

@@ -41,7 +41,7 @@ namespace ADS_B_Display
             set {
                 _Latitude = value;
                 VLatitude = value; // virtual Latitude for Animation
-                SetLatNormalized(value); // Normalize latitude
+                //SetLatNormalized(value); // Normalize latitude
             }
         }
 
@@ -52,7 +52,7 @@ namespace ADS_B_Display
             set {
                 _Longitude = value;
                 VLongitude = value; // virtual Latitude for Animation
-                SetLonNormalized(value); // Normalize longitude
+                //SetLonNormalized(value); // Normalize longitude
             }
         }
 
@@ -103,7 +103,6 @@ namespace ADS_B_Display
         }
 
         public TimedTrackQueue<AircraftTrackPoint> TrackPoint { get; set; } = new TimedTrackQueue<AircraftTrackPoint>(TimeSpan.FromSeconds(3600)); // 1시간 동안의 TrackPoint를 유지 
-
         public bool HaveSpeedAndHeading { get; set; }
         public double Heading { get; set; }
         public double Speed { get; set; }
@@ -154,14 +153,19 @@ namespace ADS_B_Display
 
             return (lat0 + dLat, lon0 + dLon);
         }
+
+        public void AddTrackPoint(AircraftTrackPoint trackPoint)
+        {
+            TrackPoint.Enqueue(trackPoint);
+        }
     }
 
     public struct AircraftTrackPoint : ITimeIncluded
     {
-        public double Latitude { get; }
-        public double Longitude { get; }
-        public double Altitude { get; }
-        public long TimestampUtc { get; } // UTC timestamp in milliseconds
+        public double Latitude { get; private set; }
+        public double Longitude { get; private set; }
+        public double Altitude { get; private set; }
+        public long TimestampUtc { get; private set; } // UTC timestamp in milliseconds
 
         public AircraftTrackPoint(double latitude, double longitude, double altitude, long timestampUtc)
         {
@@ -169,6 +173,13 @@ namespace ADS_B_Display
             Longitude = longitude;
             Altitude = altitude;
             TimestampUtc = timestampUtc;
+        }
+
+        public void UpdatePos(double lat, double lon, long time)
+        {
+            Latitude = lat;
+            Longitude = lon;
+            TimestampUtc = time;
         }
 
         public override string ToString()
