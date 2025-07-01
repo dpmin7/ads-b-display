@@ -246,6 +246,18 @@
                                 Text="Aircraft Type:" />
                             <TextBlock Margin="8,4,0,0" Text="{Binding Aircraft.AircraftData.IcaoAircraftType, FallbackValue=NA}" />
                         </StackPanel>
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock
+                                Margin="0,4,0,0"
+                                FontWeight="Bold"
+                                Text="DEP: " />
+                            <TextBlock Margin="8,4,0,0" Text="{Binding Aircraft.AircraftData.Dep, FallbackValue=NA}" />
+                            <TextBlock
+                                Margin="0,4,0,0"
+                                FontWeight="Bold"
+                                Text=" / ARR: " />
+                            <TextBlock Margin="8,4,0,0" Text="{Binding Aircraft.AircraftData.Arr, FallbackValue=NA}" />
+                        </StackPanel>
                     </StackPanel>
                     <Button
                         Grid.Column="1"

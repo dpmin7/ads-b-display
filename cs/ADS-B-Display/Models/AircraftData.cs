@@ -154,5 +154,8 @@ namespace ADS_B_Display.Models
         public bool IsMilitary { get; set; }
 
         public int AircraftImageNum { get; set; }
+
+        public string Dep { get; set; }
+        public string Arr { get; set; }
     }
 }

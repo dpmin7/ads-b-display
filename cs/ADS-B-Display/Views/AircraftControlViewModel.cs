@@ -778,6 +778,10 @@ namespace ADS_B_Display.Views
                 if (Aircraft == null) {
                     Aircraft = new AircraftForUI();
                 }
+
+                ac.AircraftData.Dep = AircraftManager.TrackHook.DepartureAirport != null ? AircraftManager.TrackHook.DepartureAirport["ICAO"] : "NA";
+                ac.AircraftData.Arr = AircraftManager.TrackHook.ArrivalAirport != null ? AircraftManager.TrackHook.ArrivalAirport["ICAO"] : "NA";
+
                 Aircraft.UpdateAircraftForUI(ac);
             }
             else
