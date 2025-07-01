@@ -376,7 +376,6 @@ namespace ADS_B_Display.Views
             _earthView.Eye.X = x;
             _earthView.Eye.Y = y;
             _earthView.Eye.H = h;
-            airplaneScale = Math.Min((0.05 / _earthView.Eye.H), 1.5); // 스케일 계산
 
             UpdateRegion(); // 현재 지역 업데이트
             eyeX.Text = _earthView.Eye.X.ToString(); eyeY.Text = _earthView.Eye.Y.ToString(); eyeH.Text = _earthView.Eye.H.ToString();
@@ -385,9 +384,19 @@ namespace ADS_B_Display.Views
         private double airplaneScale;
         private void Window_MouseWheel(object sender, MouseWheelEventArgs e)
         {
+            // 강제 복원 (freeze 해제)
+            if (_isDragging)
+            {
+                _isDragging = false;
+                ReleaseFreezeTexture();
+                Mouse.Capture(null);
+            }
+
             if (e.Delta > 0)
                 _earthView.SingleMovement(EarthView.NAV_ZOOM_IN);
-            else _earthView.SingleMovement(EarthView.NAV_ZOOM_OUT);
+            else
+                _earthView.SingleMovement(EarthView.NAV_ZOOM_OUT);
+
             airplaneScale = Math.Min((0.05 / _earthView.Eye.H), 1.5); // 스케일 계산
 
             UpdateRegion(); // 현재 지역 업데이트
@@ -849,6 +858,7 @@ namespace ADS_B_Display.Views
             xf = Mw1 / Mw2; // 가상 좌표 너비 대비 지도 너비 비율
             yf = Mh1 / Mh2; // 가상 좌표 높이 대비 지도 높이 비율
 
+            airplaneScale = Math.Min((0.05 / _earthView.Eye.H), 1.5); // 스케일 계산
             //AircraftManager.UpdateAll(Map_v); // 화면에 표시할 항공기 업데이트
         }
 
