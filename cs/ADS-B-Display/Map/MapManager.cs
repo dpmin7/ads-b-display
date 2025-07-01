@@ -21,7 +21,7 @@ namespace ADS_B_Display.Map
         private TileManager _tileManager;
         private MasterLayer _masterLayer;
         //private FlatEarthView _earthView; // 뷰는 뷰가
-        private Action<MasterLayer> _loadMapCallback;
+        private Action<MasterLayer, bool> _loadMapCallback;
         private Dictionary<TileServerType, AbstractMap> _mapProvider = new Dictionary<TileServerType, AbstractMap>();
 
         private static MapManager _instance = null;
@@ -55,7 +55,7 @@ namespace ADS_B_Display.Map
             }
         }
 
-        public void RegisterLoadMapCallback(Action<MasterLayer> callback)
+        public void RegisterLoadMapCallback(Action<MasterLayer, bool> callback)
         {
             _loadMapCallback = callback;
         }
@@ -83,7 +83,9 @@ namespace ADS_B_Display.Map
                 _masterLayer = new GoogleLayer(_tileManager);
                 //_earthView = new FlatEarthView(_masterLayer);
 
-                _loadMapCallback?.Invoke(_masterLayer);
+                bool isDark = type == TileServerType.GoogleMaps;
+
+                _loadMapCallback?.Invoke(_masterLayer, isDark);
             }
         }
 

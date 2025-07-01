@@ -416,7 +416,10 @@
     <None Include="App.config" />
   </ItemGroup>
   <ItemGroup>
-    <Resource Include="Images\altitude_chart.svg" />
+    <Resource Include="Images\altitude_chart_Dark.svg" />
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="Images\altitude_chart_Light.svg" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>

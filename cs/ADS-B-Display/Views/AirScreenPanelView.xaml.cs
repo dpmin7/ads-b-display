@@ -147,17 +147,26 @@ namespace ADS_B_Display.Views
             _timeTogoValue = timeTogoValue;
         }
 
-        private void MapLoaded(MasterLayer masterLayer)
+        private void MapLoaded(MasterLayer masterLayer, bool isDark)
         {
+            if (isDark)
+                altitudeImg.Source = new Uri("pack://application:,,,/Images/altitude_chart_Dark.svg");
+            else
+                altitudeImg.Source = new Uri("pack://application:,,,/Images/altitude_chart_Light.svg");
+
             _earthView = new FlatEarthView(masterLayer);
             _earthView.Resize((int)glControl.ActualWidth, (int)glControl.ActualHeight);
 
             UpdateRegion();
         }
 
+        // 1. 드래그 시작 시점의 Eye.Y 저장
+        private double _dragStartEyeY;
+        private int _dragStartMouseY;
         private void glControl_PreviewMouseDown(object sender, MouseButtonEventArgs e)
         {
             Mouse.Capture((UIElement)sender); // 마우스 캡처 설정
+            Mouse.OverrideCursor = Cursors.Hand;      // 손 모양
 
             // 마우스 좌표 구하기 (정수형으로 변환)
             int x = (int)e.GetPosition(glControl).X;
@@ -169,6 +178,8 @@ namespace ADS_B_Display.Views
                 _MouseLeftDownX = x;
                 _MouseLeftDownY = y;
                 _MouseDownMask |= LEFT_MOUSE_DOWN;
+                _dragStartEyeY = _earthView.Eye.Y;      // 드래그 시작 Eye.Y 저장
+                _dragStartMouseY = y;                   // 드래그 시작 마우스 Y 저장
 
                 // Ctrl 키가 눌렸는지 확인
                 if ((Keyboard.Modifiers & ModifierKeys.Control) != 0)
@@ -210,8 +221,13 @@ namespace ADS_B_Display.Views
 
             if ((_MouseDownMask & LEFT_MOUSE_DOWN) != 0 && _isDragging)
             {
+                // 2. 실제 Eye.Y 변화량을 화면 픽셀로 환산
+                double eyeYDelta = _earthView.Eye.Y - _dragStartEyeY;
+                double pixelsPerEyeY = glControl.ActualHeight / (Map_w[1].Y - Map_w[0].Y); // 대략적인 변환
+                _dragOffsetY = -(int)(-eyeYDelta * pixelsPerEyeY);
+
                 _dragOffsetX = x - _MouseLeftDownX;
-                _dragOffsetY = y - _MouseLeftDownY;
+                //_dragOffsetY = y - _MouseLeftDownY;
                 glControl.InvalidateVisual();
             }
 
@@ -259,11 +275,11 @@ namespace ADS_B_Display.Views
                 Bottom.Text = DMS.DegreesMinutesSecondsLon(Lon2);
             }
         }
-
+        
         private void glControl_PreviewMouseUp(object sender, MouseButtonEventArgs e)
         {
             Mouse.Capture(null);
-
+            Mouse.OverrideCursor = null;      // 손 모양
             // 마우스 왼쪽 버튼이 떼어졌을 때만 처리
             if (e.ChangedButton == MouseButton.Left)
             {
@@ -785,10 +801,15 @@ namespace ADS_B_Display.Views
                 GL.Color4(1.0f, 1.0f, 0.0f, 1.0f); // 노란색
                 Ntds2d.DrawCircleOutline(x, y, 20.0, 50);
                 DrawOldTrack(data.TrackPoint.Items); // 이전 트랙 포인트 그리기
+                //aircraftPopup.HorizontalOffset = x + 10; // +10은 약간 오른쪽 오프셋
+                //aircraftPopup.VerticalOffset = y - 20;   // 위로 살짝
+
+                //aircraftPopup.IsOpen = true;
             }
             else
             {
                 hook.Valid_CC = false;
+                //aircraftPopup.IsOpen = false;
             }
             GL.PopAttrib();
         }

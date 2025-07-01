@@ -28,6 +28,7 @@
             Render="glControl_Render"
             SizeChanged="glControl_SizeChanged" />
         <svgc:SvgViewbox
+            x:Name="altitudeImg"
             Width="1000"
             Margin="10"
             HorizontalAlignment="Right"
@@ -60,5 +61,19 @@
                 </TextBlock>
             </StackPanel>
         </Border>
+        <!--<Popup
+            x:Name="aircraftPopup"
+            AllowsTransparency="True"
+            Placement="Absolute"
+            PopupAnimation="Fade"
+            StaysOpen="False">
+            <Border
+                Padding="10"
+                Background="LightYellow"
+                BorderBrush="Gray"
+                BorderThickness="1">
+                <TextBlock Text="마우스 옆 플로팅 박스" />
+            </Border>
+        </Popup>-->
     </Grid>
 </UserControl>
