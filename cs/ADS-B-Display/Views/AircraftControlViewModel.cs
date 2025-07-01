@@ -480,7 +480,7 @@ namespace ADS_B_Display.Views
                 return;
 
             try {
-                _sbsWorker.RecordOff(ControlSettings.UseBigQuery);
+                _sbsWorker.RecordOff();
                 _db = null;
                 _isSbsRecording = false;
             } catch (Exception ex) {

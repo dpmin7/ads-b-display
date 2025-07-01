@@ -213,9 +213,15 @@
     <Compile Include="Models\CPA\CPAInteropComputer.cs" />
     <Compile Include="Models\CPA\CPAProcessor.cs" />
     <Compile Include="Models\BigQueryConnector.cs" />
+    <Compile Include="Models\DatabaseRecorder.cs" />
+    <Compile Include="Models\DatabaseConnector.cs" />
+    <Compile Include="Models\FileRecorder.cs" />
+    <Compile Include="Models\FileConnector.cs" />
+    <Compile Include="Models\IRecorder.cs" />
     <Compile Include="Models\IDBConnector.cs" />
     <Compile Include="Models\CPA\ICPAComputer.cs" />
     <Compile Include="Models\FlightAnalytics\FlightAnalytics.cs" />
+    <Compile Include="Models\IConnector.cs" />
     <Compile Include="Models\PingEcho.cs" />
     <Compile Include="Models\PointPolygonFilter.cs" />
     <Compile Include="Models\Settings\Setting.cs" />
@@ -223,6 +229,7 @@
     <Compile Include="Models\RangeFilter\HorizontalRangeFilter.cs" />
     <Compile Include="Models\RangeFilter\IRangeFilter.cs" />
     <Compile Include="Models\RangeFilter\VerticalRangeFilter.cs" />
+    <Compile Include="Models\TcpConnector.cs" />
     <Compile Include="StringDefinitions.cs" />
     <Compile Include="Utils\AltitudeToColor.cs" />
     <Compile Include="Utils\csv.cs" />
