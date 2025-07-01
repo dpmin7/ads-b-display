@@ -202,7 +202,7 @@ namespace ADS_B_Display.Models
                 }
             }
             aircraft.AircraftData = AircraftDB.GetAircraftInfo(aircraft.ICAO);
-
+            aircraft.AircraftData.OperatorIcao = Airlines.GetAirlineFromCallsign(aircraft.FlightNum);
 
             return aircraft;
         }
