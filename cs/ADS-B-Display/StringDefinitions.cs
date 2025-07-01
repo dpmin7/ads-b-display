@@ -13,5 +13,6 @@ namespace ADS_B_Display
         public const string EvtPurgeAll = "EvtPurgeAll";
         public const string EvtMapTypeSelected = "EvtMapTypeSelected";
         public const string EvtControlSettingChanged = "EvtControlSettingChanged";
+        public const string EvtJumpToLatLon = "EvtJumpToLatLon";
     }
 }

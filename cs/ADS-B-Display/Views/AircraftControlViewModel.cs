@@ -603,6 +603,8 @@ namespace ADS_B_Display.Views
                 return;
             }
 
+            Purge(null); // 일단 화면 데이터 날리자.
+
             // host와 port 분리
             string host;
             int port;
@@ -621,18 +623,17 @@ namespace ADS_B_Display.Views
 
             // 비동기로 TCP 연결 시도
             try {
-                CancellationTokenSource cts = new CancellationTokenSource();
                 var popup = new LoadingPopup() { WindowStartupLocation = WindowStartupLocation.CenterOwner,
                                                  Owner = Application.Current.MainWindow };
-                popup.Closed += (s, e2) => { if (popup.IsCancelled) cts.Cancel(); };
+                popup.Closed += (s, e2) => { if (popup.IsCancelled) _rawCts.Cancel(); };
                 popup.Show();
                 RawConnectStatus = ConnectStatus.Error;
-                var res = await _rawWorker.Start(host, port, cts.Token);
+                var res = await _rawWorker.Start(host, port, _rawCts.Token);
                 if (res) {
                     popup.Close();
                     RawConnectStatus = ConnectStatus.Connect;
 
-                    pingEcho.Start(host, port, 2000, PingEchoHandler);
+                    pingEcho.Start(host, port, 2000, PingEchoRawHandler);
                 } else {
                     MessageBox.Show("Connection Timeout.");
                 }
@@ -659,8 +660,11 @@ namespace ADS_B_Display.Views
         }
 
         private CancellationTokenSource _sbsCts = new CancellationTokenSource();
+        private CancellationTokenSource _rawCts = new CancellationTokenSource();
         private async void SbsConnect(object obj)
         {
+            logger.Info($"Connect SBS {SbsConnectStatus}");
+
             if (SbsConnectStatus == ConnectStatus.Connect)
                 return;
 
@@ -669,6 +673,8 @@ namespace ADS_B_Display.Views
                 MessageBox.Show("SBS Connect 주소를 입력하세요. (예: data.adsbhub.org:30003)", "Warning", MessageBoxButton.OK, MessageBoxImage.Warning);
                 return;
             }
+
+            Purge(null); // 일단 화면 데이터 날리자.
 
             // host와 port 분리
             string host;
@@ -701,7 +707,7 @@ namespace ADS_B_Display.Views
                     popup.Close();
                     SbsConnectStatus = ConnectStatus.Connect;
 
-                    //pingEcho.Start(host, port, 10000, PingEchoHandler);
+                    pingEcho.Start(host, port, 10000, PingEchoHandler);
 
                 } else {
                     MessageBox.Show("Connection Timeout.");
@@ -710,6 +716,23 @@ namespace ADS_B_Display.Views
                 logger.Error(ex);
                 _sbsWorker.Stop();
                 SbsConnectStatus = ConnectStatus.Disconnect;
+            }
+        }
+
+        private async void PingEchoRawHandler(string host, int port, bool isConnected)
+        {
+            if (isConnected == false)
+            {
+                _rawWorker.Stop();
+                RawConnectStatus = ConnectStatus.Error;
+            }
+            else
+            {
+                var res = await _rawWorker.Start(host, port, _rawCts.Token);
+                if (res)
+                {
+                    RawConnectStatus = ConnectStatus.Connect;
+                }
             }
         }
 
@@ -853,7 +876,7 @@ namespace ADS_B_Display.Views
             }
         }
 
-        private bool isEtc;
+        private bool isEtc = true;
         public bool IsEtc
         {
             get => isEtc;

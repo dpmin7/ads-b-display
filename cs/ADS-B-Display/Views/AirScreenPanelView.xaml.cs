@@ -654,6 +654,9 @@ namespace ADS_B_Display.Views
 
         private void DrawAirports()
         {
+            if (_earthView.Eye.H > 0.025)
+                return;
+
             var airportsInfo = AirportDB.GetAirPortsInfo();
             var uniqueAirports = AirportDB.GetUniqueAirportCodes();
             if (airportsInfo == null) return;
@@ -711,7 +714,7 @@ namespace ADS_B_Display.Views
                 Ntds2d.DrawAirplaneImage(scrX, scrY, data.Altitude, airplaneScale * 0.5, data.Heading, imageNum, data.IsGhost);
 
                 // Time To Go 경로선 표시
-                if (data.HaveSpeedAndHeading && _useTimeToGo && _earthView.Eye.H < 0.05)
+                if (data.HaveSpeedAndHeading && _useTimeToGo && _earthView.Eye.H < 0.025)
                 {
                     if (LatLonConv.VDirect(data.VLatitude, data.VLongitude,
                         data.Heading, data.Speed / 3060.0 * _timeTogoValue,

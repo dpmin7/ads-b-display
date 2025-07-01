@@ -4,6 +4,7 @@ using NLog.Common;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Collections.Specialized;
 using System.Diagnostics;
 using System.Linq;
 using System.Timers;
@@ -25,10 +26,18 @@ namespace ADS_B_Display.Models
 
         private static Timer _dataTimer;
         private static long _purgeLimitMS = 30000; // 30초 (1분) 후에 Purge
-        private static long _ghostLimitMS = 10000; // 10초 (1분) 후에 Purge
+        private static long _ghostLimitMS = 20000; // 10초 (1분) 후에 Purge
 
         private static ObservableCollection<CPAConflictInfo> _cpaConflicts = new ObservableCollection<CPAConflictInfo>();
         public static ObservableCollection<CPAConflictInfo> CPAConflicts => _cpaConflicts;
+
+        public static List<CPAConflictInfo> GetCPAConflicts()
+        {
+            lock (lockObj)
+            {
+                return _cpaConflicts.ToList();
+            }
+        }
 
         static AircraftManager()
         {

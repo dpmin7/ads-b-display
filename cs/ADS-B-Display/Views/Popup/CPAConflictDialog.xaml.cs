@@ -1,7 +1,6 @@
 ﻿using ADS_B_Display.Models;
+using ADS_B_Display.Utils;
 using System;
-using System.Collections.Generic;
-using System.Collections.ObjectModel;
 using System.Collections.Specialized;
 using System.Linq;
 using System.Windows;
@@ -47,7 +46,7 @@ namespace ADS_B_Display.Views
             }
 
             // UI 스레드에서 실행 중이므로 안전하게 UI 접근 가능
-            var snapshot = AircraftManager.CPAConflicts.ToList(); // Snapshot으로 동시성 문제 방지
+            var snapshot = AircraftManager.GetCPAConflicts(); // Snapshot으로 동시성 문제 방지
             CpaDataGrid.ItemsSource = snapshot
                 .OrderBy(c => c.TCPA_Seconds)
                 .Select((c, i) => new CPAConflictDisplayModel
@@ -80,6 +79,18 @@ namespace ADS_B_Display.Views
         {
             // DialogResult = false; ❌ 사용 금지
             Close();
+        }
+
+        private void CpaDataGrid_PreviewMouseDoubleClick(object sender, System.Windows.Input.MouseButtonEventArgs e)
+        {
+            if (CpaDataGrid.SelectedItem == null)
+                return;
+
+            if(CpaDataGrid.SelectedItem is CPAConflictInfo info)
+            {
+                EventBus.Publish(EventIds.EvtJumpToLatLon, (info.Lon1, info.Lat1));
+            }
+            
         }
     }
 
