@@ -697,11 +697,11 @@ namespace ADS_B_Display.Views
             var aircraftTable = AircraftManager.GetAll();
             foreach (var data in aircraftTable)
             {
-                if (data.IsOnScreen(_earthView.Eye, _earthView.Xspan, _earthView.Yspan))
-                    continue; // 화면에 표시되지 않는 항공기는 건너뜀
+                //if (data.IsOnScreen(_earthView.Eye, _earthView.Xspan, _earthView.Yspan))
+                //    continue; // 화면에 표시되지 않는 항공기는 건너뜀
 
                 if (!data.HaveLatLon) continue;
-                if (AreaManager.UsePolygon == true && data.OnScreen == false) continue;
+                if (AreaManager.UsePolygon == true && data.Viewable == false) continue;
                 GL.PushAttrib(AttribMask.CurrentBit);
                 GL.Color4(1f, 1f, 1f, 1f);
                 LatLon2XY(data.VLatitude, data.VLongitude, out double scrX, out double scrY);
