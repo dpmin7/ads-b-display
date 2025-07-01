@@ -276,7 +276,10 @@ namespace ADS_B_Display.Models
                             if(area.AddAircraft(aircraft))
                             {
                                 string time = DateTime.Now.ToString("HH:mm:ss.fff");
-                                string msg = $"[{time}] [Polygon] New Aircraft {aircraft.HexAddr} IN {area.AreaName}";
+                                
+                                AircraftData acd = AircraftDB.GetAircraftInfo(aircraft.ICAO);
+                                string msg = $"[{time}] New Aircraft {aircraft.HexAddr} IN {area.AreaName} | {acd.Country} | Military : {acd.IsMilitary}";
+
 
                                 AreaMonitorPopup.WriteLog(msg);  // Trace 대신 직접 호출
                             }
