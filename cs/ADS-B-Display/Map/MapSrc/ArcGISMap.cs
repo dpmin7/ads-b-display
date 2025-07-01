@@ -2,7 +2,7 @@
 
 namespace ADS_B_Display.Map.MapSrc
 {
-    internal class ArcGISMap : AbstractMap
+    internal class ArcGISMap : IMapProvider
     {
         private readonly string folderName = "ArcGGIS";
 

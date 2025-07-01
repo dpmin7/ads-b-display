@@ -3,6 +3,8 @@ using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using System.IO;
+using System.Web.UI.WebControls;
+using System.Linq;
 
 namespace ADS_B_Display
 {
@@ -25,6 +27,11 @@ namespace ADS_B_Display
                 string airportData = File.ReadAllText(airportsPath);
 
                 airports = CsvUtil.Parse(airportData);
+
+                List<string> airportNames = airports.Where(dict => dict.ContainsKey("Name")).Select(dict => dict["Name"]).ToList(); // 예시 함수
+
+                // 3. Ntds2d에 백그라운드 작업을 시작하라고 명령합니다.
+                Ntds2d.StartPreloadingTextures(airportNames);
 
                 if (!File.Exists(routesPath))
                     return;

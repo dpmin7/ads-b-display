@@ -2,7 +2,7 @@
 
 namespace ADS_B_Display.Map.MapSrc
 {
-    public abstract class AbstractMap
+    public abstract class IMapProvider
     {
         public abstract string GetUrl(int x, int y, int z);
         public abstract bool IsInternet();

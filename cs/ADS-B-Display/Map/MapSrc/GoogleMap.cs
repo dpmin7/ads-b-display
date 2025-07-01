@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace ADS_B_Display.Map.MapSrc
 {
-    internal class GoogleMap : AbstractMap
+    internal class GoogleMap : IMapProvider
     {
         private readonly string folderName = "GoogleMap";
 

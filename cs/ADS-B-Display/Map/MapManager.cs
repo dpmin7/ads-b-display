@@ -22,7 +22,7 @@ namespace ADS_B_Display.Map
         private MasterLayer _masterLayer;
         //private FlatEarthView _earthView; // 뷰는 뷰가
         private Action<MasterLayer, bool> _loadMapCallback;
-        private Dictionary<TileServerType, AbstractMap> _mapProvider = new Dictionary<TileServerType, AbstractMap>();
+        private Dictionary<TileServerType, IMapProvider> _mapProvider = new Dictionary<TileServerType, IMapProvider>();
 
         private static MapManager _instance = null;
         public static MapManager Instance => _instance ?? (_instance = new MapManager());

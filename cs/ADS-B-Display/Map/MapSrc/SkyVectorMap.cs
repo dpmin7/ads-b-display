@@ -1,6 +1,6 @@
 ﻿namespace ADS_B_Display.Map.MapSrc
 {
-    internal class SkyVectorMap : AbstractMap
+    internal class SkyVectorMap : IMapProvider
     {
         private readonly string VFR = "VFR_Map";
         private readonly string IFR_LOW = "IFR_Low_Map";

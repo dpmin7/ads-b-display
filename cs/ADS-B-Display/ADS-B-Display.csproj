@@ -194,7 +194,7 @@
       <SubType>Designer</SubType>
     </ApplicationDefinition>
     <Compile Include="Map\MapManager.cs" />
-    <Compile Include="Map\MapSrc\AbstractMap.cs" />
+    <Compile Include="Map\MapSrc\IMapProvider.cs" />
     <Compile Include="Map\MapSrc\ArcGISMap.cs" />
     <Compile Include="Map\MapSrc\GoogleMap.cs" />
     <Compile Include="Map\MapSrc\OpenStreetMap.cs" />

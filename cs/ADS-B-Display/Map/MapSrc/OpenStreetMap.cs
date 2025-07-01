@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace ADS_B_Display.Map.MapSrc
 {
-    internal class OpenStreetMap : AbstractMap
+    internal class OpenStreetMap : IMapProvider
     {
         private readonly string folderName = "OpenStreet";
 

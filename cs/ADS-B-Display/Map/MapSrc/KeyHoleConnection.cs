@@ -18,9 +18,9 @@ namespace ADS_B_Display.Map.MapSrc
         private readonly Logger logger = LogManager.GetLogger("KeyholeConnection");
 
         private readonly HttpClient _httpClient;
-        private readonly AbstractMap map;
+        private readonly IMapProvider map;
 
-        public KeyholeConnection(AbstractMap map) : base()
+        public KeyholeConnection(IMapProvider map) : base()
         {
             this.map = map;
             _httpClient = new HttpClient();
