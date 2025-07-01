@@ -295,8 +295,12 @@ namespace ADS_B_Display.Views
 
         private void MonitorArea(object obj)
         {
-            AreaMonitorPopup monitor = new AreaMonitorPopup();
-            monitor.Show();
+            AreaMonitorPopup monitor = new AreaMonitorPopup
+            {
+                Topmost = true, // 항상 위에 표시
+                Owner = Application.Current.MainWindow // 필요 시 소유자 지정 (선택)
+            };
+            monitor.Show(); // 모달리스로 띄우기
         }
 
         private bool CanDeleteArea(object obj) => SelectedArea != null;

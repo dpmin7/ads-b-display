@@ -41,7 +41,8 @@ namespace ADS_B_Display
 
         public bool Start(string path, bool useDb = false, IDBConnector dbConnector = null)
         {
-            try {
+            try
+            {
                 _first = true;
                 _running = true;
                 _filePath = path;
@@ -51,7 +52,9 @@ namespace ADS_B_Display
                 _thread.Start();
 
                 return true;
-            } catch (Exception ex) {
+            }
+            catch (Exception ex)
+            {
                 return false;
             }
         }
@@ -60,22 +63,30 @@ namespace ADS_B_Display
         {
             _running = true;
             _tcpClient = new TcpClient();
-            using (ct.Register(() => {
+            using (ct.Register(() =>
+            {
                 try { _tcpClient.Close(); } catch { }
-            })) {
-                try {
+            }))
+            {
+                try
+                {
                     await _tcpClient.ConnectAsync(host, port);
                     _thread = new Thread(Run) { IsBackground = true };
                     _thread.Start();
                     return true;
-                } catch (OperationCanceledException) {
+                }
+                catch (OperationCanceledException)
+                {
                     throw new TimeoutException("TCP 연결이 취소되었거나 타임아웃되었습니다.");
-                } catch (TimeoutException) {
+                }
+                catch (TimeoutException)
+                {
                     MessageBox.Show("Connection timeout. Please check your network.");
                     _running = false;
                     return false;
                 }
-                catch (Exception) {
+                catch (Exception)
+                {
                     _tcpClient.Dispose();
                     _running = false;
                     return false;
@@ -134,18 +145,18 @@ namespace ADS_B_Display
                     MessageBox.Show($"SBS 기록 파일을 닫는 동안 오류가 발생했습니다:\n{ex.Message}",
                                     "Error", MessageBoxButton.OK, MessageBoxImage.Error);
                 }
-            } 
+            }
         }
 
         public void Stop(bool useDb = false)
-        {   
+        {
             RecordOff(useDb); // 레코딩 중에 멈추면 레코딩 종료부터 하자.
             _running = false;
             if (_tcpClient != null)
             {
                 _tcpClient.Close();
             }
-            
+
             _thread?.Join();
         }
         public void setPlayBackSpeed(int speed)
@@ -162,7 +173,7 @@ namespace ADS_B_Display
                 RunDatabaseMode();
                 return;
             }
-            
+
             if (_filePath != null)
             {
                 RunFileMode();
@@ -238,14 +249,18 @@ namespace ADS_B_Display
 
         private void RunFileMode()
         {
-            try {
-                using (var reader = new StreamReader(_filePath)) {
-                    while (_running) {
+            try
+            {
+                using (var reader = new StreamReader(_filePath))
+                {
+                    while (_running)
+                    {
                         string rawLine = reader.ReadLine();
                         if (string.IsNullOrEmpty(rawLine))
                             continue;
                         var time = long.Parse(rawLine);
-                        if (_first) {
+                        if (_first)
+                        {
                             _first = false;
                             _lastTime = time;
                         }
@@ -261,7 +276,9 @@ namespace ADS_B_Display
                         PostProcess(acio);
                     }
                 }
-            } catch (Exception ex) {
+            }
+            catch (Exception ex)
+            {
                 MessageBox.Show("File Playback Error: " + ex.Message);
             }
 
@@ -270,16 +287,21 @@ namespace ADS_B_Display
 
         private void RunTcpMode()
         {
-            try {
-                using (var reader = new StreamReader(_tcpClient.GetStream())) {
-                    while (_running && _tcpClient.Connected) {
+            try
+            {
+                using (var reader = new StreamReader(_tcpClient.GetStream()))
+                {
+                    while (_running && _tcpClient.Connected)
+                    {
                         string msg = reader.ReadLine();
                         if (msg == null) continue;
                         long time = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
                         ProcessMessage(msg, time);
                     }
                 }
-            } catch (Exception ex) {
+            }
+            catch (Exception ex)
+            {
                 //MessageBox.Show("TCP Error: " + ex.Message); //리 컨넥션 필수
             }
 
@@ -303,10 +325,52 @@ namespace ADS_B_Display
             {
                 if (aircraft.HaveLatLon)
                 {
-                    aircraft.TrackPoint.Enqueue(new AircraftTrackPoint(
-                    aircraft.Latitude, aircraft.Longitude, aircraft.Altitude, aircraft.LastSeen));
+                    if (aircraft.TrackPoint.Items.Count >= 1)
+                    {
+                        var trackInfo = aircraft.TrackPoint.Items.ElementAt(0);
+
+                        if (trackInfo.Latitude == aircraft.Latitude && trackInfo.Longitude == aircraft.Longitude)
+                        {
+                            aircraft.Speed = 0;
+                        }
+
+                    }
+                    if (aircraft.HaveLatLon)
+                    {
+                        aircraft.TrackPoint.Enqueue(new AircraftTrackPoint(
+                        aircraft.Latitude, aircraft.Longitude, aircraft.Altitude, aircraft.LastSeen));
+                    }
                 }
+
+
             }
+
         }
+    }
+
+
+public static class AircraftUtils
+    {
+        // 지구 반지름 (km)
+        private const double EarthRadiusKm = 6371.0;
+
+        // 두 위경도 사이 거리 계산 (Haversine 공식)
+        public static double CalculateDistanceKm(double lat1, double lon1, double lat2, double lon2)
+        {
+            double dLat = DegreesToRadians(lat2 - lat1);
+            double dLon = DegreesToRadians(lon2 - lon1);
+            double radLat1 = DegreesToRadians(lat1);
+            double radLat2 = DegreesToRadians(lat2);
+
+            double a = Math.Sin(dLat / 2) * Math.Sin(dLat / 2) +
+                       Math.Cos(radLat1) * Math.Cos(radLat2) *
+                       Math.Sin(dLon / 2) * Math.Sin(dLon / 2);
+
+            double c = 2 * Math.Atan2(Math.Sqrt(a), Math.Sqrt(1 - a));
+
+            return EarthRadiusKm * c;
+        }
+
+        private static double DegreesToRadians(double deg) => deg * (Math.PI / 180.0);
     }
 }

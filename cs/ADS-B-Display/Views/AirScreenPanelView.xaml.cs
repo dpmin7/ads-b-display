@@ -630,10 +630,35 @@ namespace ADS_B_Display.Views
 
             GL.Color4(1f, 1f, 1f, 1f);
             GL.Begin(PrimitiveType.LineStrip);
-            foreach (var pt in adj) GL.Vertex2(pt.X, pt.Y);
+            double prevLon = tempArea.Points[0].X;
+            for (int i = 0; i < tempArea.NumPoints; i++)
+            {
+                double lat = tempArea.Points[i].Y;
+                double lon = tempArea.Points[i].X;
+
+                if (i > 0)
+                {
+                    double diff = lon - prevLon;
+                    if (diff > 180) lon -= 360;
+                    else if (diff < -180) lon += 360;
+                }
+
+                LatLon2XY_NoWrap(lat, lon, out double x, out double y);
+                GL.Vertex2(x, y);
+
+                prevLon = lon; // ← 보정된 값을 저장
+            }
             GL.End();
 
             GL.PopAttrib();
+        }
+
+        private void LatLon2XY_NoWrap(double lat, double lon, out double x, out double y)
+        {
+            // WrapLongitude 생략
+            x = (Map_v[1].X - ((Map_w[1].X - (lon / 360.0)) / xf));
+            y = Map_v[3].Y - (Map_w[1].Y / yf) +
+                (MathExt.Asinh(Math.Tan(lat * Math.PI / 180.0)) / (2 * Math.PI * yf));
         }
 
         private void DrawSavedAreas()
@@ -650,12 +675,26 @@ namespace ADS_B_Display.Views
                 GL.Begin(PrimitiveType.Triangles);
                 foreach (var tri in area.Triangles)
                 {
+                    double prevLon = area.Points[(int)tri[0]].X;
                     for (int k = 0; k < 3; k++)
                     {
-                        var idx = (int)tri[k];
+                        int idx = (int)tri[k];
                         if (idx >= area.NumPoints) continue;
-                        LatLon2XY(area.Points[idx].Y, area.Points[idx].X, out double x, out double y);
+
+                        double lat = area.Points[idx].Y;
+                        double lon = area.Points[idx].X;
+
+                        if (k > 0)
+                        {
+                            double diff = lon - prevLon;
+                            if (diff > 180) lon -= 360;
+                            else if (diff < -180) lon += 360;
+                        }
+
+                        LatLon2XY_NoWrap(lat, lon, out double x, out double y);
                         GL.Vertex2(x, y);
+
+                        prevLon = lon;
                     }
                 }
                 GL.End();
@@ -671,10 +710,27 @@ namespace ADS_B_Display.Views
                 // 영역 외곽선
                 GL.Color4(color.R / 255f, color.G / 255f, color.B / 255f, 1f);
                 GL.Begin(PrimitiveType.LineLoop);
-                for (int j = 0; j < area.NumPoints; j++)
+                if (area.NumPoints > 0)
                 {
-                    LatLon2XY(area.Points[j].Y, area.Points[j].X, out double x, out double y);
-                    GL.Vertex2(x, y);
+                    double prevLon = area.Points[0].X;
+
+                    for (int j = 0; j < area.NumPoints; j++)
+                    {
+                        double lat = area.Points[j].Y;
+                        double lon = area.Points[j].X;
+
+                        if (j > 0)
+                        {
+                            double diff = lon - prevLon;
+                            if (diff > 180) lon -= 360;
+                            else if (diff < -180) lon += 360;
+                        }
+
+                        LatLon2XY_NoWrap(lat, lon, out double x, out double y);
+                        GL.Vertex2(x, y);
+
+                        prevLon = lon;
+                    }
                 }
                 GL.End();
 
@@ -745,9 +801,6 @@ namespace ADS_B_Display.Views
                     imageNum = data.AircraftData.AircraftImageNum;
                 }
 
-                // 항공기 타입에 따라 이미지 선택
-                Ntds2d.DrawAirplaneImage(scrX, scrY, data.Altitude, airplaneScale * 0.5, data.Heading, imageNum, data.IsGhost, data.IsConflictRisk);
-
                 // Time To Go 경로선 표시
                 if (data.HaveSpeedAndHeading && _useTimeToGo && _earthView.Eye.H < 0.025)
                 {
@@ -763,6 +816,11 @@ namespace ADS_B_Display.Views
                         GL.End();
                     }
                 }
+
+                // 항공기 타입에 따라 이미지 선택
+                Ntds2d.DrawAirplaneImage(scrX, scrY, data.Altitude, airplaneScale * 0.5, data.Heading, imageNum, data.IsGhost, data.IsConflictRisk);
+
+                
                 GL.PopAttrib();
             }
         }
