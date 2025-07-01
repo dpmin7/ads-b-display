@@ -713,9 +713,8 @@ namespace ADS_B_Display.Views
                     imageNum = data.AircraftData.AircraftImageNum;
                 }
 
-
                 // 항공기 타입에 따라 이미지 선택
-                Ntds2d.DrawAirplaneImage(scrX, scrY, data.Altitude, airplaneScale * 0.5, data.Heading, imageNum, data.IsGhost);
+                Ntds2d.DrawAirplaneImage(scrX, scrY, data.Altitude, airplaneScale * 0.5, data.Heading, imageNum, data.IsGhost, data.IsConflictRisk);
 
                 // Time To Go 경로선 표시
                 if (data.HaveSpeedAndHeading && _useTimeToGo && _earthView.Eye.H < 0.025)

@@ -82,7 +82,6 @@ namespace ADS_B_Display.Views
                 double lat = selected.Raw.Lat1;
                 double lon = selected.Raw.Lon1;
                 AirScreenPanelView.CenterMapToAction?.Invoke(lat, lon);
-                Debug.WriteLine($"[CPA DoubleClick] 이동 → {lon}, {lon}");
 
             }
         }

@@ -273,9 +273,13 @@ namespace ADS_B_Display
             GL.PopMatrix();
         }
 
-        public static void DrawAirplaneImage(double x, double y, double h, double scale, double heading, int imageNum, bool isGhost)
+        public static void DrawAirplaneImage(double x, double y, double h, double scale, double heading, int imageNum, bool isGhost, bool isConflictRisk)
         {
-            if (!isGhost)
+            if(isConflictRisk)
+            {
+                GL.Color4(0f, 0, 0, 1f);
+            }
+            else if (!isGhost)
             {
                 (double r, double g, double b) color = AltitudeToColor.GetAltitudeColorRGB(h);
                 GL.Color4(color.r, color.g, color.b, 0.8f);

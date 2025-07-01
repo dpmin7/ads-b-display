@@ -1,4 +1,5 @@
-﻿using ADS_B_Display.Models.Settings;
+﻿using ADS_B_Display.Models.CPA;
+using ADS_B_Display.Models.Settings;
 using System;
 using System.Reflection;
 using System.Windows;
@@ -21,6 +22,8 @@ namespace ADS_B_Display
             if (!Setting.Load()) {
                 logger.Warn("Setting is invalid.");
             }
+
+            CollisionRiskWorker.Start();
         }
         protected override void OnExit(ExitEventArgs e)
         {

@@ -39,6 +39,19 @@ namespace ADS_B_Display.Models
             }
         }
 
+        public static bool HasCPAConflict(Aircraft aircraft)
+        {
+            if (aircraft == null)
+                return false;
+
+            uint icao = aircraft.ICAO;
+
+            lock (lockObj)
+            {
+                return _cpaConflicts.Any(conflict => conflict.ICAO1 == icao || conflict.ICAO2 == icao);
+            }
+        }
+
         static AircraftManager()
         {
             // Timer 설정: 1초마다 데이터 업데이트
@@ -47,7 +60,7 @@ namespace ADS_B_Display.Models
             _dataTimer.AutoReset = true;
             _dataTimer.Enabled = true;
 
-            CollisionRiskWorker.Start();
+            
         }
         public static void AddCPAConflict(CPAConflictInfo conflict)
         {
@@ -69,10 +82,30 @@ namespace ADS_B_Display.Models
         {
             lock (lockObj)
             {
+                foreach (var conflict in _cpaConflicts)
+                {
+                    if (TryGet(conflict.ICAO1, out Aircraft aircraft1))
+                    {
+                        aircraft1.IsConflictRisk = false;
+                    }
+                    if (TryGet(conflict.ICAO2, out Aircraft aircraft2))
+                    {
+                        aircraft2.IsConflictRisk = false;
+                    }
+                }
                 _cpaConflicts.Clear();
+
                 foreach (var conflict in newConflicts)
                 {
                     _cpaConflicts.Add(conflict);
+                    if(TryGet(conflict.ICAO1, out Aircraft aircraft1))
+                    {
+                        aircraft1.IsConflictRisk = true;
+                    }
+                    if (TryGet(conflict.ICAO2, out Aircraft aircraft2))
+                    {
+                        aircraft2.IsConflictRisk = true;
+                    }
                 }
             }
         }

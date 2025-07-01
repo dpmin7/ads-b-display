@@ -112,6 +112,8 @@ namespace ADS_B_Display
         public bool Viewable { get; set; } = false; // 특정 필터에 의해 표시 가능한지 여부
         public bool IsGhost { get; set; } = false; // Ghost 항공기 여부
         public bool UnRegistered { get; set; } = false; // 등록되지 않은 항공기 여부
+        public bool IsConflictRisk { get;  set; }
+
         internal bool TimeCheck(long now, long ghostLimit, long purgeLimit)
         {
             // Purge 조건: 마지막으로 본 시간이 limit 이상이면 true
