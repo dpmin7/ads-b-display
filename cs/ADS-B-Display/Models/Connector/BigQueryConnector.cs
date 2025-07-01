@@ -19,6 +19,7 @@ namespace ADS_B_Display.Models.Connector
         private const string DatasetId = "SBS_Data";
 
         private string _TableId;
+        private CancellationTokenSource _cts;
 
         public string CredentialPath { get; set; }
         public string CsvFolderPath { get; set; }
@@ -125,7 +126,7 @@ namespace ADS_B_Display.Models.Connector
         {
             if (CsvWriter != null)
             {
-                CsvWriter.Flush();
+                //CsvWriter.Flush();
                 CsvWriter.Close();
                 CsvWriter = null;
             }
@@ -210,6 +211,8 @@ namespace ADS_B_Display.Models.Connector
 
             // 기존 큐 비우기
             _rowQueue = new BlockingCollection<string>(boundedCapacity: 100000);
+            _cts = new CancellationTokenSource();
+            var token = _cts.Token;
 
             Task.Run(() =>
             {
@@ -217,6 +220,9 @@ namespace ADS_B_Display.Models.Connector
 
                 while (true)
                 {
+                    if (token.IsCancellationRequested)
+                        break;
+
                     string query = $"SELECT * FROM `{fullTablePath}` ORDER BY timestamp ASC LIMIT {batchSize} OFFSET {offset}";
                     var results = client.ExecuteQuery(query, parameters: null);
 
@@ -251,7 +257,7 @@ namespace ADS_B_Display.Models.Connector
                     offset += batchSize;
                 }
                 _rowQueue.CompleteAdding(); // 데이터 끝 신호
-            });
+            }, token);
         }
 
         private bool UploadCsvToBigQuery(string credentialFolder, string filename, string tableId)
@@ -314,9 +320,18 @@ namespace ADS_B_Display.Models.Connector
 
         public void Dispose()
         {
+            _cts?.Cancel();
+            ClearQueue();
+            _rowQueue?.CompleteAdding();
+
             CsvWriter?.Flush();
             CsvWriter?.Close();
             CsvWriter = null;
+        }
+
+        public void ClearQueue()
+        {
+            _rowQueue = new BlockingCollection<string>(boundedCapacity: 100000);
         }
 
         private static string CsvEscape(string value)
