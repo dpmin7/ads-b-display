@@ -1,4 +1,5 @@
 ﻿using ADS_B_Display.Models;
+using ADS_B_Display.Models.Parser;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -22,7 +23,6 @@ namespace ADS_B_Display
         private IRecorder _recorder;
 
         private Thread _thread;
-        private volatile bool _running;
         private bool _first = true;
         private long _lastTime;
         private int _playBackSpeed = 1;
@@ -35,17 +35,17 @@ namespace ADS_B_Display
         private bool _useDb = false;
         private IDBConnector _dbConnector;
 
-        public SbsWorker(Func<string, long, uint> onMessageReceived)
+        public SbsWorker(IParser parser)
         {
-            _userOnMessageReceived = onMessageReceived;
+            //_userOnMessageReceived = onMessageReceived;
             _internalOnMessageReceived = (msg, ts) =>
             {
                 RecordMessage(ts, msg); // 항상 먼저 기록
 
-                uint acio = _userOnMessageReceived?.Invoke(msg, ts) ?? 0;
+                uint acio = parser.Parse(msg, ts);
                 PostProcess(acio);
 
-                return _userOnMessageReceived?.Invoke(msg, ts) ?? 0;
+                return acio;
             };
         }
 
@@ -129,7 +129,7 @@ namespace ADS_B_Display
         public void Stop(bool useDb = false)
         {
             RecordOff();
-            _running = false;
+            _state.Running = false;
             _inputSource?.Stop();
             _inputSource?.Dispose();
             _inputSource = null;

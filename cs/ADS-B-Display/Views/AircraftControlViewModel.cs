@@ -5,6 +5,7 @@ using ADS_B_Display.Models.Settings;
 using ADS_B_Display.Utils;
 using ADS_B_Display.Views.Popup;
 using ADS_B_Display.Views.UserControls;
+using ADS_B_Display.Models.Parser;
 using Microsoft.Win32;
 using OpenTK;
 using System;
@@ -46,8 +47,8 @@ namespace ADS_B_Display.Views
 
         public AircraftControlViewModel()
         {
-            _sbsWorker = new SbsWorker(AircraftManager.ReceiveSBSMessage);
-            _rawWorker = new SbsWorker(AircraftManager.ReceiveRawMessage);
+            _sbsWorker = new SbsWorker(new SBSParser());
+            _rawWorker = new SbsWorker(new RawParser());
 
             RegisterEvents();
 

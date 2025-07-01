@@ -1,4 +1,6 @@
 ﻿using ADS_B_Display;
+using ADS_B_Display.Models;
+using ADS_B_Display.Models.Parser;
 using System;
 using System.Collections.Generic;
 using System.Globalization;
@@ -7,19 +9,19 @@ using System.Linq;
 using System.Text;
 using System.Windows.Documents;
 
-namespace ADS_B_Display
+namespace ADS_B_Display.Models.Parser
 {
     /// <summary>
     /// SBS_Message 관련 상수 및 메서드를 C#으로 변환한 버전
     /// </summary>
-    internal static class SBSMessage
+    internal class SBSParser : IParser
     {
         private const double SMALL_VAL = 0.0001;
         private const double BIG_VAL = 9999999.0;
         private const int MODES_MAX_SBS_SIZE = 256;
         private const uint MODES_NON_ICAO_ADDRESS = 0x800000; // 예시 플래그
 
-        private static bool VALID_POS(Aircraft pos) =>
+        private bool VALID_POS(Aircraft pos) =>
             Math.Abs(pos.Longitude) >= SMALL_VAL && Math.Abs(pos.Longitude) < 180.0 &&
             Math.Abs(pos.Latitude) >= SMALL_VAL && Math.Abs(pos.Latitude) < 90.0;
 
@@ -50,7 +52,7 @@ namespace ADS_B_Display
         /// <summary>
         /// 16진수 문자 하나를 정수 값(0~15)으로 변환. 실패 시 -1 반환
         /// </summary>
-        private static int HexDigitVal(char c)
+        private int HexDigitVal(char c)
         {
             if (c >= '0' && c <= '9') return c - '0';
             if (c >= 'A' && c <= 'F') return c - 'A' + 10;
@@ -61,7 +63,7 @@ namespace ADS_B_Display
         /// <summary>
         /// 현재 시각을 "yyyy/MM/dd,HH:mm:ss.fff,yyyy/MM/dd,HH:mm:ss.fff" 형태로 반환
         /// </summary>
-        private static string GetSbsTimestamp()
+        private string GetSbsTimestamp()
         {
             DateTime now = DateTime.Now;
             string ts = now.ToString("yyyy/MM/dd,HH:mm:ss.fff", CultureInfo.InvariantCulture);
@@ -71,7 +73,7 @@ namespace ADS_B_Display
         /// <summary>
         /// 24비트 big-endian을 host-order uint로 변환
         /// </summary>
-        private static uint AircraftGetAddr(byte a0, byte a1, byte a2)
+        private uint AircraftGetAddr(byte a0, byte a1, byte a2)
         {
             return (uint)((a0 << 16) | (a1 << 8) | a2);
         }
@@ -79,7 +81,7 @@ namespace ADS_B_Display
         /// <summary>
         /// modeS_message와 Aircraft 객체를 바탕으로 SBS 형식 문자열을 생성
         /// </summary>
-        private static bool ModeS_Build_SBS_Message(ModeSMessage mm, Aircraft a, out string sbs)
+        private bool ModeS_Build_SBS_Message(ModeSMessage mm, Aircraft a, out string sbs)
         {
             // 출력 버퍼를 StringBuilder로 처리
             var sb = new StringBuilder(MODES_MAX_SBS_SIZE);
@@ -177,7 +179,7 @@ namespace ADS_B_Display
         /// <summary>
         /// 쉼표 구분자로 분할(원래 C strsep 대체)
         /// </summary>
-        internal static string[] SplitSbsFields(string msg)
+        internal string[] SplitSbsFields(string msg)
         {
             // 최대 22개 필드
             var fields = new string[22];
@@ -196,7 +198,7 @@ namespace ADS_B_Display
             return fields;
         }
 
-        internal static bool VerifySbsAndIcao(string[] SBS_Fields, out uint addr)
+        internal bool VerifySbsAndIcao(string[] SBS_Fields, out uint addr)
         {
             addr = 0;
             if (SBS_Fields.Length < 22) return false;
@@ -235,10 +237,24 @@ namespace ADS_B_Display
             return true;
         }
 
+        public uint Parse(string msgLine, long time)
+        {
+            // 필드를 분리
+            string[] SBS_Fields = SplitSbsFields(msgLine);
+            if (VerifySbsAndIcao(SBS_Fields, out uint addr) == false)
+            {
+                return 0; // 유효하지 않은 SBS 메시지
+            }
+            var aircraft = AircraftManager.GetOrAdd(addr); // Aircraft 객체를 가져오거나 생성
+            SBS_Message_Decode(SBS_Fields, ref aircraft);
+
+            return addr;
+        }
+
         /// <summary>
         /// SBS 형식 문자열을 디코딩하여 해시 테이블의 Aircraft 객체를 업데이트
         /// </summary>
-        internal static bool SBS_Message_Decode(string[] SBS_Fields, ref Aircraft aircraft)
+        internal bool SBS_Message_Decode(string[] SBS_Fields, ref Aircraft aircraft)
         {
             // 전역 해시 테이블(ght_get)에서 Aircraft 검색/생성
             long currentTime = TimeFunctions.GetCurrentTimeInMsec();
@@ -321,5 +337,7 @@ namespace ADS_B_Display
 
             return true;
         }
+
+        
     }
 }

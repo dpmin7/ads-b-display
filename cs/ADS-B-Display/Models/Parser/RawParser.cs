@@ -1,8 +1,10 @@
 ﻿using ADS_B_Display;
+using ADS_B_Display.Models;
+using ADS_B_Display.Models.Parser;
 using System;
 using System.Runtime.InteropServices;
 
-namespace ADS_B_Display
+namespace ADS_B_Display.Models.Parser
 {
     /// <summary>
     /// 상수 및 매크로 정의
@@ -127,15 +129,15 @@ namespace ADS_B_Display
         BadMessageEmpty2 = 8
     }
 
-    public static class DecodeRawAdsB
+    public class RawParser : IParser
     {
         // ICAO 캐시 (모든 인스턴스가 공유)
-        private static uint[] ICAO_cache = new uint[2 * DecodeRawAdsBConstants.MODES_ICAO_CACHE_LEN];
+        private uint[] ICAO_cache = new uint[2 * DecodeRawAdsBConstants.MODES_ICAO_CACHE_LEN];
 
         /// <summary>
         /// hex 문자(0~F) 하나를 정수 값으로 변환. 실패 시 -1 반환
         /// </summary>
-        private static int HexDigitVal(char c)
+        private int HexDigitVal(char c)
         {
             c = char.ToLowerInvariant(c);
             if (c >= '0' && c <= '9')
@@ -148,7 +150,7 @@ namespace ADS_B_Display
         /// <summary>
         /// 24비트 big-endian (network order) 값을 host order (uint)로 변환
         /// </summary>
-        private static uint AircraftGetAddr(byte a0, byte a1, byte a2)
+        private uint AircraftGetAddr(byte a0, byte a1, byte a2)
         {
             return ((uint)a0 << 16) | ((uint)a1 << 8) | a2;
         }
@@ -156,7 +158,7 @@ namespace ADS_B_Display
         /// <summary>
         /// ICAO 주소를 해시하여 캐시 인덱스 생성 (길이는 2^n 여야 함)
         /// </summary>
-        private static uint ICAO_cache_hash_address(uint a)
+        private uint ICAO_cache_hash_address(uint a)
         {
             // 세 번의 라운드를 통해 비트들이 고르게 섞이도록 함
             a = ((a >> 16) ^ a) * 0x45D9F3B;
@@ -168,7 +170,7 @@ namespace ADS_B_Display
         /// <summary>
         /// 지정된 ICAO 주소를 캐시에 추가(시간 정보 포함)
         /// </summary>
-        private static void ICAO_cache_add_address(uint addr)
+        private void ICAO_cache_add_address(uint addr)
         {
             uint h = ICAO_cache_hash_address(addr);
             ICAO_cache[h * 2] = addr;
@@ -178,7 +180,7 @@ namespace ADS_B_Display
         /// <summary>
         /// 지정된 ICAO 주소가 최근에 캐시에 저장되어 있는지 확인
         /// </summary>
-        private static bool ICAO_address_recently_seen(uint addr)
+        private bool ICAO_address_recently_seen(uint addr)
         {
             uint h_idx = ICAO_cache_hash_address(addr);
             uint storedAddr = ICAO_cache[h_idx * 2];
@@ -190,7 +192,7 @@ namespace ADS_B_Display
         /// <summary>
         /// 메시지 타입(DF)에 따라 비트 길이를 반환
         /// </summary>
-        private static int ModeS_message_len_by_type(int type)
+        private int ModeS_message_len_by_type(int type)
         {
             if (type == 16 || type == 17 || type == 19 || type == 20 || type == 21)
                 return DecodeRawAdsBConstants.MODES_LONG_MSG_BITS;
@@ -200,7 +202,7 @@ namespace ADS_B_Display
         /// <summary>
         /// 주어진 메시지 버퍼의 CRC를 계산 (메시지 맨 끝 3바이트가 CRC)
         /// </summary>
-        private static uint CRC_get(byte[] msg, int bits)
+        private uint CRC_get(byte[] msg, int bits)
         {
             int bytes = bits / 8;
             return ((uint)msg[bytes - 3] << 16) |
@@ -211,7 +213,7 @@ namespace ADS_B_Display
         /// <summary>
         /// CRC 체크 계산 (MODES_LONG_MSG_BITS/SHORT)
         /// </summary>
-        private static uint CRC_check(byte[] msg, int bits)
+        private uint CRC_check(byte[] msg, int bits)
         {
             uint crc = 0;
             int offset = 0;
@@ -232,7 +234,7 @@ namespace ADS_B_Display
         /// <summary>
         /// 단일 비트 오류 교정 시도
         /// </summary>
-        private static int FixSingleBitErrors(byte[] msg, int bits)
+        private int FixSingleBitErrors(byte[] msg, int bits)
         {
             int bytes = bits / 8;
             byte[] aux = new byte[DecodeRawAdsBConstants.MODES_LONG_MSG_BYTES];
@@ -255,7 +257,7 @@ namespace ADS_B_Display
         /// <summary>
         /// 두 비트 오류 교정 시도 (매우 느림)
         /// </summary>
-        private static int FixTwoBitsErrors(byte[] msg, int bits)
+        private int FixTwoBitsErrors(byte[] msg, int bits)
         {
             int bytes = bits / 8;
             byte[] aux = new byte[DecodeRawAdsBConstants.MODES_LONG_MSG_BYTES];
@@ -283,7 +285,7 @@ namespace ADS_B_Display
         /// <summary>
         /// AP 필드가 있는 메시지에서 brute-force로 ICAO 주소 복원 시도
         /// </summary>
-        private static bool BruteForceAP(byte[] msg, ModeSMessage mm)
+        private bool BruteForceAP(byte[] msg, ModeSMessage mm)
         {
             int msg_type = mm.msg_type;
             int msg_bits = mm.msg_bits;
@@ -316,7 +318,7 @@ namespace ADS_B_Display
         /// <summary>
         /// 13비트 AC 고도 필드 디코딩 (DF0, DF4, DF16, DF20 등)
         /// </summary>
-        private static int DecodeAC13Field(byte[] msg, out metric_unit_t unit)
+        private int DecodeAC13Field(byte[] msg, out metric_unit_t unit)
         {
             bool m_bit = (msg[3] & (1 << 6)) != 0;
             bool q_bit = (msg[3] & (1 << 4)) != 0;
@@ -342,7 +344,7 @@ namespace ADS_B_Display
         /// <summary>
         /// 12비트 AC 고도 필드 디코딩 (DF17 등)
         /// </summary>
-        private static int DecodeAC12Field(byte[] msg, out metric_unit_t unit)
+        private int DecodeAC12Field(byte[] msg, out metric_unit_t unit)
         {
             bool q_bit = (msg[5] & 1) != 0;
             unit = metric_unit_t.MODES_UNIT_FEET;
@@ -357,7 +359,7 @@ namespace ADS_B_Display
         /// <summary>
         /// 주어진 버퍼를 modeS_message 구조로 디코딩
         /// </summary>
-        private static bool DecodeModeSMessage(ModeSMessage mm, byte[] rawMsg)
+        private bool DecodeModeSMessage(ModeSMessage mm, byte[] rawMsg)
         {
             // 로컬 복사본
             Array.Clear(mm.msg, 0, mm.msg.Length);
@@ -500,7 +502,29 @@ namespace ADS_B_Display
         /// <summary>
         /// RAW SBS-1 메시지(AnsiString) 입력 받아 modeS_message로 디코딩
         /// </summary>
-        public static TDecodeStatus Decode_RAW_message(string MsgIn, ref ModeSMessage mm)
+        /// 
+        public uint Parse(string msgLine, long time)
+        {
+            ModeSMessage modeSMessage = new ModeSMessage();
+            var status = Decode_RAW_message(msgLine, ref modeSMessage);
+
+            if (status != TDecodeStatus.HaveMsg)
+            {
+                return 0; // 유효하지 않은 Raw 메시지
+            }
+            else if (status == TDecodeStatus.MsgHeartBeat)
+            {
+                return 0;
+            }
+
+            uint addr = (uint)((modeSMessage.AA[0] << 16) | (modeSMessage.AA[1] << 8) | modeSMessage.AA[2]);
+            var aircraft = AircraftManager.GetOrAdd(addr); // Aircraft 객체를 가져오거나 생성
+            RawToAircraft(modeSMessage, ref aircraft, time);
+
+            return addr; // Raw 메시지 처리는 아직 구현되지 않음
+        }
+
+        public TDecodeStatus Decode_RAW_message(string MsgIn, ref ModeSMessage mm)
         {
             // 1) 입력 문자열을 바이트 배열로 복사하고 '\n' 추가
             byte[] raw = System.Text.Encoding.ASCII.GetBytes(MsgIn + "\n");
@@ -567,7 +591,7 @@ namespace ADS_B_Display
         }
 
         // CRC 테이블 (MODES_LONG_MSG_BITS 요소)
-        private static readonly uint[] ChecksumTable = new uint[]
+        private readonly uint[] ChecksumTable = new uint[]
         {
             0x3935EA, 0x1C9AF5, 0xF1B77E, 0x78DBBF, 0xC397DB, 0x9E31E9, 0xB0E2F0, 0x587178,
             0x2C38BC, 0x161C5E, 0x0B0E2F, 0xFA7D13, 0x82C48D, 0xBE9842, 0x5F4C21, 0xD05C14,
@@ -590,18 +614,18 @@ namespace ADS_B_Display
             0x000000, 0x000000, 0x000000, 0x000000, 0x000000, 0x000000, 0x000000, 0x000000
         };
 
-        public static void RawToAircraft(ModeSMessage mm, ref Aircraft a, long time)
+        public void RawToAircraft(ModeSMessage mm, ref Aircraft a, long time)
         {
-            AircraftDecoder.RawToAircraft(mm, ref a, time);
+            RawToAircraft(mm, ref a, time);
         }
 
-        static class AircraftDecoder
+        class AircraftDecoder
         {
             private const double SMALL_VAL = 0.0001;
             private const int CPR_BITS = 131072; // 2^17
             private const uint MODES_NON_ICAO_ADDRESS = 1 << 24;
 
-            private static int cprNLFunction(double lat)
+            private int cprNLFunction(double lat)
             {
                 lat = Math.Abs(lat);
                 if (lat < 10.47047130) return 59;
@@ -665,25 +689,25 @@ namespace ADS_B_Display
                 return 1;
             }
 
-            private static int cprModFunction(int a, int b)
+            private int cprModFunction(int a, int b)
             {
                 int res = a % b;
                 if (res < 0) res += b;
                 return res;
             }
 
-            private static int cprNFunction(double lat, int isodd)
+            private int cprNFunction(double lat, int isodd)
             {
                 int nl = cprNLFunction(lat) - isodd;
                 return nl < 1 ? 1 : nl;
             }
 
-            private static double cprDlonFunction(double lat, int isodd)
+            private double cprDlonFunction(double lat, int isodd)
             {
                 return 360.0 / cprNFunction(lat, isodd);
             }
 
-            private static void decodeCPR(Aircraft a)
+            private void decodeCPR(Aircraft a)
             {
                 const double AirDlat0 = 360.0 / 60.0;
                 const double AirDlat1 = 360.0 / 59.0;
@@ -721,7 +745,7 @@ namespace ADS_B_Display
                     a.Longitude -= 360.0;
             }
 
-            public static void RawToAircraft(ModeSMessage mm, ref Aircraft a, long currentTime)
+            public void RawToAircraft(ModeSMessage mm, ref Aircraft a, long currentTime)
             {
                 //long currentTime = TimeFunctions.GetCurrentTimeInMsec();
                 a.LastSeen = currentTime;

@@ -222,6 +222,7 @@
     <Compile Include="Models\CPA\ICPAComputer.cs" />
     <Compile Include="Models\FlightAnalytics\FlightAnalytics.cs" />
     <Compile Include="Models\IConnector.cs" />
+    <Compile Include="Models\Parser\IParser.cs" />
     <Compile Include="Models\PingEcho.cs" />
     <Compile Include="Models\PointPolygonFilter.cs" />
     <Compile Include="Models\Settings\Setting.cs" />
@@ -233,7 +234,7 @@
     <Compile Include="StringDefinitions.cs" />
     <Compile Include="Utils\AltitudeToColor.cs" />
     <Compile Include="Utils\csv.cs" />
-    <Compile Include="Models\DecodeRawADS_B.cs" />
+    <Compile Include="Models\Parser\RawParser.cs" />
     <Compile Include="Utils\csvUtil.cs" />
     <Compile Include="Utils\Dms.cs" />
     <Compile Include="Utils\EventBus.cs" />
@@ -263,7 +264,7 @@
     <Compile Include="Models\AircraftManager.cs" />
     <Compile Include="Ntds2d.cs" />
     <Compile Include="Models\SbsWorker.cs" />
-    <Compile Include="Models\SBS_Message.cs" />
+    <Compile Include="Models\Parser\SBSParser.cs" />
     <Compile Include="Utils\TriangulatPoly.cs" />
     <Compile Include="Utils\MathExt.cs" />
     <Compile Include="Utils\Time.cs" />
