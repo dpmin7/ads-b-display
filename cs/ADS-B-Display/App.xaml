@@ -7,12 +7,13 @@
     <Application.Resources>
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>
-                <ResourceDictionary Source="/Views/Style/Light.Default.xaml" />
-                <ResourceDictionary Source="/Views/Style/Generic.xaml" />
-
                 <ResourceDictionary Source="pack://application:,,,/MahApps.Metro;component/Styles/Controls.xaml" />
                 <ResourceDictionary Source="pack://application:,,,/MahApps.Metro;component/Styles/Fonts.xaml" />
                 <ResourceDictionary Source="pack://application:,,,/MahApps.Metro;component/Styles/Themes/Dark.Steel.xaml" />
+
+                <ResourceDictionary Source="/Views/Style/Dark.xaml" />
+                <ResourceDictionary Source="/Views/Style/Dark2.xaml" />
+                <ResourceDictionary Source="/Views/Style/Generic.xaml" />
             </ResourceDictionary.MergedDictionaries>
         </ResourceDictionary>
     </Application.Resources>

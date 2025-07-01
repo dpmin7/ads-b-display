@@ -98,7 +98,8 @@ namespace ADS_B_Display
 
             bool inLon = dx <= xSpan * 0.5;
             bool inLat = Math.Abs(_ny - eye.Y) <= ySpan * 0.5;
-            return inLon && inLat;
+            OnScreen = inLon && inLat;
+            return OnScreen;
         }
 
         public TimedTrackQueue<AircraftTrackPoint> TrackPoint { get; set; } = new TimedTrackQueue<AircraftTrackPoint>(TimeSpan.FromSeconds(3600)); // 1시간 동안의 TrackPoint를 유지 

@@ -13,6 +13,8 @@
     d:DesignWidth="300"
     mc:Ignorable="d">
     <UserControl.Resources>
+        <converters:DoubleToLatitude x:Key="D2Lat" />
+        <converters:DoubleToLongitude x:Key="D2Lon" />
         <!--<converters:BoolToStringConverter x:Key="bToInsertCancel" />-->
         <converters:BoolToNotConverter x:Key="bToNotConv" />
         <converters:MsToDateTime x:Key="msToTime" />
@@ -33,13 +35,23 @@
     </UserControl.Resources>
     <ScrollViewer
         Grid.Column="1"
-        Background="{DynamicResource {x:Static SystemColors.WindowBrushKey}}"
+        Background="{StaticResource MahApps.Brushes.ThemeBackground}"
         VerticalScrollBarVisibility="Auto">
 
-        <StackPanel Margin="0,8">
+        <StackPanel Margin="0">
 
-            <!--  ─── 1) System Info ───  -->
-            <GroupBox>
+            <Border Padding="12,8" Background="{StaticResource Aurora.Brushes.Accent}">
+                <TextBlock
+                    FontFamily="Source Serif Pro"
+                    FontSize="24"
+                    FontWeight="Bold"
+                    Text="Carnegie Mellon" />
+            </Border>
+
+            <Border
+                Background="{StaticResource MahApps.Brushes.ThemeBackground}"
+                BorderBrush="{StaticResource Aurora.Brushes.GroupBox.GroupBox24}"
+                BorderThickness="1,0,1,1">
                 <StackPanel Margin="8,10">
                     <Grid>
                         <TextBlock
@@ -85,10 +97,23 @@
                             Margin="16,0,0,0"
                             FontWeight="Bold"
                             Text="  Viewable:" />
-                        <TextBlock Margin="4,0,0,0" Text="{Binding ViewableAircraft}" />
+                        <TextBlock Margin="4,0,0,0" Text="{Binding NumOfViewableAircraft}" />
                     </StackPanel>
                 </StackPanel>
-            </GroupBox>
+            </Border>
+
+            <!--  ─── 1) System Info ───  -->
+            <!--<GroupBox Margin="0,0,0,0">
+                <GroupBox.Header>
+                    <Border Grid.Row="1" Background="Black">
+                        <TextBlock
+                            FontSize="16"
+                            Foreground="{StaticResource MahApps.Brushes.ShowcaseBrush}"
+                            Text="Carnegie Mellon" />
+                    </Border>
+                </GroupBox.Header>
+
+            </GroupBox>-->
 
 
             <GroupBox Header="Close Control">
@@ -259,9 +284,9 @@
 
             <!--  ─── 7) SBS Record / SBS Playback ───  -->
 
-            <TabControl>
-                <TabItem Header="Connection">
-                    <StackPanel Orientation="Vertical">
+            <TabControl Margin="0,10,0,0">
+                <TabItem Header="Connection" Style="{StaticResource MahApps.Styles.TabItem.Aurora}">
+                    <StackPanel HorizontalAlignment="Stretch" Orientation="Vertical">
                         <GroupBox Header="Raw Connection">
                             <StackPanel Margin="8,10" Orientation="Vertical">
                                 <!--  Connection Status + Address  -->
@@ -522,8 +547,8 @@
                         </GroupBox>
                     </StackPanel>
                 </TabItem>
-                <TabItem Header="Map" Style="{StaticResource MahApps.Styles.TabItem}">
-                    <GroupBox Header="">
+                <TabItem Header="Map" Style="{StaticResource MahApps.Styles.TabItem.Aurora}">
+                    <GroupBox HorizontalAlignment="Stretch" Header="">
                         <StackPanel Margin="8,10" Orientation="Vertical">
                             <StackPanel VerticalAlignment="Center" Orientation="Horizontal">
                                 <CheckBox
@@ -557,7 +582,7 @@
                         </StackPanel>
                     </GroupBox>
                 </TabItem>
-                <TabItem Header="Track" Style="{StaticResource MahApps.Styles.TabItem}">
+                <TabItem Header="Track" Style="{StaticResource MahApps.Styles.TabItem.Aurora}">
                     <StackPanel Orientation="Vertical">
                         <!--  ─── 8) Areas Of Interest ───  -->
                         <GroupBox>

@@ -64,16 +64,16 @@ namespace ADS_B_Display.Models.FlightAnalytics
                     var plt = plot.Plot;
 
                     var speedPlot = plt.Add.Scatter(times, speeds);
-                    speedPlot.Label = "Speed (knots)";
+                    speedPlot.LegendText = "Speed (knots)";
 
                     var rightAxis = plt.Axes.AddRightAxis();
                     var altPlot = plt.Add.Scatter(times, altitudes);
-                    altPlot.Label = "Altitude (ft)";
+                    altPlot.LegendText = "Altitude (ft)";
                     altPlot.Axes.YAxis = rightAxis;
 
                     plt.Axes.Bottom.TickGenerator = new ScottPlot.TickGenerators.DateTimeAutomatic();
                     plt.Axes.Left.Label.Text = "Speed (knots)";
-                    rightAxis.Label.Text = "Altitude (ft)";
+                    rightAxis.LabelText = "Altitude (ft)";
 
                     plt.Legend.IsVisible = true;
                     plt.Title($"Flight Info for {hexIdent}");

@@ -34,12 +34,12 @@
             VerticalAlignment="Bottom"
             Source="/Images/altitude_chart.svg" />
         <Border
-            Margin="10"
+            Margin="10,10,10,50"
             Padding="10"
             HorizontalAlignment="Right"
             VerticalAlignment="Bottom"
             Background="#55eeeeee"
-            Visibility="Collapsed">
+            Visibility="Visible">
 
             <StackPanel Orientation="Vertical">
                 <TextBlock Text="(X, Y, H), (L, R, T, B)" />

@@ -20,6 +20,7 @@
         <Grid.ColumnDefinitions>
             <!--  1) 지도 영역 (나중에 OpenGL/Map 컨트롤 등을 넣어주세요)  -->
             <ColumnDefinition Width="*" />
+            <ColumnDefinition Width="auto" />
             <!--  2) 오른쪽 패널 영역 (고정 폭 300으로 약간 여유)  -->
             <ColumnDefinition Width="370" />
         </Grid.ColumnDefinitions>
@@ -31,6 +32,13 @@
             <views:AirScreenPanelView x:Name="airScreenPanelView" />
         </Border>
 
-        <views:AircraftControlView x:Name="AircraftControlPanel" Grid.Column="1" />
+        <GridSplitter
+            Grid.Column="1"
+            Width="5"
+            HorizontalAlignment="Stretch"
+            VerticalAlignment="Stretch"
+            Background="#FF444444" />
+
+        <views:AircraftControlView x:Name="AircraftControlPanel" Grid.Column="2" />
     </Grid>
 </mah:MetroWindow>

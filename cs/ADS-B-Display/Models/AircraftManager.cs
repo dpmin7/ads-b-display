@@ -182,6 +182,13 @@ namespace ADS_B_Display.Models
             }
         }
 
+        internal static List<Aircraft> GetAllOnScreen()
+        {
+            lock (lockObj) {
+                return _aircraftTable.Values.Where(a => a.OnScreen).ToList();
+            }
+        }
+
         internal static int Count()
         {
             lock (lockObj) {

@@ -1,4 +1,5 @@
-﻿using System;
+﻿using ADS_B_Display.Map.MapSrc;
+using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
@@ -106,6 +107,42 @@ namespace ADS_B_Display.Views.Converters
             }
             return value; // 변환할 수 없는 경우 원래 값을 반환
         }
+        public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+        {
+            throw new NotImplementedException();
+        }
+    }
+
+    public class DoubleToLatitude : IValueConverter
+    {
+        public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+        {
+            if (value is double lat)
+            {
+                return DMS.DegreesMinutesSecondsLat(lat);
+            }
+
+            return "NA";
+        }
+
+        public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+        {
+            throw new NotImplementedException();
+        }
+    }
+
+    public class DoubleToLongitude : IValueConverter
+    {
+        public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+        {
+            if (value is double lon)
+            {
+                return DMS.DegreesMinutesSecondsLon(lon);
+            }
+
+            return "NA";
+        }
+
         public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
         {
             throw new NotImplementedException();

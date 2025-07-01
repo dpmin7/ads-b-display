@@ -180,7 +180,7 @@ namespace ADS_B_Display.Map.MapSrc
             return 1;
         }
 
-        const double MIN_HEIGHT = 10.0 / 40000000.0;
+        const double MIN_HEIGHT = 10.0 / 400000.0;
         const double MAX_HEIGHT = 1.0;
 
         /// <summary>

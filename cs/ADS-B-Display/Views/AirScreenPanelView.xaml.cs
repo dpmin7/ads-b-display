@@ -250,6 +250,14 @@ namespace ADS_B_Display.Views
                 _earthView.Drag(_MouseLeftDownX, _MouseLeftDownY, x, y, EarthView.NAV_DRAG_PAN);
                 glControl.InvalidateVisual(); // 화면 갱신
                 eyeX.Text = _earthView.Eye.X.ToString(); eyeY.Text = _earthView.Eye.Y.ToString(); eyeH.Text = _earthView.Eye.H.ToString();
+                XY2LatLon2(0, 0, out double Lat, out double Lon);
+                XY2LatLon2(glControl.ActualWidth-1, glControl.ActualHeight-1, out double Lat2, out double Lon2);
+                
+
+                Left.Text = DMS.DegreesMinutesSecondsLat(Lat);
+                Right.Text = DMS.DegreesMinutesSecondsLat(Lat2);
+                Top.Text = DMS.DegreesMinutesSecondsLon(Lon);
+                Bottom.Text = DMS.DegreesMinutesSecondsLon(Lon2);
             }
         }
 
@@ -693,7 +701,7 @@ namespace ADS_B_Display.Views
                     continue; // 화면에 표시되지 않는 항공기는 건너뜀
 
                 if (!data.HaveLatLon) continue;
-                if (AreaManager.UsePolygon == true && data.Viewable == false) continue;
+                if (AreaManager.UsePolygon == true && data.OnScreen == false) continue;
                 GL.PushAttrib(AttribMask.CurrentBit);
                 GL.Color4(1f, 1f, 1f, 1f);
                 LatLon2XY(data.VLatitude, data.VLongitude, out double scrX, out double scrY);

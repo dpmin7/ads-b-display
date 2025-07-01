@@ -31,6 +31,7 @@ namespace ADS_B_Display.Views
         //Area Insert Module
         private bool _canCompleteOrCancel = false;
         public ObservableCollection<Area> AreaList { get; }
+        public List<Aircraft> ViewableAircraftList { get; private set; }
         private Area _selectedArea;
         private DispatcherTimer _timer = null;
 
@@ -95,16 +96,20 @@ namespace ADS_B_Display.Views
             MonitorCommand = new DelegateCommand(MonitorArea, CanMonitorArea);
 
             AreaList = new ObservableCollection<Area>(AreaManager.Areas);
+            ViewableAircraftList = new List<Aircraft>();
             Cmd_ShowCpaDialog = new DelegateCommand(ShowCpaDialog);
 
             _timer = new DispatcherTimer(DispatcherPriority.Background) {
                 Interval = TimeSpan.FromMilliseconds(250)
             };
             _timer.Tick += (s, e) => {
+                ViewableAircraftList = AircraftManager.GetAllOnScreen();
+                NumOfViewableAircraft = ViewableAircraftList.Count;
                 NumOfAircraft = AircraftManager.Count();
-                ViewableAircraft = AircraftManager.GetAll().Count(a => a.Viewable);
                 SystemTime = DateTime.Now;
                 UpdateHookedAircraft();
+
+                OnPropertyChanged("ViewableAircraftList");
             };
 
             _timer.Start();
@@ -841,8 +846,8 @@ namespace ADS_B_Display.Views
         private int numOfAircraft;
         public int NumOfAircraft { get => numOfAircraft; set => SetProperty(ref numOfAircraft, value); }
 
-        private int viewableAircraft;
-        public int ViewableAircraft { get => viewableAircraft; set => SetProperty(ref viewableAircraft, value); }
+        private int numOfViewableAircraft;
+        public int NumOfViewableAircraft { get => numOfViewableAircraft; set => SetProperty(ref numOfViewableAircraft, value); }
 
         private DateTime systemTime;
         public DateTime SystemTime { get => systemTime; set => SetProperty(ref systemTime, value); }
