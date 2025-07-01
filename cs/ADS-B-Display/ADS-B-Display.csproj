@@ -212,8 +212,8 @@
     <Compile Include="Models\CPA\CPAInterop.cs" />
     <Compile Include="Models\CPA\CPAInteropComputer.cs" />
     <Compile Include="Models\CPA\CPAProcessor.cs" />
-    <Compile Include="Models\BigQuery.cs" />
-    <Compile Include="Models\IDbWriterReader.cs" />
+    <Compile Include="Models\BigQueryConnector.cs" />
+    <Compile Include="Models\IDBConnector.cs" />
     <Compile Include="Models\CPA\ICPAComputer.cs" />
     <Compile Include="Models\FlightAnalytics\FlightAnalytics.cs" />
     <Compile Include="Models\PingEcho.cs" />
@@ -405,10 +405,6 @@
   </ItemGroup>
   <ItemGroup>
     <Resource Include="Images\altitude_chart.svg" />
-    <Content Include="Utils\BigQuery\ReadDataFromBigQuery.py" />
-    <Content Include="Utils\BigQuery\DeleteDataInBigQuery.py" />
-    <Content Include="Utils\BigQuery\SimpleCSVtoBigQuery.py" />
-    <Content Include="Utils\BigQuery\SimpleCSVtoBigQuery_x.py" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>

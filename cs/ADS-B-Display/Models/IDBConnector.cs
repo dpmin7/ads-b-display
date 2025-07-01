@@ -4,16 +4,14 @@ using System.Threading.Tasks;
 
 namespace ADS_B_Display.Models
 {
-    public interface IDbWriterReader : IDisposable
+    public interface IDBConnector: IDisposable
     {
-        void SetPathCsvFileName();
-        void CreateCsvWriter();
-        void CreateCsvReader();
         void WriteRow(long timestamp, string row);
         string ReadRow();
-        void Close();
-        void DeleteAllCsvFiles();
+        
         void ReadDataFromDatabase();
         void StartPlayTiming();
+        long GetPlaybackTime(string tableId);
+        void Close();
     }
 }

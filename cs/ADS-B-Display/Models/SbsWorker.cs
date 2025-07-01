@@ -1,5 +1,4 @@
-﻿using Google.Apis.Bigquery.v2.Data;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -32,22 +31,22 @@ namespace ADS_B_Display
         public StreamWriter RecordStream;
 
         private bool _useDb = false;
-        //private BigQuery bigQuery;
-        private IDbWriterReader _dbWriterReader;
+
+        private IDBConnector _dbConnector;
 
         public SbsWorker(Func<string, long, uint> onMessageReceived)
         {
             OnMessageReceived = onMessageReceived;
         }
 
-        public bool Start(string path, bool useDb = false, IDbWriterReader dbWriterReader = null)
+        public bool Start(string path, bool useDb = false, IDBConnector dbConnector = null)
         {
             try {
                 _first = true;
                 _running = true;
                 _filePath = path;
                 _useDb = useDb;
-                _dbWriterReader = dbWriterReader;
+                _dbConnector = dbConnector;
                 _thread = new Thread(Run) { IsBackground = true };
                 _thread.Start();
 
@@ -84,19 +83,17 @@ namespace ADS_B_Display
             }
         }
 
-        public void RecordOn(string path, bool _useDb = false, IDbWriterReader dbWriterReader = null)
+        public void RecordOn(string path, bool _useDb = false, IDBConnector dbConnector = null)
         {
             if (_useDb)
             {
-                if (dbWriterReader == null)
+                if (dbConnector == null)
                 {
-                    Console.WriteLine("DB Writer/Reader is not initialized.");
+                    Console.WriteLine("DB Connector is not initialized.");
                     return;
                 }
 
-                _dbWriterReader = dbWriterReader;
-                _dbWriterReader.SetPathCsvFileName();
-                _dbWriterReader.CreateCsvWriter();
+                _dbConnector = dbConnector;
             }
             else // File Mode
             {
@@ -113,8 +110,8 @@ namespace ADS_B_Display
             {
                 try
                 {
-                    _dbWriterReader.Close();
-                    _dbWriterReader = null;
+                    _dbConnector.Close();
+                    _dbConnector = null;
 
                     MessageBox.Show("DB End");
                 }
@@ -181,23 +178,20 @@ namespace ADS_B_Display
 
         private void RunDatabaseMode()
         {
-            _dbWriterReader.SetPathCsvFileName();
-            _dbWriterReader.DeleteAllCsvFiles();
+            // Database에서 데이터를 비동기로 큐에 쌓기 시작
+            _dbConnector.ReadDataFromDatabase();
 
-            // BigQuery에서 데이터를 비동기로 큐에 쌓기 시작
-            _dbWriterReader.ReadDataFromDatabase();
-
-            if (_dbWriterReader == null)
+            if (_dbConnector == null)
                 return;
 
             try
             {
                 while (_running)
                 {
-                    if (_dbWriterReader == null)
+                    if (_dbConnector == null)
                         break;
 
-                    string rawLine = _dbWriterReader.ReadRow();
+                    string rawLine = _dbConnector.ReadRow();
 
                     // 데이터가 모두 끝나면 null 반환
                     if (rawLine == null)
@@ -241,78 +235,6 @@ namespace ADS_B_Display
 
             OnFinished?.Invoke();
         }
-
-        //        private void RunDatabaseMode()
-        //        {
-        //            _dbWriterReader.SetPathCsvFileName();
-        //#if true
-        //            _dbWriterReader.DeleteAllCsvFiles();
-
-        //            // Database 데이터 읽기 (Query 해서 CSV 파일 읽기)
-        //            _dbWriterReader.ReadDataFromDatabase();
-        //#endif
-        //            if (_dbWriterReader == null)
-        //            {
-        //                return;
-        //            }
-
-        //            // Database CSV 리더 생성
-        //            _dbWriterReader.CreateCsvReader();
-
-        //            try
-        //            {
-        //                while (_running)
-        //                {
-        //                    if (_dbWriterReader == null)
-        //                    {
-        //                        break;
-        //                    }
-
-        //                    string rawLine = _dbWriterReader.ReadRow();
-
-        //                    // 파일이 더 이상 없거나, 읽을 데이터가 없으면 종료
-        //                    if (rawLine == null)
-        //                    {
-        //                        MessageBox.Show("Database Playback End");
-        //                        break;
-        //                    }
-
-        //                    // 빈 줄 또는 헤더는 건너뜀
-        //                    if (string.IsNullOrWhiteSpace(rawLine) || rawLine.StartsWith("Timestamp,"))
-        //                        continue;
-
-        //                    // 첫 번째 열(timestamp)와 나머지(row) 분리
-        //                    var parts = rawLine.Split(new[] { ',' }, 2);
-        //                    if (parts.Length < 2)
-        //                        continue;
-
-        //                    if (!long.TryParse(parts[0], out var time))
-        //                        continue;
-
-        //                    if (_first)
-        //                    {
-        //                        _first = false;
-        //                        _lastTime = time;
-        //                    }
-        //                    var _sleepTime = (int)(time - _lastTime);
-        //                    _lastTime = time;
-        //                    if (_sleepTime > 0)
-        //                        Thread.Sleep(_sleepTime / _playBackSpeed);
-
-        //                    string row = parts[1];
-        //                    if (string.IsNullOrEmpty(row))
-        //                        continue;
-
-        //                    OnMessageReceived?.Invoke(row, time);
-        //                }
-        //            }
-        //            catch (Exception ex)
-        //            {
-        //                MessageBox.Show("Database Playback Error: " + ex.Message);
-        //            }
-
-        //            OnFinished?.Invoke();
-        //        }
 
         private void RunFileMode()
         {
@@ -369,7 +291,7 @@ namespace ADS_B_Display
             RecordStream?.WriteLine(timestamp);
             RecordStream?.WriteLine(msg);
 
-            _dbWriterReader?.WriteRow(timestamp, msg);
+            _dbConnector?.WriteRow(timestamp, msg);
 
             uint acio = OnMessageReceived?.Invoke(msg, timestamp) ?? 0;
             PostProcess(acio);
