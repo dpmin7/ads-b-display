@@ -156,10 +156,64 @@ namespace ADS_B_Display
             {
                 if (aircraft.HaveLatLon)
                 {
-                    aircraft.AddTrackPoint(new AircraftTrackPoint(
-                    aircraft.Latitude, aircraft.Longitude, aircraft.Altitude, aircraft.LastSeen));
+                    var curr = new AircraftTrackPoint(aircraft.Latitude, aircraft.Longitude, aircraft.Altitude, aircraft.LastSeen);
+
+                    if (aircraft.TrackPoint.Items.Count >= 1)
+                    {
+
+                        var prev = aircraft.TrackPoint.Items.ElementAt(0);
+
+                        aircraft.Speed = AircraftTrackUtils.CalculateSpeedKnots(prev, curr);
+                        //oldLatitude = aircraft.TrackPoint.Items.ElementAt(0).Latitude;
+                        //oldLongitude = aircraft.TrackPoint.Items.ElementAt(0).Longitude;
+                        //if (oldLatitude == aircraft.Latitude && oldLongitude == aircraft.Longitude)
+                        //{
+                        //    aircraft.Speed = 0;
+                        //}
+                    }
+                       
+                    aircraft.AddTrackPoint(curr);
                 }
             }
+        }
+    }
+
+    public static class AircraftTrackUtils
+    {
+        private const double EarthRadiusKm = 6371.0;
+
+        public static double CalculateSpeedKnots(AircraftTrackPoint prev, AircraftTrackPoint current)
+        {
+            double distanceKm = HaversineDistanceKm(
+                prev.Latitude, prev.Longitude,
+                current.Latitude, current.Longitude
+            );
+
+            double timeSeconds = (current.TimestampUtc - prev.TimestampUtc) / 1000.0;
+
+            if (timeSeconds <= 0.0)
+                return 0.0;
+
+            double speedKmh = (distanceKm / timeSeconds) * 3600.0;
+            double speedKnots = speedKmh * 0.539957;
+
+            return speedKnots;
+        }
+
+        private static double HaversineDistanceKm(double lat1, double lon1, double lat2, double lon2)
+        {
+            double toRad = Math.PI / 180.0;
+
+            double dLat = (lat2 - lat1) * toRad;
+            double dLon = (lon2 - lon1) * toRad;
+
+            double a = Math.Pow(Math.Sin(dLat / 2), 2) +
+                       Math.Cos(lat1 * toRad) * Math.Cos(lat2 * toRad) *
+                       Math.Pow(Math.Sin(dLon / 2), 2);
+
+            double c = 2 * Math.Atan2(Math.Sqrt(a), Math.Sqrt(1 - a));
+
+            return EarthRadiusKm * c;
         }
     }
 }

@@ -126,7 +126,7 @@ namespace ADS_B_Display
             (VLatitude, VLongitude) = PredictPositionFlat(
                Latitude, Longitude,
                 Heading,
-                Speed, // 단위: m/s 또는 픽셀/s 등
+                (Speed*0.7), // 단위: m/s 또는 픽셀/s 등
                 LastSeen,
                 now);
 
