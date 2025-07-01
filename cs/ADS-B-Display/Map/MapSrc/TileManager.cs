@@ -30,22 +30,45 @@ namespace ADS_B_Display.Map.MapSrc
         public TextureTile GetTexture(int x, int y, int level)
         {
             var cur = _root;
-            for (int curLevel = 0; curLevel <= level; curLevel++) {
+            for (int curLevel = 0; curLevel < level; curLevel++)
+            {
                 int cx = x >> (level - curLevel);
                 int cy = y >> (level - curLevel);
                 int dx = cx & 1;
                 int dy = cy & 1;
+
                 var child = cur.GetChild(dx, dy);
-                if (child == null) {
+                if (child == null)
+                {
                     child = new TextureTile(cx, cy, curLevel, cur);
                     cur.SetChild(dx, dy, child);
                     _textureCount++;
                     _storage.Enqueue(child);
                 }
                 cur = child;
-                cur.Touch();
             }
-            return cur;
+
+            int final_dx = x & 1;
+            int final_dy = y & 1;
+            var final_child = cur.GetChild(final_dx, final_dy);
+
+            if (final_child == null)
+            {
+                final_child = new TextureTile(x, y, level, cur);
+                cur.SetChild(final_dx, final_dy, final_child);
+                _textureCount++;
+                _storage.Enqueue(final_child);
+            }
+            // ✨ --- 핵심 수정 --- ✨
+            // 타일이 존재하지만, 로딩에 실패한 상태(IsNull)이고 현재 로딩 중도 아니라면,
+            // 다시 로딩을 시도하도록 큐에 추가합니다.
+            else if (final_child.IsNull && !final_child.IsLoaded)
+            {
+                _storage.Enqueue(final_child);
+            }
+
+            final_child.Touch();
+            return final_child;
         }
 
         /// <summary>
