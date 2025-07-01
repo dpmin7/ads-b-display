@@ -8,20 +8,11 @@ using System.Windows;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using ADS_B_Display.Utils;
-using System.Threading.Tasks;
 
 // 참고: WPF 기능을 사용하므로, 프로젝트 파일(.csproj)에 <UseWPF>true</UseWPF> 설정과
 // WindowsBase, PresentationCore 라이브러리 참조가 필요합니다.
 namespace ADS_B_Display
 {
-    public struct TextureJob
-    {
-        public string Key; // 텍스처 캐시용 키
-        public int Width;
-        public int Height;
-        public byte[] Pixels; // 비트맵의 순수 픽셀 데이터
-    }
-
     /// <summary>
     /// ADS-B Display용 2D 드로잉 유틸리티 모음 (ntds2d.h/.cpp 변환)
     /// </summary>
@@ -48,8 +39,6 @@ namespace ADS_B_Display
 
         // --- ✨ 텍스트 렌더링을 위해 새로 추가된 멤버 변수 ✨ ---
         private static Dictionary<string, (int textureId, int width, int height)> textTextureCache = new Dictionary<string, (int, int, int)>();
-
-        private static readonly System.Collections.Concurrent.ConcurrentQueue<TextureJob> textureCreationQueue = new System.Collections.Concurrent.ConcurrentQueue<TextureJob>();
 
         // --- ✨ 텍스트 렌더링을 위한 헬퍼 함수 ✨ ---
 
@@ -98,72 +87,6 @@ namespace ADS_B_Display
             GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureWrapT, (int)TextureWrapMode.ClampToEdge);
             GL.BindTexture(TextureTarget.Texture2D, 0);
             return (textureId, width, height);
-        }
-
-        // ✨ 1. 백그라운드에서 텍스처 생성을 시작시키는 메서드
-        public static void StartPreloadingTextures(List<string> textItems) // 예: 공항 이름 리스트를 받음
-        {
-            Task.Run(() => // 백그라운드 스레드에서 실행
-            {
-                foreach (var text in textItems)
-                {
-                    if (string.IsNullOrEmpty(text)) continue;
-
-                    string key = $"{text}_{Colors.White.ToString()}"; // 키 생성 방식은 일관성 있게
-                    if (textTextureCache.ContainsKey(key)) continue;
-
-                    Application.Current.Dispatcher.Invoke(() =>
-                    {
-                        var textBitmap = CreateTextBitmapWpf(text, "Arial", 16, Colors.White);
-
-                        int stride = textBitmap.PixelWidth * 4;
-                        byte[] pixels = new byte[textBitmap.PixelHeight * stride];
-                        textBitmap.CopyPixels(pixels, stride, 0);
-
-                        textureCreationQueue.Enqueue(new TextureJob
-                        {
-                            Key = key,
-                            Width = textBitmap.PixelWidth,
-                            Height = textBitmap.PixelHeight,
-                            Pixels = pixels
-                        });
-                    });
-                }
-            });
-        }
-
-        // ✨ 2. 렌더링 스레드에서 큐를 처리하는 메서드
-        public static void ProcessTextureQueue()
-        {
-            // ✨ 한 프레임에 처리할 최대 작업 개수 설정
-            const int maxJobsPerFrame = 3;
-
-            for (int i = 0; i < maxJobsPerFrame; i++)
-            {
-                // 큐에 더 이상 처리할 작업이 없으면 루프 종료
-                if (!textureCreationQueue.TryDequeue(out TextureJob job))
-                {
-                    break;
-                }
-
-                // --- 이하 텍스처 생성 로직은 동일 ---
-                int textureId = GL.GenTexture();
-                GL.BindTexture(TextureTarget.Texture2D, textureId);
-                GL.TexImage2D(TextureTarget.Texture2D, 0, PixelInternalFormat.Rgba, job.Width, job.Height, 0,
-                              OpenTK.Graphics.OpenGL.PixelFormat.Bgra, PixelType.UnsignedByte, job.Pixels);
-
-                // ... TexParameter 설정 ...
-                GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMinFilter, (int)TextureMinFilter.Linear);
-                GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMagFilter, (int)TextureMagFilter.Linear);
-                GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureWrapS, (int)TextureWrapMode.ClampToEdge);
-                GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureWrapT, (int)TextureWrapMode.ClampToEdge);
-                GL.BindTexture(TextureTarget.Texture2D, 0);
-
-                if (textureId > 0)
-                {
-                    textTextureCache[job.Key] = (textureId, job.Width, job.Height);
-                }
-            }
         }
 
         public static int MakeAirplaneImages()
@@ -630,12 +553,13 @@ namespace ADS_B_Display
             }
             if (airportTextId == 0) return;
 
-            string key = $"{text}_{textColor.R:X2}{textColor.G:X2}{textColor.B:X2}{textColor.A:X2}";
-            if (!textTextureCache.TryGetValue(key, out var textTexture))
+            // 텍스트 텍스처를 캐시에서 가져오거나 새로 생성합니다.
+            // (참고: 텍스트 색상별로 캐싱하려면 키를 `(text, textColor)` 조합으로 변경해야 합니다.)
+            if (!textTextureCache.TryGetValue(text, out var textTexture))
             {
                 var textBitmap = CreateTextBitmapWpf(text, "Arial", 16, textColor);
                 textTexture = CreateTextureFromBitmap(textBitmap);
-                textTextureCache[key] = textTexture;
+                textTextureCache[text] = textTexture;
             }
 
             // --- 그리기 시작 ---
