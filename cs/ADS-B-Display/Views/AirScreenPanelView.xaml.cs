@@ -77,11 +77,11 @@ namespace ADS_B_Display.Views
         private DispatcherTimer _updateTimer = new DispatcherTimer();
         private Timer _delayTimer;
 
-        public static Action<double, double> CenterMapToAction; //CPA 항목 더블클릭시 Center 이동용
         public AirScreenPanelView()
         {
             InitializeComponent();
             EventBus.Observe(EventIds.EvtControlSettingChanged).Subscribe(msg => UpdateTimeToGo(msg));
+            EventBus.Observe(EventIds.EvtCenterMapTo).Subscribe(msg => CenterMapTo(msg));
 
             var settings = new GLWpfControlSettings()
             {
@@ -108,7 +108,6 @@ namespace ADS_B_Display.Views
 
             // aircrafe load
             AircraftDB.Init();
-            CenterMapToAction = CenterMapTo;    //CPA 항목 더블클릭시 Center 이동용
         }
 
         public void Dispose()
@@ -876,6 +875,12 @@ namespace ADS_B_Display.Views
             siny = Math.Sin((MapCenterLat * Math.PI) / 180.0);
             siny = Math.Min(Math.Max(siny, -0.9999), 0.9999);
             y = (Math.Log((1 + siny) / (1 - siny)) / (4 * Math.PI));
+        }
+
+        private void CenterMapTo(object msg)
+        {
+            (double lat, double lon) = ((double, double))msg;
+            CenterMapTo(lat, lon);
         }
 
         public void CenterMapTo(double latitude, double longitude)

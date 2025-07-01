@@ -12,7 +12,6 @@ namespace ADS_B_Display.Views
     {
         public CPAConflictInfo SelectedConflict { get; private set; }
 
-
         public CPAConflictDialog()
         {
             InitializeComponent();
@@ -75,14 +74,13 @@ namespace ADS_B_Display.Views
         }
         private void CpaDataGrid_MouseDoubleClick(object sender, System.Windows.Input.MouseButtonEventArgs e)
         {
-
+            
             if (CpaDataGrid.SelectedItem is CPAConflictDisplayModel selected)
             {
                 var hex = selected.HexAddr1; // 또는 HexAddr2
                 double lat = selected.Raw.Lat1;
                 double lon = selected.Raw.Lon1;
-                AirScreenPanelView.CenterMapToAction?.Invoke(lat, lon);
-
+                EventBus.Publish(EventIds.EvtCenterMapTo, (lat, lon));
             }
         }
 
