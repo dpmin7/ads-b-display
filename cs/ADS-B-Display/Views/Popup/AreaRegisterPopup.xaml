@@ -10,6 +10,7 @@
     Width="280"
     Height="160"
     ResizeMode="NoResize"
+    Topmost="True"
     WindowStyle="None"
     mc:Ignorable="d">
     <Grid Margin="10">

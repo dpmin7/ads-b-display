@@ -4,6 +4,7 @@
 
 using Google.Apis.Auth.OAuth2;
 using Google.Cloud.BigQuery.V2;
+using MahApps.Metro.Controls;
 using ScottPlot;
 using ScottPlot.WPF;
 using System;
@@ -47,14 +48,23 @@ namespace ADS_B_Display.Models.FlightAnalytics
                         return;
                     }
 
-                    var window = new Window
+                    var window = new MetroWindow
                     {
                         Width = 1000,
                         Height = 600,
-                        Title = $"Flight Data - {hexIdent}"
+                        Title = $"Flight Data - {hexIdent}",
+                        Topmost = true
                     };
 
+                    var source = new ResourceDictionary {
+                        Source = new Uri("pack://application:,,,/MahApps.Metro;component/Styles/Themes/Dark.Steel.xaml",
+                                    UriKind.Absolute)};
+                    window.Resources.MergedDictionaries.Add(source);
+                    var darkStyle = new ScottPlot.PlotStyles.Dark();
+
                     var plot = new WpfPlot();
+                    plot.Margin = new Thickness(10);
+                    plot.Plot.SetStyle(darkStyle);
                     window.Content = plot;
 
                     var times = flightData.Select(x => x.ts.ToOADate()).ToArray();
@@ -70,6 +80,9 @@ namespace ADS_B_Display.Models.FlightAnalytics
                     var altPlot = plt.Add.Scatter(times, altitudes);
                     altPlot.LegendText = "Altitude (ft)";
                     altPlot.Axes.YAxis = rightAxis;
+                    // 다크 테마를 한 번 더 덮어쓰기
+                    plt.SetStyle(new ScottPlot.PlotStyles.Dark());
+                    plot.Refresh();
 
                     plt.Axes.Bottom.TickGenerator = new ScottPlot.TickGenerators.DateTimeAutomatic();
                     plt.Axes.Left.Label.Text = "Speed (knots)";

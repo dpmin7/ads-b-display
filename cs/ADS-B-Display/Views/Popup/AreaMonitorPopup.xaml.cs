@@ -1,11 +1,12 @@
-﻿using System;
+﻿using MahApps.Metro.Controls;
 using System.Diagnostics;
 using System.Text;
+using System;
 using System.Windows;
 
 namespace ADS_B_Display
 {
-    public partial class AreaMonitorPopup : Window
+    public partial class AreaMonitorPopup : MetroWindow
     {
         private static AreaMonitorPopup _instance;
 
@@ -14,10 +15,6 @@ namespace ADS_B_Display
             InitializeComponent();
             _instance = this; // static 참조 등록
 
-            this.Closed += (s, e) =>
-            {
-                _instance = null;
-            };
         }
 
         public static void WriteLog(string message)
@@ -27,14 +24,19 @@ namespace ADS_B_Display
 
         private void AppendLog(string message)
         {
-            if (!Dispatcher.CheckAccess())
+            if (!Application.Current.Dispatcher.CheckAccess())
             {
-                Dispatcher.BeginInvoke(new Action(() => AppendLog(message)));
+                Application.Current.Dispatcher.BeginInvoke(new Action(() => AppendLog(message)));
                 return;
             }
 
             LogTextBox.AppendText(message + Environment.NewLine);
             LogTextBox.ScrollToEnd();
+        }
+
+        private void MetroWindow_Closed(object sender, System.EventArgs e)
+        {
+            _instance = null;
         }
     }
 

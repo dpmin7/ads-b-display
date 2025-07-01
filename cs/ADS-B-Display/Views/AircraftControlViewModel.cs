@@ -497,7 +497,14 @@ namespace ADS_B_Display.Views
             if (ControlSettings.UseBigQuery)
             {
                 var items = BigQueryConnector.GetTableLists();
+                if (items == null)
+                {
+                    _isSbsPalying = false;
+                    return;
+                }
                 var win = new BigQueryListPopup(items);
+                win.Owner = Application.Current.MainWindow;
+                win.WindowStartupLocation = WindowStartupLocation.CenterOwner;
                 var res = win.ShowDialog();
                 if (res == false)
                     return;

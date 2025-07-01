@@ -303,6 +303,16 @@ namespace ADS_B_Display
             return "Unknown";
         }
 
+        public static (string, string) GetCountry(uint addr)
+        {
+            foreach (var range in CountryRanges)
+            {
+                if (addr >= range.Low && addr <= range.High)
+                    return (range.ShortCode, range.LongName);
+            }
+            return (string.Empty, string.Empty);
+        }
+
         public static bool IsMilitary(uint addr)
         {
             foreach (var range in MilitaryRanges) {
@@ -372,7 +382,8 @@ namespace ADS_B_Display
                     }
                 }
 
-                aircraft.Country = GetCountry(aircraft.Icao24, false);
+                (aircraft.CountryShort, aircraft.Country) = GetCountry(aircraft.Icao24);
+
                 aircraft.IsMilitary = IsMilitary(aircraft.Icao24);
                 aircraft.AircraftImageNum = ConvertSpriteImage(aircraft.IcaoAircraftType);
 

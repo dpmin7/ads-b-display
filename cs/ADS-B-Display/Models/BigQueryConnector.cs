@@ -8,6 +8,7 @@ using System.IO;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Windows;
 
 namespace ADS_B_Display.Models
 {
@@ -53,6 +54,8 @@ namespace ADS_B_Display.Models
 
             CredentialPath = Path.Combine(homeDir, "BigQuery", CredentialFilename);
 
+            
+
             Console.WriteLine($"Set CredentialPath: {CredentialPath}");
 
             SetNextCsvFile();
@@ -69,7 +72,14 @@ namespace ADS_B_Display.Models
         {
             string exePath = System.Reflection.Assembly.GetExecutingAssembly().Location;
             string homeDir = Path.GetDirectoryName(exePath);
+
+
             string credentialPath = Path.Combine(homeDir, "BigQuery", "YourJsonFile.json");
+            if (!File.Exists(credentialPath))
+            {
+                MessageBox.Show(Application.Current.MainWindow, $"{credentialPath} is not exist.");
+                return null;
+            }
 
             Environment.SetEnvironmentVariable("GOOGLE_APPLICATION_CREDENTIALS", credentialPath);
             
@@ -336,4 +346,5 @@ namespace ADS_B_Display.Models
             EndTime = et;
         }
     }
+
 }

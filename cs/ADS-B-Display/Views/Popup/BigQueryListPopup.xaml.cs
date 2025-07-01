@@ -1,4 +1,5 @@
 ﻿using ADS_B_Display.Models;
+using MahApps.Metro.Controls;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -18,7 +19,7 @@ namespace ADS_B_Display.Views.Popup
     /// <summary>
     /// BigQueryListPopup.xaml에 대한 상호 작용 논리
     /// </summary>
-    public partial class BigQueryListPopup : Window
+    public partial class BigQueryListPopup : MetroWindow
     {
         public BigQueryListPopup(List<BigQueryListItem> items)
         {

@@ -146,6 +146,7 @@ namespace ADS_B_Display.Models
         /// 항공기에 대한 국가 설명입니다.
         /// </summary>
         public string Country { get; set; }
+        public string CountryShort { get; set; }
 
         /// <summary>
         /// 항공기에 대한 Militery 설명입니다.

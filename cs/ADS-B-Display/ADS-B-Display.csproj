@@ -294,6 +294,9 @@
     <Compile Include="Views\Popup\LoadingPopup.xaml.cs">
       <DependentUpon>LoadingPopup.xaml</DependentUpon>
     </Compile>
+    <Compile Include="Views\UserControls\IconButton.xaml.cs">
+      <DependentUpon>IconButton.xaml</DependentUpon>
+    </Compile>
     <Page Include="MainWindow.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
@@ -378,6 +381,10 @@
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
+    <Page Include="Views\UserControls\IconButton.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Properties\AssemblyInfo.cs">
@@ -420,6 +427,197 @@
   </ItemGroup>
   <ItemGroup>
     <Resource Include="Images\altitude_chart_Light.svg" />
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="Images\BigQuery-Logo-SVG_006.svg" />
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="Images\Flags\AE.png" />
+    <Resource Include="Images\Flags\AF.png" />
+    <Resource Include="Images\Flags\AG.png" />
+    <Resource Include="Images\Flags\AL.png" />
+    <Resource Include="Images\Flags\AM.png" />
+    <Resource Include="Images\Flags\AO.png" />
+    <Resource Include="Images\Flags\AR.png" />
+    <Resource Include="Images\Flags\AT.png" />
+    <Resource Include="Images\Flags\AU.png" />
+    <Resource Include="Images\Flags\AZ.png" />
+    <Resource Include="Images\Flags\BA.png" />
+    <Resource Include="Images\Flags\BB.png" />
+    <Resource Include="Images\Flags\BD.png" />
+    <Resource Include="Images\Flags\BE.png" />
+    <Resource Include="Images\Flags\BF.png" />
+    <Resource Include="Images\Flags\BG.png" />
+    <Resource Include="Images\Flags\BH.png" />
+    <Resource Include="Images\Flags\BI.png" />
+    <Resource Include="Images\Flags\BJ.png" />
+    <Resource Include="Images\Flags\BN.png" />
+    <Resource Include="Images\Flags\BO.png" />
+    <Resource Include="Images\Flags\BR.png" />
+    <Resource Include="Images\Flags\BS.png" />
+    <Resource Include="Images\Flags\BT.png" />
+    <Resource Include="Images\Flags\BW.png" />
+    <Resource Include="Images\Flags\BY.png" />
+    <Resource Include="Images\Flags\BZ.png" />
+    <Resource Include="Images\Flags\CA.png" />
+    <Resource Include="Images\Flags\CD.png" />
+    <Resource Include="Images\Flags\CF.png" />
+    <Resource Include="Images\Flags\CG.png" />
+    <Resource Include="Images\Flags\CH.png" />
+    <Resource Include="Images\Flags\CI.png" />
+    <Resource Include="Images\Flags\CK.png" />
+    <Resource Include="Images\Flags\CL.png" />
+    <Resource Include="Images\Flags\CM.png" />
+    <Resource Include="Images\Flags\CN.png" />
+    <Resource Include="Images\Flags\CO.png" />
+    <Resource Include="Images\Flags\CR.png" />
+    <Resource Include="Images\Flags\CU.png" />
+    <Resource Include="Images\Flags\CV.png" />
+    <Resource Include="Images\Flags\CY.png" />
+    <Resource Include="Images\Flags\CZ.png" />
+    <Resource Include="Images\Flags\DE.png" />
+    <Resource Include="Images\Flags\DJ.png" />
+    <Resource Include="Images\Flags\DK.png" />
+    <Resource Include="Images\Flags\DO.png" />
+    <Resource Include="Images\Flags\DZ.png" />
+    <Resource Include="Images\Flags\EC.png" />
+    <Resource Include="Images\Flags\EE.png" />
+    <Resource Include="Images\Flags\EG.png" />
+    <Resource Include="Images\Flags\ER.png" />
+    <Resource Include="Images\Flags\ES.png" />
+    <Resource Include="Images\Flags\ET.png" />
+    <Resource Include="Images\Flags\FI.png" />
+    <Resource Include="Images\Flags\FJ.png" />
+    <Resource Include="Images\Flags\FM.png" />
+    <Resource Include="Images\Flags\FR.png" />
+    <Resource Include="Images\Flags\GA.png" />
+    <Resource Include="Images\Flags\GB.png" />
+    <Resource Include="Images\Flags\GD.png" />
+    <Resource Include="Images\Flags\GE.png" />
+    <Resource Include="Images\Flags\GH.png" />
+    <Resource Include="Images\Flags\GM.png" />
+    <Resource Include="Images\Flags\GN.png" />
+    <Resource Include="Images\Flags\GQ.png" />
+    <Resource Include="Images\Flags\GR.png" />
+    <Resource Include="Images\Flags\GT.png" />
+    <Resource Include="Images\Flags\GW.png" />
+    <Resource Include="Images\Flags\GY.png" />
+    <Resource Include="Images\Flags\HN.png" />
+    <Resource Include="Images\Flags\HR.png" />
+    <Resource Include="Images\Flags\HT.png" />
+    <Resource Include="Images\Flags\HU.png" />
+    <Resource Include="Images\Flags\ID.png" />
+    <Resource Include="Images\Flags\IE.png" />
+    <Resource Include="Images\Flags\IL.png" />
+    <Resource Include="Images\Flags\IN.png" />
+    <Resource Include="Images\Flags\IQ.png" />
+    <Resource Include="Images\Flags\IR.png" />
+    <Resource Include="Images\Flags\IS.png" />
+    <Resource Include="Images\Flags\IT.png" />
+    <Resource Include="Images\Flags\JM.png" />
+    <Resource Include="Images\Flags\JO.png" />
+    <Resource Include="Images\Flags\JP.png" />
+    <Resource Include="Images\Flags\KE.png" />
+    <Resource Include="Images\Flags\KG.png" />
+    <Resource Include="Images\Flags\KH.png" />
+    <Resource Include="Images\Flags\KI.png" />
+    <Resource Include="Images\Flags\KM.png" />
+    <Resource Include="Images\Flags\KP.png" />
+    <Resource Include="Images\Flags\KR.png" />
+    <Resource Include="Images\Flags\KW.png" />
+    <Resource Include="Images\Flags\KZ.png" />
+    <Resource Include="Images\Flags\LA.png" />
+    <Resource Include="Images\Flags\LB.png" />
+    <Resource Include="Images\Flags\LC.png" />
+    <Resource Include="Images\Flags\LK.png" />
+    <Resource Include="Images\Flags\LR.png" />
+    <Resource Include="Images\Flags\LS.png" />
+    <Resource Include="Images\Flags\LT.png" />
+    <Resource Include="Images\Flags\LU.png" />
+    <Resource Include="Images\Flags\LV.png" />
+    <Resource Include="Images\Flags\LY.png" />
+    <Resource Include="Images\Flags\MA.png" />
+    <Resource Include="Images\Flags\MC.png" />
+    <Resource Include="Images\Flags\MD.png" />
+    <Resource Include="Images\Flags\MG.png" />
+    <Resource Include="Images\Flags\MH.png" />
+    <Resource Include="Images\Flags\MK.png" />
+    <Resource Include="Images\Flags\ML.png" />
+    <Resource Include="Images\Flags\MM.png" />
+    <Resource Include="Images\Flags\MN.png" />
+    <Resource Include="Images\Flags\MR.png" />
+    <Resource Include="Images\Flags\MT.png" />
+    <Resource Include="Images\Flags\MU.png" />
+    <Resource Include="Images\Flags\MV.png" />
+    <Resource Include="Images\Flags\MW.png" />
+    <Resource Include="Images\Flags\MX.png" />
+    <Resource Include="Images\Flags\MY.png" />
+    <Resource Include="Images\Flags\MZ.png" />
+    <Resource Include="Images\Flags\NA.png" />
+    <Resource Include="Images\Flags\NE.png" />
+    <Resource Include="Images\Flags\NG.png" />
+    <Resource Include="Images\Flags\NI.png" />
+    <Resource Include="Images\Flags\NL.png" />
+    <Resource Include="Images\Flags\NO.png" />
+    <Resource Include="Images\Flags\NP.png" />
+    <Resource Include="Images\Flags\NR.png" />
+    <Resource Include="Images\Flags\NZ.png" />
+    <Resource Include="Images\Flags\OM.png" />
+    <Resource Include="Images\Flags\PA.png" />
+    <Resource Include="Images\Flags\PE.png" />
+    <Resource Include="Images\Flags\PG.png" />
+    <Resource Include="Images\Flags\PH.png" />
+    <Resource Include="Images\Flags\PK.png" />
+    <Resource Include="Images\Flags\PL.png" />
+    <Resource Include="Images\Flags\PT.png" />
+    <Resource Include="Images\Flags\PW.png" />
+    <Resource Include="Images\Flags\PY.png" />
+    <Resource Include="Images\Flags\QA.png" />
+    <Resource Include="Images\Flags\RO.png" />
+    <Resource Include="Images\Flags\RU.png" />
+    <Resource Include="Images\Flags\RW.png" />
+    <Resource Include="Images\Flags\SA.png" />
+    <Resource Include="Images\Flags\SB.png" />
+    <Resource Include="Images\Flags\SC.png" />
+    <Resource Include="Images\Flags\SD.png" />
+    <Resource Include="Images\Flags\SE.png" />
+    <Resource Include="Images\Flags\SG.png" />
+    <Resource Include="Images\Flags\SI.png" />
+    <Resource Include="Images\Flags\SK.png" />
+    <Resource Include="Images\Flags\SL.png" />
+    <Resource Include="Images\Flags\SM.png" />
+    <Resource Include="Images\Flags\SN.png" />
+    <Resource Include="Images\Flags\SO.png" />
+    <Resource Include="Images\Flags\SR.png" />
+    <Resource Include="Images\Flags\ST.png" />
+    <Resource Include="Images\Flags\SV.png" />
+    <Resource Include="Images\Flags\SY.png" />
+    <Resource Include="Images\Flags\SZ.png" />
+    <Resource Include="Images\Flags\TD.png" />
+    <Resource Include="Images\Flags\TG.png" />
+    <Resource Include="Images\Flags\TH.png" />
+    <Resource Include="Images\Flags\TJ.png" />
+    <Resource Include="Images\Flags\TM.png" />
+    <Resource Include="Images\Flags\TN.png" />
+    <Resource Include="Images\Flags\TO.png" />
+    <Resource Include="Images\Flags\TR.png" />
+    <Resource Include="Images\Flags\TT.png" />
+    <Resource Include="Images\Flags\TZ.png" />
+    <Resource Include="Images\Flags\UA.png" />
+    <Resource Include="Images\Flags\UG.png" />
+    <Resource Include="Images\Flags\US.png" />
+    <Resource Include="Images\Flags\UY.png" />
+    <Resource Include="Images\Flags\UZ.png" />
+    <Resource Include="Images\Flags\VC.png" />
+    <Resource Include="Images\Flags\VE.png" />
+    <Resource Include="Images\Flags\VN.png" />
+    <Resource Include="Images\Flags\VU.png" />
+    <Resource Include="Images\Flags\WS.png" />
+    <Resource Include="Images\Flags\YE.png" />
+    <Resource Include="Images\Flags\YU.png" />
+    <Resource Include="Images\Flags\ZA.png" />
+    <Resource Include="Images\Flags\ZM.png" />
+    <Resource Include="Images\Flags\ZW.png" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>

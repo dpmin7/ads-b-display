@@ -6,6 +6,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Data;
+using System.Windows.Media.Imaging;
 
 namespace ADS_B_Display.Views.Converters
 {
@@ -141,6 +142,31 @@ namespace ADS_B_Display.Views.Converters
             }
 
             return "NA";
+        }
+
+        public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+        {
+            throw new NotImplementedException();
+        }
+    }
+
+    public class StringToUri : IValueConverter
+    {
+        public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+        {
+            try
+            {
+                if (value is string uriSoruce && string.IsNullOrEmpty(uriSoruce) == false)
+                {
+                    return new BitmapImage(new Uri($"pack://application:,,,/Images/Flags/{value}.png"));
+                }
+            }
+            catch
+            {
+                return null;
+            }
+            
+            return null;
         }
 
         public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)

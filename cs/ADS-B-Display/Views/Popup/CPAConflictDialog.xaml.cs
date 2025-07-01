@@ -1,5 +1,6 @@
 ﻿using ADS_B_Display.Models;
 using ADS_B_Display.Utils;
+using MahApps.Metro.Controls;
 using System;
 using System.Collections.Specialized;
 using System.Diagnostics;
@@ -8,7 +9,7 @@ using System.Windows;
 
 namespace ADS_B_Display.Views
 {
-    public partial class CPAConflictDialog : Window
+    public partial class CPAConflictDialog : MetroWindow
     {
         public CPAConflictInfo SelectedConflict { get; private set; }
 
