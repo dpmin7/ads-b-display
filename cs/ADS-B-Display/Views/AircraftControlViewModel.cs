@@ -27,10 +27,10 @@ namespace ADS_B_Display.Views
     {
         public string Name { get; set; }
         public int Speed { get; set; }
-        public SpeedItem(string name, int spped)
+        public SpeedItem(string name, int speed)
         {
             Name = name;
-            Speed = Speed;
+            Speed = speed;
         }
     }
 

@@ -8,6 +8,7 @@ namespace ADS_B_Display.Models.Connector
     public class FileConnector: IConnector
     {
         private readonly string _filePath;
+        private int _playbackSpeed = 1;
         private Thread _thread;
 
         public FileConnector(string filePath)
@@ -17,6 +18,8 @@ namespace ADS_B_Display.Models.Connector
 
         public void Start(Func<string, long, uint> onMessageReceived, int playBackSpeed, InputSourceState state)
         {
+            _playbackSpeed = playBackSpeed;
+
             _thread = new Thread(() =>
             {
                 try
@@ -36,7 +39,7 @@ namespace ADS_B_Display.Models.Connector
                             }
                             var sleepTime = (int)(time - state.LastTime);
                             state.LastTime = time;
-                            Thread.Sleep(sleepTime / playBackSpeed);
+                            Thread.Sleep(sleepTime / _playbackSpeed);
 
                             rawLine = reader.ReadLine();
                             if (string.IsNullOrEmpty(rawLine))
@@ -55,6 +58,11 @@ namespace ADS_B_Display.Models.Connector
         public Task StartAsync(Func<string, long, uint> onMessageReceived, int playBackSpeed, CancellationToken ct, InputSourceState state)
         {
             throw new NotImplementedException();
+        }
+
+        public void SetPlaybackSpeed(int speed)
+        {
+            _playbackSpeed = speed;
         }
 
         public void Stop()

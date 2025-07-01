@@ -15,5 +15,6 @@ namespace ADS_B_Display.Models.Connector
         void Start(Func<string, long, uint> onMessageReceived, int playBackSpeed, InputSourceState state);
         Task StartAsync(Func<string, long, uint> onMessageReceived, int playBackSpeed, CancellationToken ct, InputSourceState state);
         void Stop();
+        void SetPlaybackSpeed(int speed);
     }
 }

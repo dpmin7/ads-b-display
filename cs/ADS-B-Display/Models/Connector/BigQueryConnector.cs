@@ -180,9 +180,11 @@ namespace ADS_B_Display.Models.Connector
             _playToFirstRowStopwatch.Restart();
         }
 
-        public long GetPlaybackTime(string tableId)
+        public (long, long) GetPlaybackTime(string tableId)
         {
-            long playbackTime = 0;
+            //long playbackTime = 0;
+            long minTs = 0;
+            long maxTs = 0;
             string fullTablePath = $"scs-lg-arch-5.SBS_Data.{tableId}";
             var client = BigQueryClient.Create("scs-lg-arch-5");
             string query = $"SELECT MIN(timestamp) AS min_ts, MAX(timestamp) AS max_ts FROM `{fullTablePath}`";
@@ -190,20 +192,20 @@ namespace ADS_B_Display.Models.Connector
 
             if (result != null)
             {
-                long minTs = result["min_ts"] == null ? 0 : Convert.ToInt64(result["min_ts"]);
-                long maxTs = result["max_ts"] == null ? 0 : Convert.ToInt64(result["max_ts"]);
-                playbackTime = maxTs - minTs;
+                minTs = result["min_ts"] == null ? 0 : Convert.ToInt64(result["min_ts"]);
+                maxTs = result["max_ts"] == null ? 0 : Convert.ToInt64(result["max_ts"]);
+                //playbackTime = maxTs - minTs;
             }
 
             //Console.WriteLine($"Playback time for table {tableId}: {playbackTime} ms (Min: {result["min_ts"]}, Max: {result["max_ts"]})");
 
-            return playbackTime;
+            return (minTs, maxTs);
         }
 
         public void ReadDataFromDatabase()
         {
             string fullTablePath = "scs-lg-arch-5.SBS_Data." + _TableId;
-            int batchSize = 50000;
+            int batchSize = 100;
             int offset = 0;
             bool isFirstBatch = true;
             bool isFirstRow = true;
@@ -329,7 +331,7 @@ namespace ADS_B_Display.Models.Connector
             CsvWriter = null;
         }
 
-        public void ClearQueue()
+        private void ClearQueue()
         {
             _rowQueue = new BlockingCollection<string>(boundedCapacity: 100000);
         }

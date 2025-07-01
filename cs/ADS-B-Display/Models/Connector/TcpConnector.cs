@@ -52,6 +52,11 @@ namespace ADS_B_Display.Models.Connector
             }
         }
 
+        public void SetPlaybackSpeed(int speed)
+        {
+            //_playbackSpeed = speed;
+        }
+
         public void Stop()
         {
             _tcpClient?.Close();

@@ -7,6 +7,7 @@ namespace ADS_B_Display.Models.Connector
     public class DatabaseConnector: IConnector
     {
         private readonly IDBConnector _dbConnector;
+        private int _playbackSpeed = 1;
         private Thread _thread;
 
         public DatabaseConnector(IDBConnector dbConnector)
@@ -16,6 +17,8 @@ namespace ADS_B_Display.Models.Connector
 
         public void Start(Func<string, long, uint> onMessageReceived, int playBackSpeed, InputSourceState state)
         {
+            _playbackSpeed = playBackSpeed;
+
             _thread = new Thread(() =>
             {
                 _dbConnector.ReadDataFromDatabase();
@@ -41,7 +44,7 @@ namespace ADS_B_Display.Models.Connector
                         var sleepTime = (int)(time - state.LastTime);
                         state.LastTime = time;
                         if (sleepTime > 0)
-                            Thread.Sleep(sleepTime / playBackSpeed);
+                            Thread.Sleep(sleepTime / _playbackSpeed);
 
                         string row = parts[1];
                         if (string.IsNullOrEmpty(row))
@@ -59,6 +62,11 @@ namespace ADS_B_Display.Models.Connector
         public Task StartAsync(Func<string, long, uint> onMessageReceived, int playBackSpeed, CancellationToken ct, InputSourceState state)
         {
             throw new NotImplementedException();
+        }
+
+        public void SetPlaybackSpeed(int speed)
+        {
+            _playbackSpeed = speed;
         }
 
         public void Stop()

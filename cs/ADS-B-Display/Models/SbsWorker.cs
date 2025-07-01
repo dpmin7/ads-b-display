@@ -78,7 +78,14 @@ namespace ADS_B_Display
         }
         public void setPlayBackSpeed(int speed)
         {
-            _playBackSpeed = speed;
+            if (_inputSource == null)
+            {
+                _playBackSpeed = speed;
+            }
+            else
+            {
+                _inputSource.SetPlaybackSpeed(speed);
+            }
         }
 
         public async Task<bool> Start(string host, int port, CancellationToken ct)

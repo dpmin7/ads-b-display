@@ -11,7 +11,7 @@ namespace ADS_B_Display.Models.Connector
         
         void ReadDataFromDatabase();
         void StartPlayTiming();
-        long GetPlaybackTime(string tableId);
+        (long, long) GetPlaybackTime(string tableId);
         void Close();
     }
 }
