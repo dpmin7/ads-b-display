@@ -1,9 +1,10 @@
-﻿using System;
+﻿using ADS_B_Display.Models.Connector;
+using System;
 using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace ADS_B_Display.Models
+namespace ADS_B_Display.Models.Recorder
 {
     public class FileRecorder : IRecorder
     {

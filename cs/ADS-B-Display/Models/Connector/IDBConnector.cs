@@ -2,7 +2,7 @@ using ADS_B_Display.Models;
 using System;
 using System.Threading.Tasks;
 
-namespace ADS_B_Display.Models
+namespace ADS_B_Display.Models.Connector
 {
     public interface IDBConnector: IDisposable
     {

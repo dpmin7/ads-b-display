@@ -4,7 +4,7 @@ using System.Net.Sockets;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace ADS_B_Display.Models
+namespace ADS_B_Display.Models.Connector
 {
     public class TcpConnector : IConnector
     {

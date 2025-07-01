@@ -3,7 +3,7 @@ using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace ADS_B_Display.Models
+namespace ADS_B_Display.Models.Connector
 {
     public class FileConnector: IConnector
     {

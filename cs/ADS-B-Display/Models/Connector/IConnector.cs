@@ -2,7 +2,7 @@ using System;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace ADS_B_Display.Models
+namespace ADS_B_Display.Models.Connector
 {
     public class InputSourceState
     {

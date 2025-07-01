@@ -1,4 +1,5 @@
 ﻿using ADS_B_Display.Models;
+using ADS_B_Display.Models.Connector;
 using MahApps.Metro.Controls;
 using System;
 using System.Collections.Generic;
