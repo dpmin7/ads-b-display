@@ -612,7 +612,7 @@ namespace ADS_B_Display.Views
             if (tempArea == null || tempArea.NumPoints <= 0) return;
 
             GL.PushAttrib(AttribMask.ColorBufferBit | AttribMask.CurrentBit | AttribMask.LineBit | AttribMask.PointBit);
-
+            GL.Disable(EnableCap.Texture2D);
             GL.Disable(EnableCap.Blend); // 블렌딩 끄기
             GL.Disable(EnableCap.LineStipple); // 선 패턴 끄기
 
@@ -631,18 +631,18 @@ namespace ADS_B_Display.Views
             GL.Color4(1f, 1f, 1f, 1f);
             GL.Begin(PrimitiveType.LineStrip);
             double prevLon = tempArea.Points[0].X;
+            double lat = 0;
+            double lon = 0;
             for (int i = 0; i < tempArea.NumPoints; i++)
             {
-                double lat = tempArea.Points[i].Y;
-                double lon = tempArea.Points[i].X;
-
+                lat = tempArea.Points[i].Y;
+                lon = tempArea.Points[i].X;
                 if (i > 0)
                 {
                     double diff = lon - prevLon;
                     if (diff > 180) lon -= 360;
                     else if (diff < -180) lon += 360;
                 }
-
                 LatLon2XY_NoWrap(lat, lon, out double x, out double y);
                 GL.Vertex2(x, y);
 
@@ -667,6 +667,7 @@ namespace ADS_B_Display.Views
             foreach (var area in AreaManager.Areas)
             {
                 var color = area.Color;
+                GL.Disable(EnableCap.Texture2D);
                 GL.Enable(EnableCap.PolygonOffsetFill);
                 GL.PolygonOffset(1.0f, 1.0f);
                 GL.Color4(color.R / 255f, color.G / 255f, color.B / 255f, 0.3f);

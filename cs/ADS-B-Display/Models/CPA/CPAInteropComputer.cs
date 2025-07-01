@@ -19,9 +19,14 @@ namespace ADS_B_Display.Models.CPA
                 return false;
             }
 
+            //return CPAInterop.computeCPA(
+            //    ac1.Latitude, ac1.Longitude, ac1.Altitude, ac1.Speed, ac1.Heading,
+            //    ac2.Latitude, ac2.Longitude, ac2.Altitude, ac2.Speed, ac2.Heading,
+            //    out tcpa, out cpa_distance_nm, out vertical_cpa);
+
             return CPAInterop.computeCPA(
-                ac1.Latitude, ac1.Longitude, ac1.Altitude, ac1.Speed, ac1.Heading,
-                ac2.Latitude, ac2.Longitude, ac2.Altitude, ac2.Speed, ac2.Heading,
+                ac1.VLatitude, ac1.VLongitude, ac1.VAltitude, ac1.Speed , ac1.Heading,
+                ac2.VLatitude, ac2.VLongitude, ac2.VAltitude, ac2.Speed, ac2.Heading,
                 out tcpa, out cpa_distance_nm, out vertical_cpa);
         }
     }

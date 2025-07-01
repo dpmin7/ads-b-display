@@ -68,8 +68,8 @@ namespace ADS_B_Display.Models.CPA
             const double MetersToNauticalMiles = 1.0 / 1852.0;
             const double MetersToFeet = 3.28084;
 
-            var pos1 = GeoToXYZ(ac1.Latitude, ac1.Longitude, ac1.Altitude);
-            var pos2 = GeoToXYZ(ac2.Latitude, ac2.Longitude, ac2.Altitude);
+            var pos1 = GeoToXYZ(ac1.VLatitude, ac1.VLongitude, ac1.Altitude);
+            var pos2 = GeoToXYZ(ac2.VLatitude, ac2.VLongitude, ac2.Altitude);
 
             var vel1 = VelocityVector(ac1);
             var vel2 = VelocityVector(ac2);
