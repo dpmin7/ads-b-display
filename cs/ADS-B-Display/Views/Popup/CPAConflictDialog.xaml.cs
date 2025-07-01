@@ -84,22 +84,23 @@ namespace ADS_B_Display.Views
                 AirScreenPanelView.CenterMapToAction?.Invoke(lat, lon);
                 Debug.WriteLine($"[CPA DoubleClick] 이동 → {lon}, {lon}");
 
+            }
         }
-    }
 
-    // Helper class for grid binding
-    public class CPAConflictDisplayModel
-    {
-        public int Index { get; set; }
-        public string HexAddr1 { get; set; }
-        public string HexAddr2 { get; set; }
-        public double TCPA_Seconds { get; set; }
-        public double CPADistance_NM { get; set; }
+        // Helper class for grid binding
+        public class CPAConflictDisplayModel
+        {
+            public int Index { get; set; }
+            public string HexAddr1 { get; set; }
+            public string HexAddr2 { get; set; }
+            public double TCPA_Seconds { get; set; }
+            public double CPADistance_NM { get; set; }
 
-        public double Vertical_ft { get; set; }
+            public double Vertical_ft { get; set; }
 
-        public string AreaName1 { get; set; } // 추가
-        public string AreaName2 { get; set; } // 추가
-        public CPAConflictInfo Raw { get; set; } // 내부 데이터 참조용
+            public string AreaName1 { get; set; } // 추가
+            public string AreaName2 { get; set; } // 추가
+            public CPAConflictInfo Raw { get; set; } // 내부 데이터 참조용
+        }
     }
 }
