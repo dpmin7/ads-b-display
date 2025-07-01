@@ -34,7 +34,7 @@ namespace ADS_B_Display.Models.CPA
                         System.Diagnostics.Debug.WriteLine($"[CPA] Error: {ex.Message}");
                     }
 
-                    await Task.Delay(TimeSpan.FromSeconds(5), _cts.Token);
+                    await Task.Delay(TimeSpan.FromSeconds(4), _cts.Token);
                 }
             }, _cts.Token);
         }

@@ -3,13 +3,14 @@ using ADS_B_Display.Utils;
 using MahApps.Metro.Controls;
 using System;
 using System.Collections.Specialized;
+using System.ComponentModel;
 using System.Diagnostics;
 using System.Linq;
 using System.Windows;
 
 namespace ADS_B_Display.Views
 {
-    public partial class CPAConflictDialog : MetroWindow
+    public partial class CPAConflictDialog : MetroWindow, INotifyPropertyChanged
     {
         public CPAConflictInfo SelectedConflict { get; private set; }
 
@@ -17,14 +18,16 @@ namespace ADS_B_Display.Views
         {
             InitializeComponent();
 
+            DataContext = this; // 🔑 ViewModel로 자기 자신을 바인딩
+
             LoadConflictList();
 
             AircraftManager.CPAConflicts.CollectionChanged += OnConflictChanged;
         }
         private void LoadConflictList()
         {
-            CpaDataGrid.ItemsSource = AircraftManager.CPAConflicts
-                .OrderBy(c => c.TCPA_Seconds) // ✅ TCPA 기준 정렬
+            var list = AircraftManager.CPAConflicts
+                .OrderBy(c => c.TCPA_Seconds)
                 .Select((c, i) => new CPAConflictDisplayModel
                 {
                     Index = i + 1,
@@ -36,6 +39,15 @@ namespace ADS_B_Display.Views
                     AreaName1 = c.AreaName1,
                     Raw = c
                 }).ToList();
+
+            CpaDataGrid.ItemsSource = list;
+
+            if (list.Count > 0)
+            {
+                var first = list[0];
+                SelectedConflictText = $"# {first.HexAddr1} vs {first.HexAddr2} | TCPA : {first.TCPA_Seconds:F2} sec | CPA_Dist: {first.CPADistance_NM:F2} NM | Vertical_Dist: {first.Vertical_ft:F0} ft";
+                CpaDataGrid.SelectedItem = first;
+            }
         }
 
         private void OnConflictChanged(object sender, NotifyCollectionChangedEventArgs e)
@@ -63,10 +75,24 @@ namespace ADS_B_Display.Views
                     Raw = c
                 }).ToList();
         }
+
+        public event PropertyChangedEventHandler PropertyChanged;
+
+        private string _selectedConflictText;
+        public string SelectedConflictText
+        {
+            get => _selectedConflictText;
+            set
+            {
+                _selectedConflictText = value;
+                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(SelectedConflictText)));
+            }
+        }
         protected override void OnClosed(EventArgs e)
         {
             base.OnClosed(e);
             AircraftManager.CPAConflicts.CollectionChanged -= OnConflictChanged;
+            AircraftManager.SetFocusedAircraft(null, null);
         }
         private void CancelButton_Click(object sender, RoutedEventArgs e)
         {
@@ -75,13 +101,17 @@ namespace ADS_B_Display.Views
         }
         private void CpaDataGrid_MouseDoubleClick(object sender, System.Windows.Input.MouseButtonEventArgs e)
         {
-            
+
             if (CpaDataGrid.SelectedItem is CPAConflictDisplayModel selected)
             {
-                var hex = selected.HexAddr1; // 또는 HexAddr2
+                var hex1 = selected.HexAddr1; // 또는 HexAddr2
+                var hex2 = selected.HexAddr2; // 또는 HexAddr2
                 double lat = selected.Raw.Lat1;
                 double lon = selected.Raw.Lon1;
+                SelectedConflictText = $"# {selected.HexAddr1} vs {selected.HexAddr2} | TCPA : {selected.TCPA_Seconds:F2} sec | CPA_Dist: {selected.CPADistance_NM:F2} NM | Vertical_Dist: {selected.Vertical_ft:F0} ft";
+                AircraftManager.SetFocusedAircraft(hex1, hex2);
                 EventBus.Publish(EventIds.EvtCenterMapTo, (lat, lon));
+                
             }
         }
 

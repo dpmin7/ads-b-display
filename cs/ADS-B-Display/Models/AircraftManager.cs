@@ -31,6 +31,43 @@ namespace ADS_B_Display.Models
         private static ObservableCollection<CPAConflictInfo> _cpaConflicts = new ObservableCollection<CPAConflictInfo>();
         public static ObservableCollection<CPAConflictInfo> CPAConflicts => _cpaConflicts;
 
+        private static string _focusedAircraftHex1 = null;
+        private static string _focusedAircraftHex2 = null;
+
+        /// <summary>
+        /// 포커스한 항공기 식별자 저장
+        /// </summary>
+        public static void SetFocusedAircraft(string hex1, string hex2)
+        {
+            lock (lockObj)
+            {
+                _focusedAircraftHex1 = hex1;
+                _focusedAircraftHex2 = hex2;
+            }
+        }
+
+        /// <summary>
+        /// 포커스한 항공기 식별자 가져오기
+        /// </summary>
+        public static void GetFocusedAircraft(out string hex1, out string hex2)
+        {
+            lock (lockObj)
+            {
+                hex1 = _focusedAircraftHex1;
+                hex2 = _focusedAircraftHex2;
+            }
+        }
+
+        public static bool IsFocusedAircraft(string hexAddr)
+        {
+            lock (lockObj)
+            {
+                if (_focusedAircraftHex1 == hexAddr || _focusedAircraftHex2 == hexAddr)
+                    return true;
+            }
+            return false;
+        }
+
         public static List<CPAConflictInfo> GetCPAConflicts()
         {
             lock (lockObj)

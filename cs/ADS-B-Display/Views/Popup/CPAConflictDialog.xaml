@@ -13,51 +13,43 @@
             <RowDefinition Height="*" />
             <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
+        <DockPanel LastChildFill="True" Margin="10">
+            <!-- ✅ 맨 위 텍스트 (DockTop) -->
 
-        <!--  DataGrid for CPA Conflicts  -->
-        <DataGrid
-            x:Name="CpaDataGrid"
-            Grid.Row="0"
-            Margin="0,0,0,10"
-            AutoGenerateColumns="False"
-            BorderBrush="Gray"
-            BorderThickness="1"
-            CanUserAddRows="False"
-            IsReadOnly="True"
-            MouseDoubleClick="CpaDataGrid_MouseDoubleClick"
-            SelectionMode="Single"
-            SelectionUnit="FullRow">
-            <DataGrid.Columns>
-                <DataGridTextColumn
-                    Width="40"
-                    Binding="{Binding Index}"
-                    Header="#" />
-                <DataGridTextColumn
-                    Width="*"
-                    Binding="{Binding HexAddr1}"
-                    Header="HexAddr1" />
-                <DataGridTextColumn
-                    Width="*"
-                    Binding="{Binding HexAddr2}"
-                    Header="HexAddr2" />
-                <DataGridTextColumn
-                    Width="*"
-                    Binding="{Binding TCPA_Seconds, StringFormat={}{0:F2} sec}"
-                    Header="TCPA" />
-                <DataGridTextColumn
-                    Width="*"
-                    Binding="{Binding CPADistance_NM, StringFormat={}{0:F2} NM}"
-                    Header="CPA Dist" />
-                <DataGridTextColumn
-                    Width="*"
-                    Binding="{Binding Vertical_ft, StringFormat={}{0:F2} ft}"
-                    Header="Vertical Dist" />
-                <DataGridTextColumn
-                    Width="*"
-                    Binding="{Binding AreaName1}"
-                    Header="Area" />
-            </DataGrid.Columns>
-        </DataGrid>
+            <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Margin="0,0,0,10">
+                <TextBlock Text="Focused: " 
+               FontWeight="Bold" 
+               Foreground="White" 
+               FontSize="16" 
+               VerticalAlignment="Center"/>
+
+                <TextBlock Text="{Binding SelectedConflictText}" 
+               Margin="5,0,0,0" 
+               FontSize="16"
+               Foreground="#AAFF66" 
+               VerticalAlignment="Center"/>
+            </StackPanel>
+
+            <!-- ✅ 가운데를 채우는 DataGrid -->
+            <DataGrid x:Name="CpaDataGrid"
+                  AutoGenerateColumns="False"
+                  SelectionMode="Single"
+                  SelectionUnit="FullRow"
+                  CanUserAddRows="False"
+                  IsReadOnly="True"
+                  Margin="0,0,0,0"
+                  MouseDoubleClick="CpaDataGrid_MouseDoubleClick">
+                <DataGrid.Columns>
+                    <DataGridTextColumn Header="#" Binding="{Binding Index}" Width="40"/>
+                    <DataGridTextColumn Header="HexAddr1" Binding="{Binding HexAddr1}" Width="*"/>
+                    <DataGridTextColumn Header="HexAddr2" Binding="{Binding HexAddr2}" Width="*"/>
+                    <DataGridTextColumn Header="TCPA" Binding="{Binding TCPA_Seconds, StringFormat={}{0:F2} sec}" Width="*" />
+                    <DataGridTextColumn Header="CPA Dist" Binding="{Binding CPADistance_NM, StringFormat={}{0:F2} NM}" Width="*" />
+                    <DataGridTextColumn Header="Vertical Dist" Binding="{Binding Vertical_ft, StringFormat={}{0:F2} ft}" Width="*" />
+                    <DataGridTextColumn Header="Area" Binding="{Binding AreaName1}" Width="*"/>
+                </DataGrid.Columns>
+            </DataGrid>
+        </DockPanel>
 
         <!--  Buttons  -->
         <StackPanel

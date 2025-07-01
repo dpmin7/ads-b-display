@@ -76,7 +76,7 @@ namespace ADS_B_Display.Views
 
         private DispatcherTimer _updateTimer = new DispatcherTimer();
         private Timer _delayTimer;
-
+        
         public AirScreenPanelView()
         {
             InitializeComponent();
@@ -820,6 +820,14 @@ namespace ADS_B_Display.Views
                 // 항공기 타입에 따라 이미지 선택
                 Ntds2d.DrawAirplaneImage(scrX, scrY, data.Altitude, airplaneScale * 0.5, data.Heading, imageNum, data.IsGhost, data.IsConflictRisk);
 
+
+                if(AircraftManager.IsFocusedAircraft(data.HexAddr))
+                {
+                    LatLon2XY(data.VLatitude, data.VLongitude, out double x, out double y);
+                    GL.LineWidth((float)(airplaneScale * 1.2));
+                    GL.Color4(1.0f, 0.078f, 0.576f, 1.0f); // 형광 분홍색 (Deep Pink / #FF1493)
+                    Ntds2d.DrawCircleOutline(x, y, 20.0, 50);
+                }
                 
                 GL.PopAttrib();
             }
@@ -969,6 +977,7 @@ namespace ADS_B_Display.Views
         private void CenterMapTo(object msg)
         {
             (double lat, double lon) = ((double, double))msg;
+            
             CenterMapTo(lat, lon);
         }
 
