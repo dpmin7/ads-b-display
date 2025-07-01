@@ -205,7 +205,7 @@ namespace ADS_B_Display.Models.Connector
         public void ReadDataFromDatabase()
         {
             string fullTablePath = "scs-lg-arch-5.SBS_Data." + _TableId;
-            int batchSize = 100;
+            int batchSize = 50000;
             int offset = 0;
             bool isFirstBatch = true;
             bool isFirstRow = true;
