@@ -1,9 +1,7 @@
 ﻿using ADS_B_Display.Models;
 using ADS_B_Display.Utils;
-using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
-using System.ComponentModel;
 using System.Globalization;
 using System.IO;
 using System.Linq;
@@ -183,9 +181,23 @@ namespace ADS_B_Display
         private static readonly ICAORange[] MilitaryRanges = new ICAORange[]
         {
             new ICAORange(0xADF7C8, 0xAFFFFF, "US", "United States Military"),
+            new ICAORange(0xAE0000, 0xAEFFFF, "US", "United States Military (Air Force)"),
+            new ICAORange(0x43C000, 0x43CFFF, "GB", "United Kingdom (Royal Air Force)"),
+            new ICAORange(0x3F4000, 0x3FFFFF, "FR", "France Military"),
             new ICAORange(0x3B0000, 0x3BFFFF, "DE", "Germany Military"),
-            new ICAORange(0xC0CDF9, 0xC3FFFF, "CA", "Canada Military")
-            // 생략된 범위는 필요 시 추가
+            new ICAORange(0x7C8000, 0x7CFFFF, "AU", "Australia Military"),
+            new ICAORange(0x480000, 0x48FFFF, "NL", "Netherlands Military"),
+            new ICAORange(0x33FF00, 0x33FFFF, "IT", "Italy Military (Partial)"),
+            new ICAORange(0xC00000, 0xC3FFFF, "CA", "Canada Military"),
+            new ICAORange(0x448000, 0x44FFFF, "NATO", "NATO"),
+            new ICAORange(0x718000, 0x71FFFF, "JP", "Japan Self-Defense Forces"),
+            new ICAORange(0x738000, 0x73FFFF, "KR", "Republic of Korea Air Force"),
+            new ICAORange(0x4A8000, 0x4A8FFF, "SE", "Sweden Military"),
+            new ICAORange(0x4B8000, 0x4B8FFF, "NO", "Norway Military"),
+            new ICAORange(0x468000, 0x46FFFF, "TR", "Turkey Military"),
+            new ICAORange(0x4D0000, 0x4D1FFF, "PL", "Poland Military"),
+            new ICAORange(0xE40000, 0xE7FFFF, "IN", "India Military"),
+            new ICAORange(0x780000, 0x7BFFFF, "CN", "China Military")
         };
 
         private static int ConvertSpriteImage(string icaoaircrafttype)

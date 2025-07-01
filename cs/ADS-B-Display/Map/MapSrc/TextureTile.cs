@@ -105,7 +105,7 @@ namespace ADS_B_Display.Map.MapSrc
             Touch();
             if (IsReady)
             {
-                // _texture.AdjustBrightness(0.7f);
+                _texture.AdjustBrightness(0.7f);
                 _texture.SetTexture();
             } 
         }
