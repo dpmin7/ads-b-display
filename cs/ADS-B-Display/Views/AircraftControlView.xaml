@@ -117,99 +117,134 @@
 
 
             <GroupBox Header="Close Control">
-                <UniformGrid Margin="8,10" Columns="2">
-                    <UniformGrid.Resources>
-                        <Style x:Key="TitleText" TargetType="TextBlock">
-                            <Setter Property="Margin" Value="0,4,0,0" />
-                        </Style>
-                        <Style x:Key="ValueText" TargetType="TextBlock">
-                            <Setter Property="Margin" Value="8,0,0,0" />
-                        </Style>
-                    </UniformGrid.Resources>
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition />
+                        <ColumnDefinition />
+                    </Grid.ColumnDefinitions>
+                    <StackPanel Margin="8,10">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock
+                                Margin="0,4,0,0"
+                                FontWeight="Bold"
+                                Text="ICAO:" />
+                            <TextBlock Margin="8,4,0,0" Text="{Binding Aircraft.ICAO, FallbackValue=NA}" />
+                        </StackPanel>
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock
+                                Margin="0,4,0,0"
+                                FontWeight="Bold"
+                                Text="FLIGHT #:" />
+                            <TextBlock Margin="8,4,0,0" Text="{Binding Aircraft.FlightNum, FallbackValue=NA}" />
+                        </StackPanel>
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock
+                                Margin="0,4,0,0"
+                                FontWeight="Bold"
+                                Text="LAT:" />
+                            <TextBlock Margin="8,4,0,0" Text="{Binding Aircraft.Latitude, FallbackValue=NA, Converter={StaticResource D2Lat}}" />
+                        </StackPanel>
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock
+                                Margin="0,4,0,0"
+                                FontWeight="Bold"
+                                Text="LON:" />
+                            <TextBlock Margin="8,4,0,0" Text="{Binding Aircraft.Longitude, FallbackValue=NA, Converter={StaticResource D2Lon}}" />
+                        </StackPanel>
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock
+                                Margin="0,4,0,0"
+                                FontWeight="Bold"
+                                Text="SPD:" />
+                            <TextBlock Margin="8,4,0,0">
+                                <Run Text="{Binding Aircraft.Speed, FallbackValue=NA, StringFormat=F2}" />
+                                <Run Text=" KTS" />
+                            </TextBlock>
+                        </StackPanel>
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock
+                                Margin="0,4,0,0"
+                                FontWeight="Bold"
+                                Text="VRATE:" />
+                            <TextBlock Margin="8,4,0,0">
+                                <Run Text="{Binding Aircraft.VerticalRate, FallbackValue=NA, StringFormat=F2}" />
+                            </TextBlock>
+                        </StackPanel>
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock
+                                Margin="0,4,0,0"
+                                FontWeight="Bold"
+                                Text="HDG:" />
+                            <TextBlock Margin="8,4,0,0">
+                                <Run Text="{Binding Aircraft.Heading, FallbackValue=NA}" />
+                                <Run Text=" DEG" />
+                            </TextBlock>
+                        </StackPanel>
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock
+                                Margin="0,4,0,0"
+                                FontWeight="Bold"
+                                Text="ALT:" />
+                            <TextBlock Margin="8,4,0,0">
+                                <Run Text="{Binding Aircraft.Altitude, FallbackValue=NA}" />
+                                <Run Text=" FT" />
+                            </TextBlock>
+                        </StackPanel>
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock
+                                Margin="0,4,0,0"
+                                FontWeight="Bold"
+                                Text="MSG CNT :" />
+                            <TextBlock Margin="8,4,0,0" Text="Raw : " />
+                            <TextBlock Margin="0,4,0,0" Text="{Binding Aircraft.NumMessagesRaw, FallbackValue=0}" />
+                            <TextBlock Margin="8,4,0,0" Text="SBS : " />
+                            <TextBlock Margin="0,4,0,0" Text="{Binding Aircraft.NumMessagesSBS, FallbackValue=0}" />
+                        </StackPanel>
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock
+                                Margin="0,4,0,0"
+                                FontWeight="Bold"
+                                Text="LAST UPDATE TIME:" />
+                        </StackPanel>
+                        <TextBlock Margin="8,4,0,0" Text="{Binding Aircraft.LastSeen, StringFormat='yyyy-MM-dd HH:mm:ss', Converter={StaticResource msToTime}}" />
 
-                    <TextBlock
-                        FontWeight="Bold"
-                        Style="{StaticResource TitleText}"
-                        Text="ICAO:" />
-                    <TextBlock
-                        FontWeight="Bold"
-                        Style="{StaticResource TitleText}"
-                        Text="FLIGHT #:" />
-                    <TextBlock Style="{StaticResource ValueText}" Text="{Binding Aircraft.ICAO, FallbackValue=NA}" />
-                    <TextBlock Style="{StaticResource ValueText}" Text="{Binding Aircraft.FlightNum, FallbackValue=NA}" />
-                    <TextBlock
-                        FontWeight="Bold"
-                        Style="{StaticResource TitleText}"
-                        Text="LAT:" />
-                    <!--  40°38'07.13&quot; N  -->
-                    <TextBlock
-                        FontWeight="Bold"
-                        Style="{StaticResource TitleText}"
-                        Text="LON:" />
-                    <TextBlock Style="{StaticResource ValueText}" Text="{Binding Aircraft.Longitude, FallbackValue=NA, Converter={StaticResource D2Lon}}" />
-                    <TextBlock Style="{StaticResource ValueText}" Text="{Binding Aircraft.Latitude, FallbackValue=NA, Converter={StaticResource D2Lat}}" />
-                    <TextBlock
-                        FontWeight="Bold"
-                        Style="{StaticResource TitleText}"
-                        Text="SPD:" />
-                    <TextBlock
-                        FontWeight="Bold"
-                        Style="{StaticResource TitleText}"
-                        Text="VRATE:" />
-                    <TextBlock Style="{StaticResource ValueText}">
-                        <Run Text="{Binding Aircraft.Speed, FallbackValue=NA, StringFormat=F2}" />
-                        <Run Text="KTS" />
-                    </TextBlock>
-                    <TextBlock Style="{StaticResource ValueText}">
-                        <Run Text="{Binding Aircraft.VerticalRate, FallbackValue=NA, StringFormat=F2}" />
-                    </TextBlock>
-                    <TextBlock
-                        FontWeight="Bold"
-                        Style="{StaticResource TitleText}"
-                        Text="HDG:" />
-                    <TextBlock
-                        FontWeight="Bold"
-                        Style="{StaticResource TitleText}"
-                        Text="ALT:" />
-                    <TextBlock Style="{StaticResource ValueText}">
-                        <Run Text="{Binding Aircraft.Heading, FallbackValue=NA}" />
-                        <Run Text="DEG" />
-                    </TextBlock>
-                    <TextBlock Style="{StaticResource ValueText}">
-                        <Run Text="{Binding Aircraft.Altitude, FallbackValue=NA}" />
-                        <Run Text="FT" />
-                    </TextBlock>
-                    <TextBlock
-                        FontWeight="Bold"
-                        Style="{StaticResource TitleText}"
-                        Text="MSG CNT :" />
-                    <Rectangle Visibility="Hidden" />
-                    <StackPanel Grid.Row="9" Orientation="Horizontal">
-                        <TextBlock Style="{StaticResource ValueText}" Text="Raw : " />
-                        <TextBlock Text="{Binding Aircraft.NumMessagesRaw, FallbackValue=0}" />
-                        <TextBlock Style="{StaticResource ValueText}" Text="SBS : " />
-                        <TextBlock Text="{Binding Aircraft.NumMessagesSBS, FallbackValue=0}" />
                     </StackPanel>
-                    <Rectangle Visibility="Hidden" />
-                    <TextBlock
-                        HorizontalAlignment="Left"
-                        FontWeight="Bold"
-                        Style="{StaticResource TitleText}"
-                        Text="LAST UPDATE TIME:    " />
-                    <Rectangle Visibility="Hidden" />
-                    <TextBlock
-                        HorizontalAlignment="Left"
-                        Style="{StaticResource ValueText}"
-                        Text="{Binding Aircraft.LastSeen, StringFormat='yyyy-MM-dd HH:mm:ss', Converter={StaticResource msToTime}}" />
+                    <StackPanel
+                        Grid.Column="1"
+                        Margin="8,10"
+                        Orientation="Vertical">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock
+                                Margin="0,4,0,0"
+                                FontWeight="Bold"
+                                Text="Airline:" />
+                            <TextBlock Margin="8,4,0,0" Text="{Binding Aircraft.AircraftData.OperatorIcao, FallbackValue=NA}" />
+                        </StackPanel>
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock
+                                Margin="0,4,0,0"
+                                FontWeight="Bold"
+                                Text="Country:" />
+                            <TextBlock Margin="8,4,0,0" Text="{Binding Aircraft.AircraftData.Country, FallbackValue=NA}" />
+                        </StackPanel>
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock
+                                Margin="0,4,0,0"
+                                FontWeight="Bold"
+                                Text="Aircraft Type:" />
+                            <TextBlock Margin="8,4,0,0" Text="{Binding Aircraft.AircraftData.IcaoAircraftType, FallbackValue=NA}" />
+                        </StackPanel>
+                    </StackPanel>
                     <Button
-                        Grid.RowSpan="12"
-                        Grid.ColumnSpan="2"
+                        Grid.Column="1"
                         Width="100"
+                        Margin="8"
                         HorizontalAlignment="Right"
                         VerticalAlignment="Bottom"
                         Command="{Binding Cmd_Analytics}"
                         Content="Analytics" />
-                </UniformGrid>
+                </Grid>
+
             </GroupBox>
 
             <!--  ─── 3) Display Map / Purge ───  -->

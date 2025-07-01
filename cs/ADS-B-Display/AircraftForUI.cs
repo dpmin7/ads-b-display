@@ -1,4 +1,5 @@
-﻿using System.ComponentModel;
+﻿using ADS_B_Display.Models;
+using System.ComponentModel;
 using System.Runtime.CompilerServices;
 
 namespace ADS_B_Display
@@ -30,7 +31,11 @@ namespace ADS_B_Display
             Speed = aircraft.Speed;
             VerticalRate = aircraft.VerticalRate;
             SpriteImage = aircraft.SpriteImage;
+
+            AircraftData = aircraft.AircraftData;
+            OnPropertyChanged(nameof(AircraftData));
         }
+        public AircraftData AircraftData { get; set; }
 
         private uint _icao;
         public uint ICAO
