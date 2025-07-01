@@ -27,28 +27,36 @@ namespace ADS_B_Display.Map.MapSrc
                 {
                     if (token.IsCancellationRequested) break;
 
-                    // ✨ 수정된 로직 ✨
-                    // 타일이 오래되었는지 여부를 Process() 호출 직전에만 확인합니다.
-                    if (tile.IsOld)
-                    {
-                        // 오래된 타일은 로딩할 필요가 없으므로 그냥 건너뜁니다.
-                        // 이 시점에서 쿼드트리 참조는 이미 끊어졌고, 큐에서도 제거되었으므로
-                        // 다른 곳에 참조가 없다면 GC가 수거해 갈 것입니다.
-                        continue;
-                    }
+                    // ✨ --- 최종 수정된 로직 --- ✨
 
-                    // 이제 이 타일은 '오래되지 않은 것'이 확실하므로 로딩을 진행합니다.
+                    // 1. 작업을 시작하기 전, 타일의 로드 상태를 미리 저장합니다.
+                    bool wasAlreadyLoaded = tile.IsLoaded;
+
+                    // 2. 실제 로딩 또는 저장 작업을 처리합니다.
                     try
                     {
                         await Process(tile);
                     }
-                    catch (Exception e) { Console.Error.WriteLine($"Error: {e}"); }
+                    catch (Exception e)
+                    {
+                        Console.Error.WriteLine($"Error processing tile {tile.X},{tile.Y},{tile.Level}: {e}");
+                    }
 
-                    // 로딩 후의 후처리 로직은 그대로 둡니다.
-                    if (tile.IsLoaded && tile.IsSaveable)
+                    // 3. 작업 후 상태에 따라 후속 작업을 딱 한 번만 수행하여 무한 루프를 방지합니다.
+                    if (!wasAlreadyLoaded && tile.IsLoaded)
+                    {
+                        // Case A: 로딩에 성공한 경우 (예: 인터넷에서 다운로드 완료)
+                        // -> 이제 이 타일을 저장 큐로 보냅니다.
                         SaveStorage?.Enqueue(tile);
-                    else
+                    }
+                    else if (!wasAlreadyLoaded && !tile.IsLoaded)
+                    {
+                        // Case B: 로딩에 실패한 경우 (예: 디스크에도 없고, 다음 소스가 있다면)
+                        // -> 다음 로더(인터넷)의 큐로 보냅니다.
                         NextLoadStorage?.Enqueue(tile);
+                    }
+                    // Case C: 이미 로드된 상태로 큐에 들어온 경우 (예: 저장 큐에서 온 타일)
+                    // -> 모든 작업이 끝났으므로 아무것도 하지 않고 루프를 종료하여 타일을 해제합니다.
                 }
             }
             catch (OperationCanceledException) { }
