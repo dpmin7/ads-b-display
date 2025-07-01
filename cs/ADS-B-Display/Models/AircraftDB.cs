@@ -303,16 +303,9 @@ namespace ADS_B_Display
                 return data;
             }
 
-            return null;
-        }
+            (var countryShort, var country) = GetCountry(addr);
 
-        public static string GetCountry(uint addr, bool shortCode)
-        {
-            foreach (var range in CountryRanges) {
-                if (addr >= range.Low && addr <= range.High)
-                    return shortCode ? range.ShortCode : range.LongName;
-            }
-            return "Unknown";
+            return new AircraftData { Icao24 = addr, Country = country, CountryShort = countryShort, IsMilitary = IsMilitary(addr) };
         }
 
         public static (string, string) GetCountry(uint addr)
