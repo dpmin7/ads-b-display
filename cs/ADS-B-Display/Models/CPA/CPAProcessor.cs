@@ -111,10 +111,10 @@ namespace ADS_B_Display.Models.CPA
             AircraftManager.UpdateCPAConflicts(conflictList);
             cpaStopwatch.Stop();
              
-            logger.Debug($"[CPA] Total aircrafts: {count}");
-            logger.Debug($"[CPA] Total calculateCnt: {calculatedPairs:N0}");
-            logger.Debug($"[CPA] Total candidateCnt: {collisionCandidateCnt:N0}");
-            logger.Debug($"[CPA] Elapsed time: {cpaStopwatch.Elapsed.TotalSeconds:F2} seconds");
+            logger.Info($"[CPA] Total aircrafts: {count}");
+            logger.Info($"[CPA] Total calculateCnt: {calculatedPairs:N0}");
+            logger.Info($"[CPA] Total candidateCnt: {collisionCandidateCnt:N0}");
+            logger.Info($"[CPA] Elapsed time: {cpaStopwatch.Elapsed.TotalSeconds:F2} seconds");
         }
 
         //private static bool HorizontalRangeFilter(double lat1, double lon1, double lat2, double lon2, double rangeNm)
