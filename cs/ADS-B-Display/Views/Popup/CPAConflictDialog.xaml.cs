@@ -2,6 +2,7 @@
 using ADS_B_Display.Utils;
 using System;
 using System.Collections.Specialized;
+using System.Diagnostics;
 using System.Linq;
 using System.Windows;
 
@@ -31,6 +32,7 @@ namespace ADS_B_Display.Views
                     HexAddr2 = c.HexAddr2,
                     TCPA_Seconds = c.TCPA_Seconds,
                     CPADistance_NM = c.CPADistance_NM,
+                    Vertical_ft = c.Vertical_ft,
                     AreaName1 = c.AreaName1,
                     Raw = c
                 }).ToList();
@@ -48,7 +50,7 @@ namespace ADS_B_Display.Views
             // UI 스레드에서 실행 중이므로 안전하게 UI 접근 가능
             var snapshot = AircraftManager.GetCPAConflicts(); // Snapshot으로 동시성 문제 방지
             CpaDataGrid.ItemsSource = snapshot
-                .OrderBy(c => c.TCPA_Seconds)
+                .OrderBy(c => c.CPADistance_NM)
                 .Select((c, i) => new CPAConflictDisplayModel
                 {
                     Index = i + 1,
@@ -56,6 +58,7 @@ namespace ADS_B_Display.Views
                     HexAddr2 = c.HexAddr2,
                     TCPA_Seconds = c.TCPA_Seconds,
                     CPADistance_NM = c.CPADistance_NM,
+                    Vertical_ft = c.Vertical_ft,
                     AreaName1 = c.AreaName1,
                     Raw = c
                 }).ToList();
@@ -65,32 +68,22 @@ namespace ADS_B_Display.Views
             base.OnClosed(e);
             AircraftManager.CPAConflicts.CollectionChanged -= OnConflictChanged;
         }
-
-        private void OkButton_Click(object sender, RoutedEventArgs e)
-        {
-            if (CpaDataGrid.SelectedItem is CPAConflictDisplayModel selected)
-            {
-                SelectedConflict = selected.Raw;
-            }
-            Close();
-        }
-
         private void CancelButton_Click(object sender, RoutedEventArgs e)
         {
             // DialogResult = false; ❌ 사용 금지
             Close();
         }
-
-        private void CpaDataGrid_PreviewMouseDoubleClick(object sender, System.Windows.Input.MouseButtonEventArgs e)
+        private void CpaDataGrid_MouseDoubleClick(object sender, System.Windows.Input.MouseButtonEventArgs e)
         {
-            if (CpaDataGrid.SelectedItem == null)
-                return;
 
-            if(CpaDataGrid.SelectedItem is CPAConflictInfo info)
+            if (CpaDataGrid.SelectedItem is CPAConflictDisplayModel selected)
             {
-                EventBus.Publish(EventIds.EvtJumpToLatLon, (info.Lon1, info.Lat1));
-            }
-            
+                var hex = selected.HexAddr1; // 또는 HexAddr2
+                double lat = selected.Raw.Lat1;
+                double lon = selected.Raw.Lon1;
+                AirScreenPanelView.CenterMapToAction?.Invoke(lat, lon);
+                Debug.WriteLine($"[CPA DoubleClick] 이동 → {lon}, {lon}");
+
         }
     }
 
@@ -102,6 +95,8 @@ namespace ADS_B_Display.Views
         public string HexAddr2 { get; set; }
         public double TCPA_Seconds { get; set; }
         public double CPADistance_NM { get; set; }
+
+        public double Vertical_ft { get; set; }
 
         public string AreaName1 { get; set; } // 추가
         public string AreaName2 { get; set; } // 추가

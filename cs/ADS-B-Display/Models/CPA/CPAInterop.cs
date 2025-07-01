@@ -15,8 +15,7 @@ namespace ADS_B_Display.Models.CPA
         public static extern bool computeCPA(
             double lat1, double lon1, double altitude1, double speed1, double heading1,
             double lat2, double lon2, double altitude2, double speed2, double heading2,
-            out double tcpa, out double cpa_distance_nm);
+            out double tcpa, out double cpa_distance_nm, out double vertical_cpa);
     }
 
-    
 }

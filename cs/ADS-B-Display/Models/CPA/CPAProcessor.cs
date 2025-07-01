@@ -74,7 +74,7 @@ namespace ADS_B_Display.Models.CPA
                         continue;
                     }
 
-                    if (cpaComputer.ComputeCPA(ac1, ac2, out double tcpa, out double cpaDistanceNm))
+                    if (cpaComputer.ComputeCPA(ac1, ac2, out double tcpa, out double cpaDistanceNm, out double vertical_cpa))
                     {
                         if (tcpa > thresholdForTcpa)
                         {
@@ -96,6 +96,7 @@ namespace ADS_B_Display.Models.CPA
                             conflictInfo.Alt2 = ac2.Altitude;  
                             conflictInfo.TCPA_Seconds = tcpa;
                             conflictInfo.CPADistance_NM = cpaDistanceNm;
+                            conflictInfo.Vertical_ft = vertical_cpa;
                             conflictInfo.AreaName1 = ac1.AreaName;
                             conflictInfo.AreaName2 = ac1.AreaName;
                             conflictList.Add(conflictInfo);

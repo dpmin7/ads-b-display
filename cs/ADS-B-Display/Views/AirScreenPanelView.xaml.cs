@@ -77,7 +77,7 @@ namespace ADS_B_Display.Views
         private DispatcherTimer _updateTimer = new DispatcherTimer();
         private Timer _delayTimer;
 
-
+        public static Action<double, double> CenterMapToAction; //CPA 항목 더블클릭시 Center 이동용
         public AirScreenPanelView()
         {
             InitializeComponent();
@@ -108,6 +108,7 @@ namespace ADS_B_Display.Views
 
             // aircrafe load
             AircraftDB.Init();
+            CenterMapToAction = CenterMapTo;    //CPA 항목 더블클릭시 Center 이동용
         }
 
         public void Dispose()
@@ -188,8 +189,11 @@ namespace ADS_B_Display.Views
                 {
                     InsertPolygon(x, y);
                 }
-                bool ctrl = Keyboard.Modifiers == ModifierKeys.Control;
-                HookTrack(x, y, ctrl);
+                else
+                {
+                    bool ctrl = Keyboard.Modifiers == ModifierKeys.Control;
+                    HookTrack(x, y, ctrl);
+                }
                 //}
             }
             else if (e.ChangedButton == MouseButton.Middle)

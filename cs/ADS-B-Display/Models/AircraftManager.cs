@@ -226,7 +226,7 @@ namespace ADS_B_Display.Models
                             if(area.AddAircraft(aircraft))
                             {
                                 string time = DateTime.Now.ToString("HH:mm:ss.fff");
-                                string msg = $"[{time}] [Polygon] New Aircraft In Polygon: {aircraft.HexAddr} IN {area.AreaName}";
+                                string msg = $"[{time}] [Polygon] New Aircraft {aircraft.HexAddr} IN {area.AreaName}";
 
                                 AreaMonitorPopup.WriteLog(msg);  // Trace 대신 직접 호출
                             }
@@ -270,6 +270,8 @@ namespace ADS_B_Display.Models
 
         public double TCPA_Seconds { get; set; }
         public double CPADistance_NM { get; set; }
+
+        public double Vertical_ft { get; set; }
 
         public String AreaName1 { get; set; }
         public String AreaName2 { get; set; }

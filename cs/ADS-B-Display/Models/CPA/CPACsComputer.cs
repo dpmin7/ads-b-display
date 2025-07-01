@@ -13,16 +13,17 @@ namespace ADS_B_Display.Models.CPA
         /// <param name="ac1">첫 번째 항공기</param>
         /// <param name="ac2">두 번째 항공기</param>
         /// <returns>CPA 거리(m)와 시간(s). 유효하지 않으면 (-1, -1) 반환</returns>
-        public bool ComputeCPA(Aircraft ac1, Aircraft ac2, out double tcpa, out double cpa_distance_nm)
+        public bool ComputeCPA(Aircraft ac1, Aircraft ac2, out double tcpa, out double cpa_distance_nm, out double vertical_cpa)
         {
             if (!IsValidAircraft(ac1) || !IsValidAircraft(ac2))
             {
                 tcpa = -1;
                 cpa_distance_nm = -1;
+                vertical_cpa = -1;
                 return false;
             }
 
-            return ClosestApproachCalculator.FindClosestDistance(ac1, ac2, out tcpa, out cpa_distance_nm);
+            return ClosestApproachCalculator.FindClosestDistance(ac1, ac2, out tcpa, out cpa_distance_nm, out vertical_cpa);
         }
 
         private static bool IsValidAircraft(Aircraft ac)
@@ -62,9 +63,11 @@ namespace ADS_B_Display.Models.CPA
         private const double KnotToMs = 0.514444;
         private const double FtPerMinToMs = 0.00508;
 
-        public static bool FindClosestDistance(Aircraft ac1, Aircraft ac2, out double tcpa, out double cpa_distance_nm)
+        public static bool FindClosestDistance(Aircraft ac1, Aircraft ac2, out double tcpa, out double cpa_distance_nm, out double vertical_cpa)
         {
             const double MetersToNauticalMiles = 1.0 / 1852.0;
+            const double MetersToFeet = 3.28084;
+
             var pos1 = GeoToXYZ(ac1.Latitude, ac1.Longitude, ac1.Altitude);
             var pos2 = GeoToXYZ(ac2.Latitude, ac2.Longitude, ac2.Altitude);
 
@@ -81,6 +84,9 @@ namespace ADS_B_Display.Models.CPA
             var closestP2 = pos2 + vel2 * tStar;
 
             cpa_distance_nm = (closestP1 - closestP2).Magnitude() * MetersToNauticalMiles;
+
+            vertical_cpa = Math.Abs(closestP1.Z - closestP2.Z) * MetersToFeet;
+
             return true;
         }
 

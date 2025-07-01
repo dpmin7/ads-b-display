@@ -1,7 +1,7 @@
 ﻿<Window x:Class="ADS_B_Display.Views.CPAConflictDialog"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="CPA Conflict List" Height="400" Width="600" WindowStartupLocation="CenterOwner">
+        Title="CPA Conflict List" Height="400" Width="800" WindowStartupLocation="CenterOwner">
     <Grid Margin="10">
         <Grid.RowDefinitions>
             <RowDefinition Height="*" />
@@ -17,7 +17,8 @@
                   IsReadOnly="True"
 		  PreviewMouseDoubleClick="CpaDataGrid_PreviewMouseDoubleClick"
                   Grid.Row="0"
-                  Margin="0,0,0,10">
+                  Margin="0,0,0,10"
+                  MouseDoubleClick="CpaDataGrid_MouseDoubleClick">
             <DataGrid.Columns>
                 <DataGridTextColumn Header="#" Binding="{Binding Index}" Width="40"/>
                 <DataGridTextColumn Header="HexAddr1" Binding="{Binding HexAddr1}" Width="*"/>
@@ -25,17 +26,19 @@
                 <DataGridTextColumn Header="TCPA"
                     Binding="{Binding TCPA_Seconds, StringFormat={}{0:F2} sec}"
                     Width="*" />
-                <DataGridTextColumn Header="CPA Dist (NM)"
+                <DataGridTextColumn Header="CPA Dist"
                     Binding="{Binding CPADistance_NM, StringFormat={}{0:F2} NM}"
                     Width="*" />
+                <DataGridTextColumn Header="Vertical Dist"
+                    Binding="{Binding Vertical_ft, StringFormat={}{0:F2} ft}"
+                    Width="*" />        
                 <DataGridTextColumn Header="Area" Binding="{Binding AreaName1}" Width="*"/>
             </DataGrid.Columns>
         </DataGrid>
 
         <!-- Buttons -->
         <StackPanel Grid.Row="1" Orientation="Horizontal" HorizontalAlignment="Right">
-            <Button Content="OK" Width="75" Margin="5,0" Click="OkButton_Click"/>
-            <Button Content="Cancel" Width="75" Margin="5,0" Click="CancelButton_Click"/>
+            <Button Content="Close" Width="75" Margin="5,0" Click="CancelButton_Click"/>
         </StackPanel>
     </Grid>
 </Window>
