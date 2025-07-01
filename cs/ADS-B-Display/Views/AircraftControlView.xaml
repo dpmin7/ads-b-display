@@ -132,7 +132,7 @@
                                 Margin="0,4,0,0"
                                 FontWeight="Bold"
                                 Text="ICAO:" />
-                            <TextBlock Margin="8,4,0,0" Text="{Binding Aircraft.ICAO, FallbackValue=NA}" />
+                            <TextBlock Margin="8,4,0,0" Text="{Binding Aircraft.HexAddr, FallbackValue=NA}" />
                         </StackPanel>
                         <StackPanel Orientation="Horizontal">
                             <TextBlock

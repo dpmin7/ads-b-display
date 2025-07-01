@@ -8,6 +8,9 @@ using System.Windows;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using ADS_B_Display.Utils;
+using SkiaSharp;
+using System.Drawing.Imaging;
+using System.Drawing;
 
 // 참고: WPF 기능을 사용하므로, 프로젝트 파일(.csproj)에 <UseWPF>true</UseWPF> 설정과
 // WindowsBase, PresentationCore 라이브러리 참조가 필요합니다.
@@ -37,57 +40,20 @@ namespace ADS_B_Display
         private static int airportTextId = 0;
         private static bool airportVboInitialized = false;
 
-        // --- ✨ 텍스트 렌더링을 위해 새로 추가된 멤버 변수 ✨ ---
         private static Dictionary<string, (int textureId, int width, int height)> textTextureCache = new Dictionary<string, (int, int, int)>();
 
-        // --- ✨ 텍스트 렌더링을 위한 헬퍼 함수 ✨ ---
-
-        private static BitmapSource CreateTextBitmapWpf(string text, string fontFamily, double fontSize, System.Windows.Media.Color textColor)
+        // font
+        public struct FontChar
         {
-            var formattedText = new FormattedText(
-                text, CultureInfo.CurrentCulture, FlowDirection.LeftToRight,
-                new Typeface(fontFamily), fontSize, new SolidColorBrush(textColor), 1.0
-            );
-
-            var drawingVisual = new DrawingVisual();
-            using (var drawingContext = drawingVisual.RenderOpen())
-            {
-                drawingContext.DrawText(formattedText, new Point(2, 0));
-            }
-
-            var bmp = new RenderTargetBitmap(
-                (int)Math.Ceiling(formattedText.Width) + 4, (int)Math.Ceiling(formattedText.Height),
-                96, 96, PixelFormats.Pbgra32
-            );
-
-            bmp.Render(drawingVisual);
-            bmp.Freeze();
-            return bmp;
+            public int id;
+            public float x, y, width, height;
+            public float xOffset, yOffset, xAdvance;
         }
 
-        private static (int textureId, int width, int height) CreateTextureFromBitmap(BitmapSource bitmap)
-        {
-            if (bitmap.Format != PixelFormats.Bgra32)
-                bitmap = new FormatConvertedBitmap(bitmap, PixelFormats.Bgra32, null, 0);
-
-            int width = bitmap.PixelWidth;
-            int height = bitmap.PixelHeight;
-            int stride = width * 4;
-            byte[] pixels = new byte[height * stride];
-            bitmap.CopyPixels(pixels, stride, 0);
-
-            int textureId = GL.GenTexture();
-            GL.BindTexture(TextureTarget.Texture2D, textureId);
-            GL.TexImage2D(TextureTarget.Texture2D, 0, PixelInternalFormat.Rgba, width, height, 0,
-                          OpenTK.Graphics.OpenGL.PixelFormat.Bgra, PixelType.UnsignedByte, pixels);
-
-            GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMinFilter, (int)TextureMinFilter.Linear);
-            GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMagFilter, (int)TextureMagFilter.Linear);
-            GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureWrapS, (int)TextureWrapMode.ClampToEdge);
-            GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureWrapT, (int)TextureWrapMode.ClampToEdge);
-            GL.BindTexture(TextureTarget.Texture2D, 0);
-            return (textureId, width, height);
-        }
+        public static Dictionary<char, FontChar> CharMap = new Dictionary<char, FontChar>();
+        public static int fontTextureId;
+        private static int _fontTextureWidth;
+        private static int _fontTextureHeight;
 
         public static int MakeAirplaneImages()
         {
@@ -466,6 +432,53 @@ namespace ADS_B_Display
             return textureId;
         }
 
+        // Ntds2d.cs 안에 있는 함수
+        public static (int textureId, int width, int height) LoadTextureFontFromFile(string filePath)
+        {
+            // 1. 파일이 존재하는지 확인
+            if (!File.Exists(filePath))
+            {
+                Console.WriteLine($"Error: Texture file not found at {filePath}");
+                return (0, 0, 0);
+            }
+
+            // 2. WPF 비트맵 디코더로 이미지 로드
+            var decoder = new PngBitmapDecoder(new Uri(filePath), BitmapCreateOptions.PreservePixelFormat, BitmapCacheOption.OnLoad);
+            var bitmap = decoder.Frames[0];
+
+            // 3. 실제 이미지의 너비와 높이를 변수에 저장
+            int width = bitmap.PixelWidth;
+            int height = bitmap.PixelHeight;
+
+            // 4. 비트맵 픽셀 데이터를 byte 배열로 복사
+            int stride = width * 4; // 픽셀당 4바이트(BGRA)
+            byte[] pixels = new byte[height * stride];
+            bitmap.CopyPixels(pixels, stride, 0);
+
+            // 5. OpenGL 텍스처 생성
+            int textureId = GL.GenTexture();
+            GL.BindTexture(TextureTarget.Texture2D, textureId);
+
+            // 6. 텍스처 데이터 업로드 (BGRA 형식으로)
+            GL.TexImage2D(TextureTarget.Texture2D, 0, PixelInternalFormat.Rgba, width, height, 0,
+                          OpenTK.Graphics.OpenGL.PixelFormat.Bgra, PixelType.UnsignedByte, pixels);
+
+            // 7. ✨✨ 텍스처 파라미터 설정 (가장 중요) ✨✨
+
+            // 필터링 모드: 주변 픽셀과 섞지 않고 가장 가까운 픽셀 하나만 선택 (글자를 선명하게)
+            GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMinFilter, (int)TextureMinFilter.Nearest);
+            GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMagFilter, (int)TextureMagFilter.Nearest);
+
+            // 래핑 모드: 텍스처 좌표가 [0, 1] 범위를 벗어날 경우, 가장자리 픽셀을 사용 (경계선 깨짐 방지)
+            GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureWrapS, (int)TextureWrapMode.ClampToEdge);
+            GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureWrapT, (int)TextureWrapMode.ClampToEdge);
+
+            GL.BindTexture(TextureTarget.Texture2D, 0);
+
+            // 8. 생성된 텍스처 ID와 실제 크기 반환
+            return (textureId, width, height);
+        }
+
         private static void InitAirportVBO()
         {
             if (airportVboInitialized) return;
@@ -542,7 +555,7 @@ namespace ADS_B_Display
         /// <param name="text">아이콘 위에 표시할 텍스트</param>
         /// <param name="textColor">텍스트 색상</param>
         /// <param name="textBackgroundColor">텍스트 배경색 (기본값: 없음)</param>
-        public static void DrawAirportVBO(double x, double y, double scale, string text, System.Windows.Media.Color textColor, System.Windows.Media.Color? textBackgroundColor = null)
+        public static void DrawAirportVBO(double x, double y, double scale, string text)
         {
             InitAirportVBO();
             if (string.IsNullOrEmpty(text))
@@ -552,15 +565,6 @@ namespace ADS_B_Display
                 return;
             }
             if (airportTextId == 0) return;
-
-            // 텍스트 텍스처를 캐시에서 가져오거나 새로 생성합니다.
-            // (참고: 텍스트 색상별로 캐싱하려면 키를 `(text, textColor)` 조합으로 변경해야 합니다.)
-            if (!textTextureCache.TryGetValue(text, out var textTexture))
-            {
-                var textBitmap = CreateTextBitmapWpf(text, "Arial", 16, textColor);
-                textTexture = CreateTextureFromBitmap(textBitmap);
-                textTextureCache[text] = textTexture;
-            }
 
             // --- 그리기 시작 ---
             GL.PushMatrix();
@@ -593,45 +597,22 @@ namespace ADS_B_Display
             GL.PopMatrix(); // 아이콘 스케일 행렬 복원
 
             // --- 2. 텍스트 그리기 ---
-            if (textTexture.textureId > 0)
+            if (!string.IsNullOrEmpty(text))
             {
-                // 텍스트 크기 및 위치 계산
-                float textHeight = (float)(18f * scale); // 월드 좌표계 기준 텍스트 높이
-                float textWidth = textHeight * textTexture.width / textTexture.height; // 종횡비 유지
-                float iconTopY = (float)(24f * scale); // 아이콘의 최상단 Y 좌표
-                float textMargin = (float)(5f * scale);  // 아이콘과 텍스트 사이 간격
-                float textQuadX = -textWidth / 2.0f; // 텍스트를 수평 중앙에 위치
-                float textQuadY = iconTopY + textMargin; // 텍스트의 하단 Y 좌표
+                float textHeight = (float)(18f * scale);
+                float iconTopY = (float)(30f * scale);
+                float textMargin = (float)(10f * scale);
+                float textStartY = iconTopY + textMargin;
 
-                // --- 2a. 텍스트 배경 그리기 (색상이 지정된 경우) ---
-                if (textBackgroundColor.HasValue)
-                {
-                    GL.Disable(EnableCap.Texture2D); // 텍스처 비활성화 (단색 사각형을 위함)
-                    var bgColor = textBackgroundColor.Value;
-                    GL.Color4(bgColor.R / 255.0f, bgColor.G / 255.0f, bgColor.B / 255.0f, bgColor.A / 255.0f);
+                // 텍스트의 전체 너비를 미리 측정
+                float totalTextWidth = MeasureText(textHeight, text);
+                // 중앙 정렬을 위한 시작 X 좌표 계산
+                float textStartX = -totalTextWidth / 2.0f;
+                // 배경 패딩 값
+                float padding = 10.0f * (float)scale;
 
-                    float padding = (float)(3.0f * scale); // 배경 여백
-
-                    GL.Begin(PrimitiveType.Quads);
-                    GL.Vertex2(textQuadX - padding, textQuadY - padding);            // 좌하단
-                    GL.Vertex2(textQuadX + textWidth + padding, textQuadY - padding);            // 우하단
-                    GL.Vertex2(textQuadX + textWidth + padding, textQuadY + textHeight + padding); // 우상단
-                    GL.Vertex2(textQuadX - padding, textQuadY + textHeight + padding); // 좌상단
-                    GL.End();
-
-                    GL.Enable(EnableCap.Texture2D); // 텍스트를 위해 텍스처 다시 활성화
-                }
-
-                // --- 2b. 텍스트 자체 그리기 ---
-                GL.Color4(1.0f, 1.0f, 1.0f, 1.0f); // 텍스처 자체 색상을 사용하기 위해 흰색으로 설정
-                GL.BindTexture(TextureTarget.Texture2D, textTexture.textureId);
-
-                GL.Begin(PrimitiveType.Quads);
-                GL.TexCoord2(0, 1); GL.Vertex2(textQuadX, textQuadY);            // 좌하단
-                GL.TexCoord2(1, 1); GL.Vertex2(textQuadX + textWidth, textQuadY);            // 우하단
-                GL.TexCoord2(1, 0); GL.Vertex2(textQuadX + textWidth, textQuadY + textHeight); // 우상단
-                GL.TexCoord2(0, 0); GL.Vertex2(textQuadX, textQuadY + textHeight); // 좌상단
-                GL.End();
+                // ✨ 모든 그리기 작업을 DrawText 함수에 위임
+                DrawText(textStartX, textStartY, textHeight, text, padding);
             }
 
             // --- 정리 ---
@@ -740,6 +721,224 @@ namespace ADS_B_Display
                 GL.DeleteTextures(textTextureCache.Count, textTextureCache.Values.Select(t => t.textureId).ToArray());
                 textTextureCache.Clear();
             }
+        }
+
+        public static void LoadFont(string fntPath, string pngPath)
+        {
+            CharMap.Clear();
+
+            // 1. 텍스처 로드 (System.Drawing.Bitmap 사용)
+            Bitmap bmp = new Bitmap(pngPath);
+            fontTextureId = GL.GenTexture();
+            GL.BindTexture(TextureTarget.Texture2D, fontTextureId);
+
+            BitmapData data = bmp.LockBits(
+                new Rectangle(0, 0, bmp.Width, bmp.Height),
+                ImageLockMode.ReadOnly,
+                System.Drawing.Imaging.PixelFormat.Format32bppArgb);
+
+            GL.TexImage2D(TextureTarget.Texture2D, 0, PixelInternalFormat.Rgba,
+                data.Width, data.Height, 0,
+                OpenTK.Graphics.OpenGL.PixelFormat.Bgra, // Bitmap은 BGRA 순서
+                PixelType.UnsignedByte, data.Scan0);
+            _fontTextureWidth = data.Width;
+            _fontTextureHeight = data.Height;
+            bmp.UnlockBits(data);
+            bmp.Dispose(); // 리소스 해제
+
+            // ✨ --- 수정된 텍스처 파라미터 --- ✨
+            // 필터링 모드를 GL_NEAREST로 설정하여 글자를 선명하게
+            GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMinFilter, (int)TextureMinFilter.Nearest);
+            GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMagFilter, (int)TextureMinFilter.Nearest);
+            GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureWrapS, (int)TextureWrapMode.ClampToEdge);
+            GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureWrapT, (int)TextureWrapMode.ClampToEdge);
+
+            GL.BindTexture(TextureTarget.Texture2D, 0);
+
+
+            foreach (string line in File.ReadAllLines(fntPath))
+            {
+                if (!line.StartsWith("char id=")) continue;
+
+                string[] parts = line.Split(' ');
+                FontChar fc = new FontChar();
+                foreach (var part in parts)
+                {
+                    var kv = part.Split('=');
+                    if (kv.Length != 2) continue;
+                    string key = kv[0];
+                    string value = kv[1];
+
+                    switch (key)
+                    {
+                        case "id": fc.id = int.Parse(value); break;
+                        case "x": fc.x = float.Parse(value); break;
+                        case "y": fc.y = float.Parse(value); break;
+                        case "width": fc.width = float.Parse(value); break;
+                        case "height": fc.height = float.Parse(value); break;
+                        case "xoffset": fc.xOffset = float.Parse(value); break;
+                        case "yoffset": fc.yOffset = float.Parse(value); break;
+                        case "xadvance": fc.xAdvance = float.Parse(value); break;
+                    }
+                }
+
+                if (fc.id > 0 && fc.id < 256)
+                    CharMap[(char)fc.id] = fc;
+            }
+        }
+
+        public static float MeasureText(float textHeight, string text)
+        {
+            if (string.IsNullOrEmpty(text)) return 0f;
+
+            float scale = textHeight / 32f; // 기본 폰트 기준 크기 (32px)
+            float width = 0f;
+
+            foreach (char c in text)
+            {
+                if (CharMap.TryGetValue(c, out var fc))
+                {
+                    width += fc.xAdvance * scale;
+                }
+            }
+
+            return width;
+        }
+
+        /*
+        public static void DrawText(float x, float y, float size, string text)
+        {
+            if (fontTextureId == 0 || string.IsNullOrEmpty(text)) return;
+
+            // --- OpenGL 상태 설정 ---
+            GL.Disable(EnableCap.Lighting);
+            GL.Enable(EnableCap.Texture2D);
+            GL.Enable(EnableCap.Blend);
+            GL.BlendFunc(BlendingFactor.SrcAlpha, BlendingFactor.OneMinusSrcAlpha);
+            GL.BindTexture(TextureTarget.Texture2D, fontTextureId);
+            GL.Color4(1f, 1f, 1f, 1f);
+
+            // --- 그리기 시작 ---
+            GL.Begin(PrimitiveType.Quads);
+
+            float cursorX = x;
+            float fontBaseSize = 32f; // .fnt 생성 시 사용한 폰트의 base size (예: 32)
+
+            foreach (char c in text)
+            {
+                if (!CharMap.TryGetValue(c, out var fc)) continue;
+
+                // 현재 원하는 글자 크기에 맞는 스케일 계산
+                float scale = size / fontBaseSize;
+
+                // 화면에 그려질 사각형의 크기와 위치
+                float quadWidth = fc.width * scale;
+                float quadHeight = fc.height * scale;
+                float drawX = cursorX + (fc.xOffset * scale);
+                float drawY = y - (fc.yOffset * scale); // Y축 방향이 반대이므로 뺌
+
+                // 텍스처 UV 좌표
+                float u1 = fc.x / _fontTextureWidth; // 텍스처 전체 너비 기준
+                float v1 = fc.y / _fontTextureHeight; // 텍스처 전체 높이 기준
+                float u2 = (fc.x + fc.width) / _fontTextureWidth;
+                float v2 = (fc.y + fc.height) / _fontTextureHeight;
+
+                // 정점과 텍스처 좌표 매핑 (Y축 반전 최종)
+                // 화면의 위쪽(Vertex y)에 텍스처의 위쪽(TexCoord v)을 매핑하고, 화면 아래로 그림
+                GL.TexCoord2(u1, v1); GL.Vertex2(drawX, drawY);
+                GL.TexCoord2(u2, v1); GL.Vertex2(drawX + quadWidth, drawY);
+                GL.TexCoord2(u2, v2); GL.Vertex2(drawX + quadWidth, drawY - quadHeight);
+                GL.TexCoord2(u1, v2); GL.Vertex2(drawX, drawY - quadHeight);
+
+                // 커서 이동
+                cursorX += fc.xAdvance * scale;
+            }
+
+            GL.End();
+
+            // --- 상태 복원 ---
+            GL.BindTexture(TextureTarget.Texture2D, 0);
+            GL.Disable(EnableCap.Texture2D);
+            GL.Disable(EnableCap.Blend);
+        }
+        */
+
+        public static void DrawText(float x, float y, float size, string text, float padding = 0)
+        {
+            if (fontTextureId == 0 || string.IsNullOrEmpty(text)) return;
+
+            // --- 1. 텍스트의 전체 너비와 높이 미리 계산 ---
+            float totalWidth = 0;
+            float maxHeight = 0;
+            float fontBaseSize = 32f; // .fnt 파일 생성 시 기준 크기
+            float scale = size / fontBaseSize;
+
+            foreach (char c in text)
+            {
+                if (CharMap.TryGetValue(c, out var fc))
+                {
+                    totalWidth += fc.xAdvance * scale;
+                    if (fc.height * scale > maxHeight)
+                    {
+                        maxHeight = fc.height * scale;
+                    }
+                }
+            }
+
+            // --- 2. 배경 그리기 (색상이 지정된 경우) ---
+            GL.Disable(EnableCap.Texture2D); // 텍스처 끄고 단색 사각형 그리기
+            GL.Enable(EnableCap.Blend);
+            GL.BlendFunc(BlendingFactor.SrcAlpha, BlendingFactor.OneMinusSrcAlpha);
+
+            GL.Color4(0.0f, 0.0f, 0.0f, 1.0f);
+
+            GL.Begin(PrimitiveType.Quads);
+            GL.Vertex2(x - padding, y - padding);
+            GL.Vertex2(x + totalWidth + padding, y - padding);
+            GL.Vertex2(x + totalWidth + padding, y + size + padding);
+            GL.Vertex2(x - padding, y + size + padding);
+            GL.End();
+
+            // --- 3. 텍스트 그리기 ---
+            GL.Enable(EnableCap.Texture2D);
+            GL.Enable(EnableCap.Blend);
+            GL.BlendFunc(BlendingFactor.SrcAlpha, BlendingFactor.OneMinusSrcAlpha);
+            GL.BindTexture(TextureTarget.Texture2D, fontTextureId);
+            GL.Color4(1.0f, 1.0f, 1.0f, 1.0f);
+
+            GL.Begin(PrimitiveType.Quads);
+
+            float cursorX = x;
+
+            foreach (char c in text)
+            {
+                if (!CharMap.TryGetValue(c, out var fc)) continue;
+
+                // 오프셋과 스케일을 적용한 최종 위치 및 크기 계산
+                float drawX = cursorX + (fc.xOffset * scale);
+                float drawY = y + (size - (fc.yOffset * scale));
+                float quadWidth = fc.width * scale;
+                float quadHeight = fc.height * scale;
+
+                // UV 좌표
+                float u1 = fc.x / _fontTextureWidth;
+                float v1 = fc.y / _fontTextureHeight;
+                float u2 = (fc.x + fc.width) / _fontTextureWidth;
+                float v2 = (fc.y + fc.height) / _fontTextureHeight;
+
+                // 정점과 텍스처 좌표 매핑
+                GL.TexCoord2(u1, v2); GL.Vertex2(drawX, drawY - quadHeight);
+                GL.TexCoord2(u2, v2); GL.Vertex2(drawX + quadWidth, drawY - quadHeight);
+                GL.TexCoord2(u2, v1); GL.Vertex2(drawX + quadWidth, drawY);
+                GL.TexCoord2(u1, v1); GL.Vertex2(drawX, drawY);
+
+                cursorX += fc.xAdvance * scale;
+            }
+
+            GL.End();
+            GL.BindTexture(TextureTarget.Texture2D, 0);
+            GL.Disable(EnableCap.Texture2D);
+            GL.Disable(EnableCap.Blend);
         }
     }
 }

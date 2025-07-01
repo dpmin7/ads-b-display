@@ -7,6 +7,7 @@ using NLog;
 using OpenTK;
 using OpenTK.Graphics.OpenGL;
 using OpenTK.Wpf;
+using System.IO;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -16,6 +17,7 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Threading;
+using SkiaSharp;
 
 namespace ADS_B_Display.Views
 {
@@ -369,6 +371,12 @@ namespace ADS_B_Display.Views
             Console.WriteLine($"OpenGL Version: {GL.GetString(StringName.Version)}");
             _isLoaded = true;
             glControl.InvalidateVisual(); // 첫 프레임 수동 렌더링
+
+            // font load
+            // 폰트 리소스 로딩 (경로는 실제 파일 위치에 맞게 수정)
+            string texturePath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Fonts", "font.png");
+            string dataPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Fonts", "font.fnt");
+            Ntds2d.LoadFont(dataPath, texturePath);
         }
 
         private void MapInit()
@@ -468,6 +476,21 @@ namespace ADS_B_Display.Views
                 CaptureFreezeTexture();
                 //CaptureWideFreezeTexture();
             }
+
+            /*
+            // 2. 테스트를 위한 깨끗한 렌더링 환경 설정
+            GL.MatrixMode(MatrixMode.Projection);
+            GL.LoadIdentity();
+            GL.Ortho(0, glControl.ActualWidth, 0, glControl.ActualHeight, -1, 1);
+            GL.MatrixMode(MatrixMode.Modelview);
+            GL.LoadIdentity();
+            GL.Disable(EnableCap.DepthTest);
+            GL.ClearColor(0.2f, 0.2f, 0.2f, 1.0f);
+            GL.Clear(ClearBufferMask.ColorBufferBit);
+
+            // 3. 폰트 텍스처 전체를 그리는 테스트 함수 호출
+            Ntds2d.DrawEntireFontTextureForTest();
+            */
         }
 
         private void HookTrack(int x, int y, bool cpaHook)
@@ -765,8 +788,8 @@ namespace ADS_B_Display.Views
                 if (lat > 85.0511 || lat < -85.0511) continue;
 
                 LatLon2XY(lat, lon, out double x, out double y);
-                var semiTransparentBlack = System.Windows.Media.Color.FromArgb(128, 0, 0, 0);
-                Ntds2d.DrawAirportVBO(x, y, airplaneScale * 0.6, row["Name"], System.Windows.Media.Colors.White, semiTransparentBlack);
+
+                Ntds2d.DrawAirportVBO(x, y, airplaneScale * 0.6, _earthView.Eye.H > 0.010 ? "" : row["Name"]);
             }
         }
 
