@@ -528,7 +528,7 @@ namespace ADS_B_Display.Views
 
             foreach (var data in AircraftManager.GetAll())
             {
-                if (data.HaveLatLon)
+                if (!data.Filtered && data.HaveLatLon)
                 {
                     double dLat = vLat - data.Latitude;
                     double dLon = vLon - data.Longitude;
@@ -715,6 +715,9 @@ namespace ADS_B_Display.Views
 
         private void DrawSavedAreas()
         {
+            if (AreaManager.UsePolygon == false)
+                return;
+
             GL.PushAttrib(AttribMask.CurrentBit);
             foreach (var area in AreaManager.Areas)
             {

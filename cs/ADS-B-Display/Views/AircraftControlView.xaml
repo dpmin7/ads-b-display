@@ -270,20 +270,6 @@
                                 Text="Military:" />
                             <TextBlock Margin="8,4,0,0" Text="{Binding Aircraft.AircraftData.IsMilitary, FallbackValue=NA}" />
                         </StackPanel>
-                        <StackPanel Orientation="Horizontal">
-                            <TextBlock
-                                Margin="0,4,0,0"
-                                FontWeight="Bold"
-                                Text="Dep:" />
-                            <TextBlock Margin="8,4,0,0" Text="{Binding Aircraft.AircraftData.Dep, FallbackValue=NA}" />
-                        </StackPanel>
-                        <StackPanel Orientation="Horizontal">
-                            <TextBlock
-                                Margin="0,4,0,0"
-                                FontWeight="Bold"
-                                Text="Arr:" />
-                            <TextBlock Margin="8,4,0,0" Text="{Binding Aircraft.AircraftData.Arr, FallbackValue=NA}" />
-                        </StackPanel>
                     </StackPanel>
                     <Button
                         Grid.Column="1"
@@ -588,7 +574,10 @@
                                         IsChecked="{Binding DisplayMapEnabled}" />
                                 </StackPanel>
                                 <StackPanel VerticalAlignment="Center" Orientation="Horizontal">
-                                    <TextBlock FontWeight="Bold" Text="Map provider :" />
+                                    <TextBlock
+                                        VerticalAlignment="Center"
+                                        FontWeight="Bold"
+                                        Text="Map provider :" />
                                     <ComboBox
                                         Width="150"
                                         Margin="8,0,0,0"
@@ -619,7 +608,7 @@
                             <StackPanel Margin="8,10" Orientation="Vertical">
                                 <StackPanel VerticalAlignment="Center" Orientation="Horizontal">
                                     <CheckBox
-                                        Width="110"
+                                        Width="120"
                                         Margin="0,4,0,0"
                                         Content="Purge Stale"
                                         IsChecked="{Binding UsePurgeMode}" />
@@ -644,9 +633,9 @@
                                     VerticalAlignment="Center"
                                     Orientation="Horizontal">
                                     <CheckBox
-                                        Width="110"
+                                        Width="120"
                                         Margin="0,4,0,0"
-                                        Content="Ghost Timeout"
+                                        Content="Dead reckoning"
                                         IsChecked="{Binding UseGhostMode}" />
                                     <TextBox
                                         Width="40"
