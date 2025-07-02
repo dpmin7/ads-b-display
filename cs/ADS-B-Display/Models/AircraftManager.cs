@@ -1,14 +1,9 @@
-﻿using ADS_B_Display.Models.CPA;
-using NLog;
-using NLog.Common;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
-using System.Collections.Specialized;
-using System.Diagnostics;
 using System.Linq;
 using System.Timers;
-using System.Windows.Markup;
+using static System.Windows.Forms.VisualStyles.VisualStyleElement.TaskbarClock;
 
 namespace ADS_B_Display.Models
 {
@@ -292,7 +287,9 @@ namespace ADS_B_Display.Models
             {
                 foreach (var aircraft in _aircraftTable.Values)
                 {
+                    bool outCheck = false;
                     bool isInAnyArea = false;
+                    
                     foreach (var area in AreaManager.Areas)
                     {
                         if (area.Use == false)
@@ -315,6 +312,20 @@ namespace ADS_B_Display.Models
                             }
                             isInAnyArea = true;
                             break;
+                        }
+                        else
+                        {
+                            if (aircraft.Viewable)
+                            {
+                                if(area.ContainsAircraft(aircraft))
+                                {
+                                    string time = DateTime.Now.ToString("HH:mm:ss.fff");
+                                    AircraftData acd = AircraftDB.GetAircraftInfo(aircraft.ICAO);
+                                    string msg = $"[{time}] New Aircraft {aircraft.HexAddr} Out {area.AreaName} | {acd.Country} | Military : {acd.IsMilitary}";
+                                    AreaMonitorPopup.WriteLog(msg);  // Trace 대신 직접 호출
+                                    area.RemoveAircraft(aircraft);
+                                }
+                            }
                         }
                     }
                     aircraft.Viewable = isInAnyArea;
