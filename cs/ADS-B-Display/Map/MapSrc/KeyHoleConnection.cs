@@ -46,7 +46,7 @@ namespace ADS_B_Display.Map.MapSrc
 
                 if (tile.IsOld)
                 {
-                    logger.Warn($"오래된 타일 로드 취소: z={tile.Level}, x={tile.X}, y={tile.Y}");
+                    logger.Debug($"오래된 타일 로드 취소: z={tile.Level}, x={tile.X}, y={tile.Y}");
                     tile.Null();
                     return;
                 }

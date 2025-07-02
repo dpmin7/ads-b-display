@@ -65,7 +65,7 @@ namespace ADS_B_Display
                 return acio;
             };
         }
-
+        
         public bool Start(string path, bool useDb = false, IDBConnector dbConnector = null)
         {
             try

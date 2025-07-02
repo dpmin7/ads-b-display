@@ -642,6 +642,7 @@ namespace ADS_B_Display.Views
             }
         }
 
+        private IDisposable _currentTimeSubscription;
         private void SbsPlay(object obj)
         {
             if (_isSbsPalying == true)
@@ -670,7 +671,14 @@ namespace ADS_B_Display.Views
                 _selectedBigQueryTable = selItem.Name;
 
                 _db = new BigQueryConnector(selItem.Name);
-                _db.GetPlaybackTime(selItem.Name);
+                (long st, long ed) times = _db.GetPlaybackTime(selItem.Name);
+                EdTime = times.ed;
+                StTime = RemainTime = times.st;
+                _currentTimeSubscription = EventBus.Observe(EventIds.EvtBigQueryRemainTimeUpdate).Subscribe(time =>
+                {
+                    RemainTime = (long)time;
+                    OnPropertyChanged(nameof(RemainTime));
+                });
                 _db.StartPlayTiming();
                 _sbsWorker.Start(selItem.Name, true, _db);
             }
@@ -1213,6 +1221,15 @@ namespace ADS_B_Display.Views
             }
         }
 
-        
+        private long remainTime;
+        public long RemainTime { get => remainTime; set => SetProperty(ref remainTime, value); }
+
+        private long edTime;
+        public long EdTime { get => edTime; set => SetProperty(ref edTime, value); }
+
+        private long stTime;
+        public long StTime { get => stTime; set => SetProperty(ref stTime, value); }
+
+
     }
 }

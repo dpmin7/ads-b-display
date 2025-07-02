@@ -15,5 +15,6 @@ namespace ADS_B_Display
         public const string EvtControlSettingChanged = "EvtControlSettingChanged";
         public const string EvtCenterMapTo = "EvtCenterMapTo";
         public const string EvtAircraftDBInitialized = "EvtAircraftDBInitialized";
+        public const string EvtBigQueryRemainTimeUpdate = "EvtBigQueryRemainTimeUpdate";
     }
 }

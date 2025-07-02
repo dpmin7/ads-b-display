@@ -16,7 +16,8 @@
     mc:Ignorable="d">
     <UserControl.Resources>
         <converters:NullToNAConverter x:Key="null2NA" />
-        <converters:BoolToBrushConverter x:Key="btb" TrueBrush="Red" />
+        <converters:BoolToBrushConverter x:Key="btRed" TrueBrush="Red" />
+        <converters:BoolToBrushConverter x:Key="btGreen" TrueBrush="Lime" />
         <converters:StringToUri x:Key="S2Uri" />
         <converters:DoubleToLatitude x:Key="D2Lat" />
         <converters:DoubleToLongitude x:Key="D2Lon" />
@@ -135,13 +136,7 @@
                                 Text="ICAO:" />
                             <TextBlock Margin="8,4,0,0" Text="{Binding Aircraft.HexAddr, FallbackValue=NA}" />
                         </StackPanel>
-                        <StackPanel Orientation="Horizontal">
-                            <TextBlock
-                                Margin="0,4,0,0"
-                                FontWeight="Bold"
-                                Text="FLIGHT #:" />
-                            <TextBlock Margin="8,4,0,0" Text="{Binding Aircraft.FlightNum, FallbackValue=NA}" />
-                        </StackPanel>
+
                         <StackPanel Orientation="Horizontal">
                             <TextBlock
                                 Margin="0,4,0,0"
@@ -222,6 +217,13 @@
                             <TextBlock
                                 Margin="0,4,0,0"
                                 FontWeight="Bold"
+                                Text="FLIGHT #:" />
+                            <TextBlock Margin="8,4,0,0" Text="{Binding Aircraft.FlightNum, FallbackValue=NA}" />
+                        </StackPanel>
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock
+                                Margin="0,4,0,0"
+                                FontWeight="Bold"
                                 Text="Airline:" />
                             <TextBlock Margin="8,4,0,0" Text="{Binding Aircraft.AircraftData.OperatorIcao, FallbackValue=NA}" />
                         </StackPanel>
@@ -282,31 +284,6 @@
 
             </GroupBox>
 
-            <!--  ─── 3) Display Map / Purge ───  -->
-            <GroupBox Header="">
-                <StackPanel Margin="8,10" Orientation="Vertical">
-                    <StackPanel VerticalAlignment="Center" Orientation="Horizontal">
-                        <CheckBox
-                            Margin="0,4,0,0"
-                            Content="Purge Stale"
-                            IsChecked="{Binding ControlSettings.PurgeStale}" />
-                        <TextBox
-                            Width="40"
-                            Margin="4,0,0,0"
-                            HorizontalContentAlignment="Center"
-                            VerticalContentAlignment="Center"
-                            Text="{Binding ControlSettings.PurgeDuration}" />
-                        <Button
-                            Margin="8,0,0,0"
-                            Padding="8,2"
-                            Command="{Binding Cmd_Purge}"
-                            Content="Purge Force" />
-                    </StackPanel>
-                </StackPanel>
-            </GroupBox>
-
-
-
             <!--  ─── 7) SBS Record / SBS Playback ───  -->
 
             <TabControl Margin="0,10,0,0">
@@ -357,7 +334,7 @@
                                                 <iconPacks:PackIconMaterial
                                                     Width="16"
                                                     Height="16"
-                                                    Foreground="{Binding IsRawRecording, Converter={StaticResource btb}}"
+                                                    Foreground="{Binding IsRawRecording, Converter={StaticResource btRed}}"
                                                     Kind="Record" />
                                             </StackPanel>
                                         </Button>
@@ -379,46 +356,37 @@
                                     </StackPanel>
                                 </StackPanel>
 
-                                <StackPanel HorizontalAlignment="Right" Orientation="Horizontal">
-                                    <GroupBox
-                                        Margin="10,10,0,0"
-                                        Padding="4,2"
+                                <StackPanel Margin="20,6,0,0" Orientation="Horizontal">
+                                    <!--  Play  -->
+                                    <Button
+                                        Margin="0,0,0,0"
                                         Background="Transparent"
-                                        Header="Play"
-                                        Style="{x:Null}">
-                                        <StackPanel Orientation="Horizontal">
-                                            <!--  Play  -->
-                                            <Button
-                                                Margin="0,0,8,0"
-                                                Background="Transparent"
-                                                BorderBrush="Transparent"
-                                                Command="{Binding Cmd_RawPlay}"
-                                                Cursor="Hand">
-                                                <StackPanel HorizontalAlignment="Center" Orientation="Vertical">
-                                                    <iconPacks:PackIconMaterial
-                                                        Width="24"
-                                                        Height="24"
-                                                        Foreground="#555555"
-                                                        Kind="Play" />
-                                                </StackPanel>
-                                            </Button>
-
-                                            <!--  Stop  -->
-                                            <Button
-                                                Background="Transparent"
-                                                BorderBrush="Transparent"
-                                                Command="{Binding Cmd_RawPlayStop}"
-                                                Cursor="Hand">
-                                                <StackPanel HorizontalAlignment="Center" Orientation="Vertical">
-                                                    <iconPacks:PackIconMaterial
-                                                        Width="24"
-                                                        Height="24"
-                                                        Foreground="#555555"
-                                                        Kind="Stop" />
-                                                </StackPanel>
-                                            </Button>
+                                        BorderBrush="Transparent"
+                                        Command="{Binding Cmd_RawPlay}"
+                                        Cursor="Hand">
+                                        <StackPanel HorizontalAlignment="Center" Orientation="Vertical">
+                                            <iconPacks:PackIconMaterial
+                                                Width="16"
+                                                Height="16"
+                                                Foreground="{Binding IsRawPalying, Converter={StaticResource btGreen}}"
+                                                Kind="Play" />
                                         </StackPanel>
-                                    </GroupBox>
+                                    </Button>
+
+                                    <!--  Stop  -->
+                                    <Button
+                                        Background="Transparent"
+                                        BorderBrush="Transparent"
+                                        Command="{Binding Cmd_RawPlayStop}"
+                                        Cursor="Hand">
+                                        <StackPanel HorizontalAlignment="Center" Orientation="Vertical">
+                                            <iconPacks:PackIconMaterial
+                                                Width="16"
+                                                Height="16"
+                                                Foreground="#555555"
+                                                Kind="Stop" />
+                                        </StackPanel>
+                                    </Button>
                                 </StackPanel>
                             </StackPanel>
                         </GroupBox>
@@ -499,7 +467,7 @@
                                                 <iconPacks:PackIconMaterial
                                                     Width="16"
                                                     Height="16"
-                                                    Foreground="{Binding IsSbsRecording, Converter={StaticResource btb}}"
+                                                    Foreground="{Binding IsSbsRecording, Converter={StaticResource btRed}}"
                                                     Kind="Record" />
                                             </StackPanel>
                                         </Button>
@@ -539,7 +507,7 @@
                                                 <iconPacks:PackIconMaterial
                                                     Width="16"
                                                     Height="16"
-                                                    Foreground="#555555"
+                                                    Foreground="{Binding IsSbsPalying, Converter={StaticResource btGreen}}"
                                                     Kind="Play" />
                                             </StackPanel>
                                         </Button>
@@ -562,8 +530,8 @@
                                         Grid.Column="1"
                                         Margin="10,2,10,0"
                                         LargeChange="10"
-                                        Maximum="1800"
-                                        Minimum="0"
+                                        Maximum="{Binding EdTime}"
+                                        Minimum="{Binding StTime}"
                                         SmallChange="1"
                                         TickFrequency="1"
                                         Value="{Binding RemainTime}" />
@@ -590,45 +558,67 @@
                                             Style="{x:Null}" />
                                     </StackPanel>
                                 </StackPanel>
-
                             </StackPanel>
                         </GroupBox>
                     </StackPanel>
                 </TabItem>
-                <TabItem Header="Map" Style="{StaticResource MahApps.Styles.TabItem.Aurora}">
-                    <GroupBox HorizontalAlignment="Stretch" Header="">
-                        <StackPanel Margin="8,10" Orientation="Vertical">
-                            <StackPanel VerticalAlignment="Center" Orientation="Horizontal">
-                                <CheckBox
-                                    VerticalAlignment="Center"
-                                    Content="Display Map:"
-                                    FontWeight="Bold"
-                                    IsChecked="{Binding DisplayMapEnabled}" />
-                            </StackPanel>
-                            <StackPanel VerticalAlignment="Center" Orientation="Horizontal">
-                                <TextBlock FontWeight="Bold" Text="Map provider :" />
-                                <ComboBox
-                                    Width="150"
-                                    Margin="8,0,0,0"
-                                    ItemsSource="{Binding TileServerTypeList}"
-                                    SelectedItem="{Binding SelectedTileServer}" />
-                            </StackPanel>
+                <TabItem Header="Map / Data" Style="{StaticResource MahApps.Styles.TabItem.Aurora}">
+                    <StackPanel Orientation="Vertical">
+                        <GroupBox HorizontalAlignment="Stretch" Header="">
+                            <StackPanel Margin="8,10" Orientation="Vertical">
+                                <StackPanel VerticalAlignment="Center" Orientation="Horizontal">
+                                    <CheckBox
+                                        VerticalAlignment="Center"
+                                        Content="Display Map:"
+                                        FontWeight="Bold"
+                                        IsChecked="{Binding DisplayMapEnabled}" />
+                                </StackPanel>
+                                <StackPanel VerticalAlignment="Center" Orientation="Horizontal">
+                                    <TextBlock FontWeight="Bold" Text="Map provider :" />
+                                    <ComboBox
+                                        Width="150"
+                                        Margin="8,0,0,0"
+                                        ItemsSource="{Binding TileServerTypeList}"
+                                        SelectedItem="{Binding SelectedTileServer}" />
+                                </StackPanel>
 
 
 
-                            <!--  Zoom In / Zoom Out 버튼  -->
-                            <StackPanel
-                                Margin="0,8,0,8"
-                                HorizontalAlignment="Center"
-                                Orientation="Horizontal">
-                                <Button Width="100" Content="Zoom In" />
-                                <Button
-                                    Width="100"
-                                    Margin="8,0,0,0"
-                                    Content="Zoom Out" />
+                                <!--  Zoom In / Zoom Out 버튼  -->
+                                <StackPanel
+                                    Margin="0,8,0,8"
+                                    HorizontalAlignment="Center"
+                                    Orientation="Horizontal">
+                                    <Button Width="100" Content="Zoom In" />
+                                    <Button
+                                        Width="100"
+                                        Margin="8,0,0,0"
+                                        Content="Zoom Out" />
+                                </StackPanel>
                             </StackPanel>
-                        </StackPanel>
-                    </GroupBox>
+                        </GroupBox>
+                        <GroupBox Header="Data">
+                            <StackPanel Margin="8,10" Orientation="Vertical">
+                                <StackPanel VerticalAlignment="Center" Orientation="Horizontal">
+                                    <CheckBox
+                                        Margin="0,4,0,0"
+                                        Content="Purge Stale"
+                                        IsChecked="{Binding ControlSettings.PurgeStale}" />
+                                    <TextBox
+                                        Width="40"
+                                        Margin="4,0,0,0"
+                                        HorizontalContentAlignment="Center"
+                                        VerticalContentAlignment="Center"
+                                        Text="{Binding ControlSettings.PurgeDuration}" />
+                                    <Button
+                                        Margin="8,0,0,0"
+                                        Padding="8,2"
+                                        Command="{Binding Cmd_Purge}"
+                                        Content="Purge Force" />
+                                </StackPanel>
+                            </StackPanel>
+                        </GroupBox>
+                    </StackPanel>
                 </TabItem>
                 <TabItem Header="Filter" Style="{StaticResource MahApps.Styles.TabItem.Aurora}">
                     <StackPanel Orientation="Vertical">

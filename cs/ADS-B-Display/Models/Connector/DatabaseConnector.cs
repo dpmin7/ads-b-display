@@ -1,4 +1,5 @@
-﻿using ScottPlot.Colormaps;
+﻿using ADS_B_Display.Utils;
+using ScottPlot.Colormaps;
 using System;
 using System.Threading;
 using System.Threading.Tasks;
@@ -44,6 +45,9 @@ namespace ADS_B_Display.Models.Connector
                         }
                         var sleepTime = (int)(time - state.LastTime);
                         state.LastTime = time;
+
+                        EventBus.Publish(EventIds.EvtBigQueryRemainTimeUpdate, time);
+
                         if (sleepTime > 0)
                             Thread.Sleep(sleepTime / _playbackSpeed);
 
