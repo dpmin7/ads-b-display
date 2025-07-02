@@ -76,7 +76,7 @@ namespace ADS_B_Display.Models.Settings
 
         // Display Map
         public bool DisplayMapEnabled { get; set; } = true;
-        public int PurgeDuration { get; set; } = 90;
+        public long PurgeDuration { get; set; } = 90;
         public bool PurgeStale { get; set; } = false;
         public bool CycleImages { get; set; } = false;
 

@@ -195,7 +195,9 @@ namespace ADS_B_Display
                         //    aircraft.Speed = 0;
                         //}
                     }
-                       
+
+                    //AircraftManager.FilterTest(aircraft);
+
                     aircraft.AddTrackPoint(curr);
                 }
             }

@@ -20,7 +20,9 @@ namespace ADS_B_Display.Models
         private static object lockObj = new object();
 
         private static Timer _dataTimer;
+        private static bool _usePurge = true; // Purge 기능 활성화 여부
         private static long _purgeLimitMS = 30000; // 30초 (1분) 후에 Purge
+        private static bool _useghost = true; // Ghost 기능 활성화 여부
         private static long _ghostLimitMS = 20000; // 10초 (1분) 후에 Purge
 
         private static ObservableCollection<CPAConflictInfo> _cpaConflicts = new ObservableCollection<CPAConflictInfo>();
@@ -92,7 +94,7 @@ namespace ADS_B_Display.Models
             _dataTimer.AutoReset = true;
             _dataTimer.Enabled = true;
 
-            
+
         }
         public static void AddCPAConflict(CPAConflictInfo conflict)
         {
@@ -130,7 +132,7 @@ namespace ADS_B_Display.Models
                 foreach (var conflict in newConflicts)
                 {
                     _cpaConflicts.Add(conflict);
-                    if(TryGet(conflict.ICAO1, out Aircraft aircraft1))
+                    if (TryGet(conflict.ICAO1, out Aircraft aircraft1))
                     {
                         aircraft1.IsConflictRisk = true;
                     }
@@ -142,10 +144,36 @@ namespace ADS_B_Display.Models
             }
         }
 
-        internal static void SetPurgeLimitMS(long limitMS, long ghostLimitMS)
+        internal static void SetUsePurge(bool usePurge)
         {
-            _purgeLimitMS = limitMS;
-            _ghostLimitMS = ghostLimitMS;
+            lock (lockObj)
+            {
+                _usePurge = usePurge;
+            }
+        }
+
+        internal static void SetPurgeLimitMS(long purgelimitMS)
+        {
+            lock (lockObj)
+            {
+                _purgeLimitMS = purgelimitMS;
+            }
+        }
+
+        internal static void SetUseGhost(bool useGhost)
+        {
+            lock (lockObj)
+            {
+                _useghost = useGhost;
+            }
+        }
+
+        internal static void SetGhostLimitMS(long ghostLimitMS)
+        {
+            lock (lockObj)
+            {
+                _ghostLimitMS = ghostLimitMS;
+            }
         }
 
         // Purge, virtual 업데이트
@@ -162,7 +190,7 @@ namespace ADS_B_Display.Models
                 var num = 0;
                 foreach (var kvp in _aircraftTable)
                 {
-                    if (kvp.Value.TimeCheck(now, _ghostLimitMS, _purgeLimitMS))
+                    if (kvp.Value.TimeCheck(now, _ghostLimitMS, _purgeLimitMS, _useghost, _usePurge))
                     {
                         keysToRemove.Add(kvp.Key);
                     }
@@ -191,10 +219,22 @@ namespace ADS_B_Display.Models
             UpdateViewableAircraftInPolygon();
         }
 
+        internal static void FilterTest(Aircraft aircraft)
+        {
+            if (_speedFilter.IsValid(aircraft.Speed) &&
+                _altitudeFilter.IsValid(aircraft.Altitude) &&
+                _aircraftTypeFilter.IsValid(aircraft.AircraftData.IcaoAircraftType))
+            {
+                aircraft.Filtered = true;
+            }
+        }
+
         internal static Aircraft GetOrAdd(uint icao)
         {
-            if (!_aircraftTable.TryGetValue(icao, out var aircraft)) {
-                aircraft = new Aircraft {
+            if (!_aircraftTable.TryGetValue(icao, out var aircraft))
+            {
+                aircraft = new Aircraft
+                {
                     ICAO = icao,
                     HexAddr = icao.ToString("X6"),
                     NumMessagesSBS = 0,
@@ -206,7 +246,8 @@ namespace ADS_B_Display.Models
                     HaveFlightNum = false,
                     // SpriteImage 및 CycleImages 로직은 UI 쪽에서 설정
                 };
-                lock (lockObj) {
+                lock (lockObj)
+                {
                     _aircraftTable.Add(icao, aircraft);
                 }
             }
@@ -223,21 +264,24 @@ namespace ADS_B_Display.Models
 
         internal static IEnumerable<Aircraft> GetAll()
         {
-            lock (lockObj) {
+            lock (lockObj)
+            {
                 return _aircraftTable.Values.ToList();
             }
         }
 
         internal static List<Aircraft> GetAllOnScreen()
         {
-            lock (lockObj) {
+            lock (lockObj)
+            {
                 return _aircraftTable.Values.Where(a => a.OnScreen).ToList();
             }
         }
 
         internal static int Count()
         {
-            lock (lockObj) {
+            lock (lockObj)
+            {
                 return _aircraftTable.Count;
             }
         }

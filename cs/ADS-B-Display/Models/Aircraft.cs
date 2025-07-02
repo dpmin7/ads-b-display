@@ -115,13 +115,13 @@ namespace ADS_B_Display
         public bool UnRegistered { get; set; } = false; // 등록되지 않은 항공기 여부
         public bool IsConflictRisk { get;  set; }
 
-        internal bool TimeCheck(long now, long ghostLimit, long purgeLimit)
+        internal bool TimeCheck(long now, long ghostLimit, long purgeLimit, bool useGhost, bool usePurge)
         {
             // Purge 조건: 마지막으로 본 시간이 limit 이상이면 true
-            if (now - LastSeen >= purgeLimit)
+            if (now - LastSeen >= purgeLimit && usePurge)
                 return true; // Purge 대상
 
-            IsGhost = now - LastSeen >= ghostLimit; // Ghost 항공기로 표시
+            IsGhost = now - LastSeen >= ghostLimit && useGhost; // Ghost 항공기로 표시
 
             (VLatitude, VLongitude) = PredictPositionFlat(
                Latitude, Longitude,

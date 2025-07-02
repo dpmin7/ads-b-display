@@ -11,11 +11,35 @@ namespace ADS_B_Display.Views.Popup
         private Action<List<string>> CheckedListCB = null;
 
         public ObservableCollection<TypeItem> AircraftTypeList { get; set; } = new ObservableCollection<TypeItem>();
-        public TypeFilterSettingPopupVM(IList<string> AircraftTypeList, Action<List<string>> checkedListCB)
+        private ObservableCollection<TypeItem> _selectedAircraftTypeList = new ObservableCollection<TypeItem>();
+        public ObservableCollection<TypeItem> SelectedAircraftTypeList
         {
-            this.AircraftTypeList = new ObservableCollection<TypeItem>( AircraftTypeList.Select(x => new TypeItem(x, false, ChangeData)));
-            CheckedListCB = checkedListCB;
+            get => _selectedAircraftTypeList;
+            set
+            {
+                _selectedAircraftTypeList = value;
+                OnPropertyChanged(nameof(SelectedAircraftTypeList));
+            }
+        }
 
+        public TypeFilterSettingPopupVM(IList<string> aircraftTypeList, IList<string> selectedAircraftTypeList, Action<List<string>> checkedListCB)
+        {
+            //AircraftTypeList = new ObservableCollection<TypeItem>(aircraftTypeList.Select(x => new TypeItem(x, false, ChangeData)));
+            foreach (string item in aircraftTypeList)
+            {
+                if (selectedAircraftTypeList.Contains(item))
+                {
+                    var temp = new TypeItem(item, true, ChangeData);
+                    AircraftTypeList.Add(temp);
+                    SelectedAircraftTypeList.Add(temp);
+                }
+                else
+                {
+                    AircraftTypeList.Add(new TypeItem(item, false, ChangeData));
+                }
+            }
+
+            CheckedListCB = checkedListCB;
             Cmd_Apply = new DelegateCommand(Apply);
         }
 
@@ -29,7 +53,6 @@ namespace ADS_B_Display.Views.Popup
             {
                 SelectedAircraftTypeList.Remove(item);
             }
-            VisibleSelectedList = SelectedAircraftTypeList.Count != 0;
         }
 
         private void Apply(object obj)
@@ -38,20 +61,6 @@ namespace ADS_B_Display.Views.Popup
         }
 
         public ICommand Cmd_Apply { get; }
-
-        private ObservableCollection<TypeItem> _SelectedAircraftTypeList = new ObservableCollection<TypeItem>();
-        public ObservableCollection<TypeItem> SelectedAircraftTypeList
-        {
-            get => _SelectedAircraftTypeList;
-            set
-            {
-                _SelectedAircraftTypeList = value;
-                OnPropertyChanged(nameof(SelectedAircraftTypeList));
-            }
-        }
-
-        private bool visibleSelectedList;
-        public bool VisibleSelectedList { get => visibleSelectedList; set => SetProperty(ref visibleSelectedList, value); }
     }
 
     public class TypeItem : NotifyPropertyChangedBase

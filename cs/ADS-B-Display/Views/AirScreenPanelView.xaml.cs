@@ -88,6 +88,7 @@ namespace ADS_B_Display.Views
             InitializeComponent();
             EventBus.Observe(EventIds.EvtControlSettingChanged).Subscribe(msg => UpdateTimeToGo(msg));
             EventBus.Observe(EventIds.EvtCenterMapTo).Subscribe(msg => CenterMapTo(msg));
+            EventBus.Observe(EventIds.EvtZoom).Subscribe(msg => ZoomControl((bool)msg));
 
             var settings = new GLWpfControlSettings()
             {
@@ -421,6 +422,20 @@ namespace ADS_B_Display.Views
             }
 
             if (e.Delta > 0)
+                _earthView.SingleMovement(EarthView.NAV_ZOOM_IN);
+            else
+                _earthView.SingleMovement(EarthView.NAV_ZOOM_OUT);
+
+            airplaneScale = Math.Min((0.05 / _earthView.Eye.H), 1.5); // 스케일 계산
+
+            UpdateRegion(); // 현재 지역 업데이트
+            glControl.InvalidateVisual(); // 마우스 휠 이벤트 후 강제 갱신
+            eyeX.Text = _earthView.Eye.X.ToString(); eyeY.Text = _earthView.Eye.Y.ToString(); eyeH.Text = _earthView.Eye.H.ToString();
+        }
+
+        private void ZoomControl(bool isZoomIn)
+        {
+            if (isZoomIn)
                 _earthView.SingleMovement(EarthView.NAV_ZOOM_IN);
             else
                 _earthView.SingleMovement(EarthView.NAV_ZOOM_OUT);

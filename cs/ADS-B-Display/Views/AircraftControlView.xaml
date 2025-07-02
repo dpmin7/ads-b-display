@@ -564,7 +564,7 @@
                 </TabItem>
                 <TabItem Header="Map / Data" Style="{StaticResource MahApps.Styles.TabItem.Aurora}">
                     <StackPanel Orientation="Vertical">
-                        <GroupBox HorizontalAlignment="Stretch" Header="">
+                        <GroupBox HorizontalAlignment="Stretch" Header="Map">
                             <StackPanel Margin="8,10" Orientation="Vertical">
                                 <StackPanel VerticalAlignment="Center" Orientation="Horizontal">
                                     <CheckBox
@@ -589,10 +589,14 @@
                                     Margin="0,8,0,8"
                                     HorizontalAlignment="Center"
                                     Orientation="Horizontal">
-                                    <Button Width="100" Content="Zoom In" />
+                                    <Button
+                                        Width="100"
+                                        Command="{Binding Cmd_ZoomIn}"
+                                        Content="Zoom In" />
                                     <Button
                                         Width="100"
                                         Margin="8,0,0,0"
+                                        Command="{Binding Cmd_ZoomOut}"
                                         Content="Zoom Out" />
                                 </StackPanel>
                             </StackPanel>
@@ -601,20 +605,46 @@
                             <StackPanel Margin="8,10" Orientation="Vertical">
                                 <StackPanel VerticalAlignment="Center" Orientation="Horizontal">
                                     <CheckBox
+                                        Width="110"
                                         Margin="0,4,0,0"
                                         Content="Purge Stale"
-                                        IsChecked="{Binding ControlSettings.PurgeStale}" />
+                                        IsChecked="{Binding UsePurgeMode}" />
                                     <TextBox
                                         Width="40"
                                         Margin="4,0,0,0"
                                         HorizontalContentAlignment="Center"
                                         VerticalContentAlignment="Center"
-                                        Text="{Binding ControlSettings.PurgeDuration}" />
+                                        Text="{Binding PurgeDuration}" />
+                                    <TextBlock
+                                        Margin="2,0,0,0"
+                                        VerticalAlignment="Center"
+                                        Text="sec" />
                                     <Button
                                         Margin="8,0,0,0"
                                         Padding="8,2"
                                         Command="{Binding Cmd_Purge}"
                                         Content="Purge Force" />
+                                </StackPanel>
+                                <StackPanel
+                                    Margin="0,4,0,0"
+                                    VerticalAlignment="Center"
+                                    Orientation="Horizontal">
+                                    <CheckBox
+                                        Width="110"
+                                        Margin="0,4,0,0"
+                                        Content="Ghost Timeout"
+                                        IsChecked="{Binding UseGhostMode}" />
+                                    <TextBox
+                                        Width="40"
+                                        Margin="4,0,0,0"
+                                        HorizontalContentAlignment="Center"
+                                        VerticalContentAlignment="Center"
+                                        Text="{Binding GhostDuration}" />
+                                    <TextBlock
+                                        Margin="2,0,0,0"
+                                        VerticalAlignment="Center"
+                                        Text="sec" />
+
                                 </StackPanel>
                             </StackPanel>
                         </GroupBox>
@@ -625,15 +655,22 @@
                         <!--  ─── 8) Areas Of Interest ───  -->
                         <GroupBox>
                             <GroupBox.Header>
-                                <StackPanel>
+                                <Grid>
                                     <CheckBox
                                         Margin="4,0,0,0"
                                         Content="AREA OF INTEREST"
                                         IsChecked="{Binding UsePolygon, UpdateSourceTrigger=PropertyChanged}" />
-                                </StackPanel>
+                                    <Button
+                                        Margin="2,0"
+                                        HorizontalAlignment="Right"
+                                        Command="{Binding MonitorCommand}"
+                                        Content="Monitor" />
+                                </Grid>
                             </GroupBox.Header>
                             <StackPanel Margin="8,10" Orientation="Vertical">
                                 <DataGrid
+                                    PreviewMouseDoubleClick="dgArea_PreviewMouseDoubleClick"
+                                    x:Name="dgArea"
                                     Height="100"
                                     AutoGenerateColumns="False"
                                     BorderBrush="Gray"
@@ -667,10 +704,13 @@
                                                 </DataTemplate>
                                             </DataGridTemplateColumn.CellTemplate>
                                         </DataGridTemplateColumn>
-                                        <DataGridTextColumn
-                                            Width="*"
-                                            Binding="{Binding Name}"
-                                            Header="Name" />
+                                        <DataGridTemplateColumn Width="*" Header="Name">
+                                            <DataGridTemplateColumn.CellTemplate>
+                                                <DataTemplate>
+                                                    <TextBlock Text="{Binding Name}" />
+                                                </DataTemplate>
+                                            </DataGridTemplateColumn.CellTemplate>
+                                        </DataGridTemplateColumn>
 
                                     </DataGrid.Columns>
                                 </DataGrid>
@@ -688,12 +728,13 @@
                                         Content="Cancel" />
                                     <Button
                                         Margin="2,0"
-                                        Command="{Binding DeleteCommand}"
-                                        Content="Delete" />
+                                        Command="{Binding EditCommand}"
+                                        CommandParameter="{Binding ElementName=dgArea, Path=SelectedIndex}"
+                                        Content="Edit" />
                                     <Button
                                         Margin="2,0"
-                                        Command="{Binding MonitorCommand}"
-                                        Content="Monitor" />
+                                        Command="{Binding DeleteCommand}"
+                                        Content="Delete" />
                                 </UniformGrid>
                             </StackPanel>
                         </GroupBox>
@@ -765,11 +806,6 @@
                                             Content="Altitude : "
                                             FontWeight="Bold"
                                             IsChecked="{Binding UseAltitudeFilter}" />
-                                        <TextBlock
-                                            Width="60"
-                                            VerticalAlignment="Center"
-                                            FontWeight="Bold"
-                                            Text="Altitude : " />
                                         <TextBox
                                             Width="60"
                                             VerticalAlignment="Center"
@@ -791,24 +827,30 @@
                                         TickFrequency="1"
                                         UpperValue="{Binding MaxAltitude, Mode=TwoWay}" />
                                 </Grid>
-                                <CheckBox Content="USE" IsChecked="{Binding UseAircraftTypeFilter}" />
-                                <Button
-                                    Grid.RowSpan="2"
-                                    Width="130"
-                                    Margin="10,0,10,0"
-                                    HorizontalAlignment="Right"
-                                    VerticalAlignment="Bottom"
-                                    Command="{Binding Cmd_SetAircraftType}">
-                                    <StackPanel Orientation="Horizontal">
-                                        <iconPacks:PackIconMaterial Kind="CogOutline" />
-                                        <TextBlock
-                                            Margin="4,0,0,0"
-                                            VerticalAlignment="Center"
-                                            FontSize="12"
-                                            Text="Aircraft Type" />
-                                    </StackPanel>
-                                </Button>
-                                <Separator Margin="6,10,10,0" />
+                                <StackPanel Orientation="Horizontal">
+                                    <CheckBox
+                                        Margin="0,4,0,0"
+                                        Content="USE"
+                                        IsChecked="{Binding UseAircraftTypeFilter}" />
+                                    <Button
+                                        Grid.RowSpan="2"
+                                        Width="180"
+                                        Margin="10,0,10,0"
+                                        HorizontalAlignment="Right"
+                                        VerticalAlignment="Bottom"
+                                        Command="{Binding Cmd_SetAircraftType}">
+                                        <StackPanel Orientation="Horizontal">
+                                            <iconPacks:PackIconMaterial Kind="CogOutline" />
+                                            <TextBlock
+                                                Margin="4,0,0,0"
+                                                VerticalAlignment="Center"
+                                                FontSize="12"
+                                                Text="Aircraft Type Detail" />
+                                        </StackPanel>
+                                    </Button>
+                                </StackPanel>
+
+                                <Separator Margin="6,15,10,5" />
                                 <Grid Margin="10,4">
                                     <Grid.RowDefinitions>
                                         <RowDefinition />

@@ -1,4 +1,5 @@
-﻿using ADS_B_Display.Map;
+﻿using ADS_B_Display;
+using ADS_B_Display.Map;
 using ADS_B_Display.Map.MapSrc;
 using ADS_B_Display.Models;
 using ADS_B_Display.Models.Settings;
@@ -100,6 +101,9 @@ namespace ADS_B_Display.Views
 
             OnChangeSetting();
 
+            UsePurgeMode = ControlSettings.PurgeStale;
+            PurgeDuration = ControlSettings.PurgeDuration;
+
             if (Enum.TryParse(ControlSettings.MapProvider, true, out TileServerType res))
                 SelectedTileServer = res;
             else
@@ -133,13 +137,15 @@ namespace ADS_B_Display.Views
             CompleteCommand = new DelegateCommand(CompleteArea, CanCompleteArea);
             CancelCommand = new DelegateCommand(CancelArea, CanCancelArea);
             DeleteCommand = new DelegateCommand(DeleteArea, CanDeleteArea);
+            EditCommand = new DelegateCommand(EditArea, CanEditArea);
             MonitorCommand = new DelegateCommand(MonitorArea, CanMonitorArea);
 
             AreaList = new ObservableCollection<Area>(AreaManager.Areas);
             ViewableAircraftList = new List<Aircraft>();
             Cmd_ShowCpaDialog = new DelegateCommand(ShowCpaDialog);
             Cmd_SetAircraftType = new DelegateCommand(SetAircraftType);
-
+            Cmd_ZoomIn = new DelegateCommand(ZoomIn);
+            Cmd_ZoomOut = new DelegateCommand(ZoomOut);
             _timer = new DispatcherTimer(DispatcherPriority.Background)
             {
                 Interval = TimeSpan.FromMilliseconds(250)
@@ -157,6 +163,15 @@ namespace ADS_B_Display.Views
             };
 
             _timer.Start();
+        }
+        private void ZoomIn(object obj)
+        {
+            EventBus.Publish(EventIds.EvtZoom, true);
+        }
+
+        private void ZoomOut(object obj)
+        {
+            EventBus.Publish(EventIds.EvtZoom, false);
         }
 
         private Window TypeSettingWindow = null;
@@ -186,7 +201,7 @@ namespace ADS_B_Display.Views
             {
                 Owner = Application.Current.MainWindow,
                 WindowStartupLocation = WindowStartupLocation.CenterOwner,
-                DataContext = new TypeFilterSettingPopupVM(AircraftTypeList, OnAircraftTypeFilterChanged)
+                DataContext = new TypeFilterSettingPopupVM(AircraftTypeList, _selectedAircraftTypeList, OnAircraftTypeFilterChanged)
             };
             TypeSettingWindow.Show();
         }
@@ -194,7 +209,7 @@ namespace ADS_B_Display.Views
         private void OnAircraftTypeFilterChanged(List<string> types)
         {
             _selectedAircraftTypeList = types.ToList();
-            _useAircraftTypeFilter = true;
+            //_useAircraftTypeFilter = true;
             AircraftManager.UpdateAircraftTypeFilter(_selectedAircraftTypeList);
         }
 
@@ -422,6 +437,28 @@ namespace ADS_B_Display.Views
             }
         }
 
+        private void EditArea(object obj)
+        {
+            if (SelectedArea != null && obj is int idx && idx >= 0)
+            {
+                AreaRegisterPopup popup = new AreaRegisterPopup
+                {
+                    AreaName = SelectedArea.Name,
+                    AreaColor = SelectedArea.Color
+                };
+                popup.Owner = Application.Current.MainWindow;
+                popup.WindowStartupLocation = WindowStartupLocation.CenterOwner;
+                var res = popup.ShowDialog();
+                if (res == true)
+                {
+                    SelectedArea.Name = popup.AreaName;
+                    SelectedArea.Color = popup.AreaColor;
+                    //if (AreaManager.EditArea(SelectedArea, name, color, idx))
+                    SelectedArea.UpdateUI();
+                }
+            }
+        }
+
         private bool CanMonitorArea(object obj) => true;
 
 
@@ -436,6 +473,8 @@ namespace ADS_B_Display.Views
         }
 
         private bool CanDeleteArea(object obj) => SelectedArea != null;
+        private bool CanEditArea(object obj) => SelectedArea != null;
+
 
         private bool _isInsertMode;
         public bool IsInsertMode
@@ -766,10 +805,13 @@ namespace ADS_B_Display.Views
         public ICommand CompleteCommand { get; }
         public ICommand CancelCommand { get; }
         public ICommand DeleteCommand { get; }
+        public ICommand EditCommand { get; }
         public ICommand MonitorCommand { get; }
 
         public ICommand Cmd_ShowCpaDialog { get; }
         public ICommand Cmd_SetAircraftType { get; }
+        public ICommand Cmd_ZoomIn { get; }
+        public ICommand Cmd_ZoomOut { get; }
         private void RawDisconnect(object obj)
         {
             if (RawConnectStatus == ConnectStatus.Disconnect)
@@ -1083,6 +1125,14 @@ namespace ADS_B_Display.Views
             EventBus.Publish(EventIds.EvtControlSettingChanged, ControlSettings);
         }
 
+        internal void MouseDoubleClick()
+        {
+            if (SelectedArea != null)
+            {
+                EventBus.Publish(EventIds.EvtCenterMapTo, (SelectedArea.Points[0].Y, SelectedArea.Points[0].X));
+            }
+        }
+
         private int numOfAircraft;
         public int NumOfAircraft { get => numOfAircraft; set => SetProperty(ref numOfAircraft, value); }
 
@@ -1230,6 +1280,48 @@ namespace ADS_B_Display.Views
         private long stTime;
         public long StTime { get => stTime; set => SetProperty(ref stTime, value); }
 
+        private bool useGhostMode = true;
+        public bool UseGhostMode {
+            get => useGhostMode;
+            set
+            {
+                SetProperty(ref useGhostMode, value);
+                AircraftManager.SetUseGhost(value);
+            }
+        }
 
+        private long ghostDuration = 20;
+        public long GhostDuration {
+            get => ghostDuration;
+            set
+            {
+                SetProperty(ref ghostDuration, value);
+                AircraftManager.SetGhostLimitMS(value * 1000);
+            }
+        }
+
+        private bool usePurgeMode = true;
+        public bool UsePurgeMode
+        {
+            get => usePurgeMode;
+            set
+            {
+                SetProperty(ref usePurgeMode, value); 
+                ControlSettings.PurgeStale = value;
+                AircraftManager.SetUsePurge(value);
+            }
+        }
+
+        private long purgeDuration = 30;
+        public long PurgeDuration
+        {
+            get => purgeDuration;
+            set
+            {
+                SetProperty(ref purgeDuration, value);
+                ControlSettings.PurgeDuration = value;
+                AircraftManager.SetPurgeLimitMS(value * 1000);
+            }
+        }
     }
 }

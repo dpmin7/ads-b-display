@@ -12,8 +12,10 @@
     Width="1280"
     Height="800"
     Closing="Window_Closing"
+    ShowTitleBar="True"
     WindowStartupLocation="CenterScreen"
     WindowState="Maximized"
+    WindowTitleBrush="#FF2E2E2E"
     mc:Ignorable="d">
     <!--  ─── 내용 영역 (2열짜리 Grid) ───  -->
     <Grid>

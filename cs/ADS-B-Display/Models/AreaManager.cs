@@ -78,6 +78,16 @@ internal class AreaManager
         return false;
     }
 
+    public static bool EditArea(string areaName, Color color, int idx)
+    {
+        if (_areas.Count <= idx)
+            return false;
+        
+        _areas[idx].Name = areaName;
+        _areas[idx].Color = color;
+        return true;
+    }
+
     public static void ResetTempArea()
     {
         _tempArea = new Area

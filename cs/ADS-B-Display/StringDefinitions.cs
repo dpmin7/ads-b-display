@@ -16,5 +16,6 @@ namespace ADS_B_Display
         public const string EvtCenterMapTo = "EvtCenterMapTo";
         public const string EvtAircraftDBInitialized = "EvtAircraftDBInitialized";
         public const string EvtBigQueryRemainTimeUpdate = "EvtBigQueryRemainTimeUpdate";
+        public const string EvtZoom = "EvtZoom";
     }
 }

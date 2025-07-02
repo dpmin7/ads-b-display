@@ -39,8 +39,11 @@ namespace ADS_B_Display.Views.Popup
             }
             AreaColor = colorPicker.SelectedColor.Value;
             
+            
             DialogResult = true;
-            Dispatcher.Invoke(() => this.Close());
+            Dispatcher.Invoke(() => {
+                this.Close(); 
+            });
         }
 
         private void Cancel_Click(object sender, RoutedEventArgs e)

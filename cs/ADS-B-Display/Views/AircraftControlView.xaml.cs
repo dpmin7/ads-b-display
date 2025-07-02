@@ -29,5 +29,10 @@ namespace ADS_B_Display.Views
         {
             (DataContext as IDisposable)?.Dispose();
         }
+
+        private void dgArea_PreviewMouseDoubleClick(object sender, MouseButtonEventArgs e)
+        {
+            ((AircraftControlViewModel)DataContext).MouseDoubleClick();
+        }
     }
 }

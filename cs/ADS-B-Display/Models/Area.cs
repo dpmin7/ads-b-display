@@ -12,10 +12,9 @@ namespace ADS_B_Display
     /// 다각형 영역 데이터.
     /// 원본 TArea 구조체를 C#으로 변환.
     /// </summary>
-    public class Area
+    public class Area : NotifyPropertyChangedBase
     {
         public const int MAX_AREA_POINTS = 500;
-
         public bool Use { get; set; } = true;
         public string Name { get; set; }
         public Color Color { get; set; }
@@ -41,6 +40,11 @@ namespace ADS_B_Display
             Points = new List<Vector3d>();
             Triangles = null;
             Selected = false;
+        }
+
+        public void UpdateUI()
+        {
+            OnPropertyChanged("");
         }
 
         public bool AddAircraft(Aircraft aircraft)
