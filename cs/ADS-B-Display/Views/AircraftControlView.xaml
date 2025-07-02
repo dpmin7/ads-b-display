@@ -15,6 +15,7 @@
     d:DesignWidth="360"
     mc:Ignorable="d">
     <UserControl.Resources>
+        <converters:NullToNAConverter x:Key="null2NA" />
         <converters:BoolToBrushConverter x:Key="btb" TrueBrush="Red" />
         <converters:StringToUri x:Key="S2Uri" />
         <converters:DoubleToLatitude x:Key="D2Lat" />
@@ -100,8 +101,8 @@
                         <TextBlock
                             Margin="16,0,0,0"
                             FontWeight="Bold"
-                            Text="  Viewable:" />
-                        <TextBlock Margin="4,0,0,0" Text="{Binding NumOfViewableAircraft}" />
+                            Text="  Num of Filtered Aircraft:" />
+                        <TextBlock Margin="4,0,0,0" Text="{Binding NumOfFilteredAircraft}" />
                     </StackPanel>
                 </StackPanel>
             </Border>
@@ -246,7 +247,7 @@
                                 Margin="0,4,0,0"
                                 FontWeight="Bold"
                                 Text="Aircraft Type:" />
-                            <TextBlock Margin="8,4,0,0" Text="{Binding Aircraft.AircraftData.IcaoAircraftType, FallbackValue=NA}" />
+                            <TextBlock Margin="8,4,0,0" Text="{Binding Aircraft.AircraftData.IcaoAircraftType, FallbackValue=NA, Converter={StaticResource null2NA}}" />
                         </StackPanel>
                         <StackPanel Orientation="Horizontal">
                             <TextBlock
@@ -268,7 +269,8 @@
                         HorizontalAlignment="Right"
                         VerticalAlignment="Bottom"
                         Command="{Binding Cmd_Analytics}"
-                        Content="Analytics" />
+                        Content="Analytics"
+                        IsEnabled="{Binding CanAnalytics}" />
                 </Grid>
 
             </GroupBox>
@@ -792,6 +794,7 @@
                                         TickFrequency="1"
                                         UpperValue="{Binding MaxAltitude, Mode=TwoWay}" />
                                 </Grid>
+                                <CheckBox Content="USE" IsChecked="{Binding UseAircraftTypeFilter}" />
                                 <Button
                                     Grid.RowSpan="2"
                                     Width="130"

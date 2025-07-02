@@ -296,6 +296,10 @@
     <Compile Include="Views\Popup\CPAConflictDialog.xaml.cs">
       <DependentUpon>CPAConflictDialog.xaml</DependentUpon>
     </Compile>
+    <Compile Include="Views\Popup\TypeFilterSettingPopup.xaml.cs">
+      <DependentUpon>TypeFilterSettingPopup.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="Views\Popup\TypeFilterSettingPopupVM.cs" />
     <Compile Include="Views\UserControls\ConnectionSignal.xaml.cs">
       <DependentUpon>ConnectionSignal.xaml</DependentUpon>
     </Compile>
@@ -352,6 +356,10 @@
       <Generator>MSBuild:Compile</Generator>
     </Page>
     <Page Include="Views\Popup\CPAConflictDialog.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="Views\Popup\TypeFilterSettingPopup.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>

@@ -352,6 +352,8 @@ namespace ADS_B_Display
 
                 List<Dictionary<string, string>> parseData = CsvUtil.Parse(data);
                 _aircraftDataTable = CreateAircraftDictionary(parseData);
+
+                EventBus.Publish(EventIds.EvtAircraftDBInitialized, null);
             });
         }
 
@@ -455,6 +457,13 @@ namespace ADS_B_Display
                 aircraftDataTable[icaoUintValue] = aircraft;
             }
             return aircraftDataTable;
+        }
+
+        public static IList<AircraftData> GetAllAircraftData()
+        {
+            if (_aircraftDataTable == null || _aircraftDataTable.Count == 0)
+                return new List<AircraftData>();
+            return _aircraftDataTable.Values.ToList();
         }
     }
 }

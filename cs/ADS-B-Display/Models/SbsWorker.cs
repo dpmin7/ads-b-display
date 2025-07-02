@@ -17,9 +17,11 @@ using System.Windows.Threading;
 
 namespace ADS_B_Display
 {
+    public enum MsgType { SbsMsg, RawMsg }
+    public enum ConnectorType { TCP, File, DB }
     public class SbsWorker
     {
-        enum MsgType { SbsMsg, RawMsg }
+        public ConnectorType ConnectorType { get; private set; }
         private IConnector _inputSource;
         private InputSourceState _state = new InputSourceState();
         private IRecorder _recorder;
@@ -62,9 +64,15 @@ namespace ADS_B_Display
                 AircraftManager.PurgeAll();
 
                 if (useDb && dbConnector != null)
+                {
                     _inputSource = new DatabaseConnector(dbConnector);
+                    ConnectorType = ConnectorType.DB;
+                }
                 else
+                {
                     _inputSource = new FileConnector(path);
+                    ConnectorType = ConnectorType.File;
+                }
 
                 _inputSource.Start(_internalOnMessageReceived, _playBackSpeed, _state);
                 return true;
@@ -99,7 +107,10 @@ namespace ADS_B_Display
                 AircraftManager.PurgeAll();
 
                 _inputSource = new TcpConnector(host, port);
+                ConnectorType = ConnectorType.TCP;
+                
                 await _inputSource.StartAsync(_internalOnMessageReceived, _playBackSpeed, ct, _state);
+                
                 return true;
             }
             catch

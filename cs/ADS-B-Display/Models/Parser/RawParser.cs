@@ -616,7 +616,7 @@ namespace ADS_B_Display.Models.Parser
 
         public void RawToAircraft(ModeSMessage mm, ref Aircraft a, long time)
         {
-            RawToAircraft(mm, ref a, time);
+            AircraftDecoder.RawToAircraft(mm, ref a, time);
         }
 
         class AircraftDecoder
@@ -625,7 +625,7 @@ namespace ADS_B_Display.Models.Parser
             private const int CPR_BITS = 131072; // 2^17
             private const uint MODES_NON_ICAO_ADDRESS = 1 << 24;
 
-            private int cprNLFunction(double lat)
+            private static int cprNLFunction(double lat)
             {
                 lat = Math.Abs(lat);
                 if (lat < 10.47047130) return 59;
@@ -689,25 +689,25 @@ namespace ADS_B_Display.Models.Parser
                 return 1;
             }
 
-            private int cprModFunction(int a, int b)
+            private static int cprModFunction(int a, int b)
             {
                 int res = a % b;
                 if (res < 0) res += b;
                 return res;
             }
 
-            private int cprNFunction(double lat, int isodd)
+            private static int cprNFunction(double lat, int isodd)
             {
                 int nl = cprNLFunction(lat) - isodd;
                 return nl < 1 ? 1 : nl;
             }
 
-            private double cprDlonFunction(double lat, int isodd)
+            private static double cprDlonFunction(double lat, int isodd)
             {
                 return 360.0 / cprNFunction(lat, isodd);
             }
 
-            private void decodeCPR(Aircraft a)
+            private static void decodeCPR(Aircraft a)
             {
                 const double AirDlat0 = 360.0 / 60.0;
                 const double AirDlat1 = 360.0 / 59.0;
@@ -745,7 +745,7 @@ namespace ADS_B_Display.Models.Parser
                     a.Longitude -= 360.0;
             }
 
-            public void RawToAircraft(ModeSMessage mm, ref Aircraft a, long currentTime)
+            public static void RawToAircraft(ModeSMessage mm, ref Aircraft a, long currentTime)
             {
                 //long currentTime = TimeFunctions.GetCurrentTimeInMsec();
                 a.LastSeen = currentTime;

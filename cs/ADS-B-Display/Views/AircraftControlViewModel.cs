@@ -66,6 +66,8 @@ namespace ADS_B_Display.Views
             }
         }
 
+        public bool CanAnalytics => _sbsWorker.ConnectorType == ConnectorType.DB && Aircraft != null;
+
         public List<Aircraft> ViewableAircraftList { get; private set; }
         private Area _selectedArea;
         private DispatcherTimer _timer = null;
@@ -125,7 +127,7 @@ namespace ADS_B_Display.Views
 
             Cmd_Purge = new DelegateCommand(Purge);
 
-            Cmd_Analytics = new DelegateCommand(Analytics, CanAnalytics);
+            Cmd_Analytics = new DelegateCommand(Analytics);
 
             InsertCommand = new DelegateCommand(InsertArea, CanInsertArea);
             CompleteCommand = new DelegateCommand(CompleteArea, CanCompleteArea);
@@ -136,6 +138,7 @@ namespace ADS_B_Display.Views
             AreaList = new ObservableCollection<Area>(AreaManager.Areas);
             ViewableAircraftList = new List<Aircraft>();
             Cmd_ShowCpaDialog = new DelegateCommand(ShowCpaDialog);
+            Cmd_SetAircraftType = new DelegateCommand(SetAircraftType);
 
             _timer = new DispatcherTimer(DispatcherPriority.Background)
             {
@@ -144,23 +147,55 @@ namespace ADS_B_Display.Views
             _timer.Tick += (s, e) =>
             {
                 ViewableAircraftList = AircraftManager.GetAllOnScreen();
-                NumOfViewableAircraft = ViewableAircraftList.Count;
+                NumOfFilteredAircraft = AircraftManager.NumOfFilteredAircraft;
                 NumOfAircraft = AircraftManager.Count();
                 SystemTime = DateTime.Now;
                 UpdateHookedAircraft();
 
                 OnPropertyChanged("ViewableAircraftList");
+                OnPropertyChanged("CanAnalytics");
             };
 
             _timer.Start();
         }
 
-        private bool CanAnalytics(object obj)
+        private Window TypeSettingWindow = null;
+        private IList<string> _selectedAircraftTypeList = new List<string>();
+        private IList<string> AircraftTypeList { get; set; } = new List<string>();
+        private bool _useAircraftTypeFilter = false;
+        public bool UseAircraftTypeFilter
         {
-            if (Aircraft == null || ControlSettings.UseBigQuery == false)
-                return false;
+            get => _useAircraftTypeFilter;
+            set
+            {
+                if (_useAircraftTypeFilter != value)
+                {
+                    _useAircraftTypeFilter = value;
+                    OnPropertyChanged(nameof(UseAircraftTypeFilter));
+                    AircraftManager.UpdateUseAircraftTypeFilter(value);
+                }
+            }
+        }
 
-            return true;
+        private void SetAircraftType(object obj)
+        {
+            if (AircraftTypeList.Count == 0)
+                return;
+
+            Window TypeSettingWindow = new TypeFilterSettingPopup()
+            {
+                Owner = Application.Current.MainWindow,
+                WindowStartupLocation = WindowStartupLocation.CenterOwner,
+                DataContext = new TypeFilterSettingPopupVM(AircraftTypeList, OnAircraftTypeFilterChanged)
+            };
+            TypeSettingWindow.Show();
+        }
+
+        private void OnAircraftTypeFilterChanged(List<string> types)
+        {
+            _selectedAircraftTypeList = types.ToList();
+            _useAircraftTypeFilter = true;
+            AircraftManager.UpdateAircraftTypeFilter(_selectedAircraftTypeList);
         }
 
         private void Analytics(object obj)
@@ -210,7 +245,7 @@ namespace ADS_B_Display.Views
             catch (Exception ex)
             {
                 // 예외 발생 시에도 앱이 죽지 않도록 처리
-                Debug.WriteLine($"[ShowCpaDialog] Failed to show dialog: {ex.Message}");
+                //Debug.WriteLine($"[ShowCpaDialog] Failed to show dialog: {ex.Message}");
             }
         }
 
@@ -686,6 +721,8 @@ namespace ADS_B_Display.Views
         private void RegisterEvents()
         {
             _mouseMoveSubscription = EventBus.Observe(EventIds.EvtMouseMoved).Subscribe(msg => UpdateMouseMove(msg));
+            EventBus.Observe(EventIds.EvtAircraftDBInitialized).
+                Subscribe(msg => AircraftTypeList = AircraftDB.GetAllAircraftData().Select(x => x.IcaoAircraftType).Distinct().ToList());
         }
 
         private void UpdateMouseMove(object msg)
@@ -724,6 +761,7 @@ namespace ADS_B_Display.Views
         public ICommand MonitorCommand { get; }
 
         public ICommand Cmd_ShowCpaDialog { get; }
+        public ICommand Cmd_SetAircraftType { get; }
         private void RawDisconnect(object obj)
         {
             if (RawConnectStatus == ConnectStatus.Disconnect)
@@ -785,7 +823,10 @@ namespace ADS_B_Display.Views
                     WindowStartupLocation = WindowStartupLocation.CenterOwner,
                     Owner = Application.Current.MainWindow
                 };
-                popup.Closed += (s, e2) => { if (popup.IsCancelled) { } };
+                popup.Closed += (s, e2) => {
+                    if (popup.IsCancelled) { }
+                        //_rawCts.Cancel(); 
+                };
                 popup.Show();
                 RawConnectStatus = ConnectStatus.Error;
                 var res = await _rawWorker.Start(host, port, _rawCts.Token);
@@ -869,12 +910,16 @@ namespace ADS_B_Display.Views
             try
             {
                 // 연결 후, 스트림에서 한 줄씩 읽어서 처리 (예시: OnSbsMessageReceived(rawLine))
+
                 var popup = new LoadingPopup()
                 {
                     WindowStartupLocation = WindowStartupLocation.CenterOwner,
                     Owner = Application.Current.MainWindow
                 };
-                popup.Closed += (s, e2) => { if (popup.IsCancelled) { } };
+                popup.Closed += (s, e2) => {
+                    if (popup.IsCancelled) { }
+                        //_sbsCts.Cancel();
+                };
                 SbsConnectStatus = ConnectStatus.Error;
                 popup.Show();
                 var res = await _sbsWorker.Start(host, port, _sbsCts.Token);
@@ -1033,8 +1078,8 @@ namespace ADS_B_Display.Views
         private int numOfAircraft;
         public int NumOfAircraft { get => numOfAircraft; set => SetProperty(ref numOfAircraft, value); }
 
-        private int numOfViewableAircraft;
-        public int NumOfViewableAircraft { get => numOfViewableAircraft; set => SetProperty(ref numOfViewableAircraft, value); }
+        private int numOfFilteredAircraft;
+        public int NumOfFilteredAircraft { get => numOfFilteredAircraft; set => SetProperty(ref numOfFilteredAircraft, value); }
 
         private DateTime systemTime;
         public DateTime SystemTime { get => systemTime; set => SetProperty(ref systemTime, value); }

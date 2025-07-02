@@ -159,6 +159,7 @@ namespace ADS_B_Display.Models
                 // 첫 번째 루프: 
                 // 1. TimeCheck함수에서 현재 시간과 비교하여 Purge 대상 키를 수집, Ghost상태 체크, 가상 위치 계산
                 // 2. 다각형 등의 필터도 여기서 하기...
+                var num = 0;
                 foreach (var kvp in _aircraftTable)
                 {
                     if (kvp.Value.TimeCheck(now, _ghostLimitMS, _purgeLimitMS))
@@ -166,15 +167,19 @@ namespace ADS_B_Display.Models
                         keysToRemove.Add(kvp.Key);
                     }
                     if (_speedFilter.IsValid(kvp.Value.Speed) &&
-                        _altitudeFilter.IsValid(kvp.Value.Altitude))
+                        _altitudeFilter.IsValid(kvp.Value.Altitude) &&
+                        _aircraftTypeFilter.IsValid(kvp.Value.AircraftData.IcaoAircraftType))
                     {
                         kvp.Value.Filtered = false;
+                        num++;
                     }
                     else
                     {
                         kvp.Value.Filtered = true;
                     }
                 }
+
+                NumOfFilteredAircraft = num;
 
                 // 두 번째 루프: Purge키로 aircraft 삭제
                 foreach (var key in keysToRemove)
@@ -257,8 +262,26 @@ namespace ADS_B_Display.Models
             }
         }
 
+        public static void UpdateAircraftTypeFilter(IList<string> types)
+        {
+            lock (lockObj)
+            {
+                _aircraftTypeFilter.Types = types.ToList();
+            }
+        }
+
+        public static void UpdateUseAircraftTypeFilter(bool use)
+        {
+            lock (lockObj)
+            {
+                _aircraftTypeFilter.UseFilter = use;
+            }
+        }
+
+        public static int NumOfFilteredAircraft { get; private set; }
         private static Filter _speedFilter = new Filter();
         private static Filter _altitudeFilter = new Filter();
+        private static TypeFilter _aircraftTypeFilter = new TypeFilter();
 
         private static double _onLeftTopLat = 0.0;
         private static double _onRightBottomLat = 0.0;
@@ -271,8 +294,6 @@ namespace ADS_B_Display.Models
             _onRightBottomLat = rightBottomLat;
             _onRightBottomLon = rightBottomLon;
         }
-
-        
 
         internal static void PurgeAll()
         {
@@ -371,7 +392,7 @@ namespace ADS_B_Display.Models
         public String AreaName2 { get; set; }
     }
 
-    public class Filter
+    public class Filter : IFilter<double>
     {
         public bool UseFilter { get; set; } = false;
         public double Min { get; set; } = 0.0;
@@ -385,5 +406,25 @@ namespace ADS_B_Display.Models
                 return false;
             return true;
         }
+    }
+
+    public class TypeFilter : IFilter<string>
+    {
+        public bool UseFilter { get; set; } = false;
+        public List<string> Types { get; set; } = new List<string>();
+        public bool IsValid(string value)
+        {
+            if (!UseFilter)
+                return true;
+            if (string.IsNullOrEmpty(value))
+                return false;
+            return Types.Contains(value);
+        }
+    }
+
+    public interface IFilter<T>
+    {
+        bool UseFilter { get; set; }
+        bool IsValid(T value);
     }
 }

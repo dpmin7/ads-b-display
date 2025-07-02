@@ -1,0 +1,125 @@
+﻿<mah:MetroWindow
+    x:Class="ADS_B_Display.Views.Popup.TypeFilterSettingPopup"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:converters="clr-namespace:ADS_B_Display.Views.Converters"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:iconPacks="http://metro.mahapps.com/winfx/xaml/iconpacks"
+    xmlns:local="clr-namespace:ADS_B_Display.Views.Popup"
+    xmlns:mah="http://metro.mahapps.com/winfx/xaml/controls"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    Title="TypeFilterSettingPopup"
+    Width="300"
+    Height="650"
+    d:DataContext="{d:DesignInstance Type=local:TypeFilterSettingPopupVM}"
+    Topmost="True"
+    mc:Ignorable="d">
+    <Window.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="pack://application:,,,/MahApps.Metro;component/Styles/Controls.xaml" />
+            </ResourceDictionary.MergedDictionaries>
+
+            <!--  2) 컨버터 등록  -->
+            <converters:Bool2VisibleConverter x:Key="Bool2Visible" />
+        </ResourceDictionary>
+    </Window.Resources>
+    <Grid Margin="20">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="auto" />
+            <RowDefinition />
+            <RowDefinition Height="auto" />
+        </Grid.RowDefinitions>
+        <DataGrid
+            Grid.Row="0"
+            Height="200"
+            Margin="0,0,0,10"
+            AutoGenerateColumns="False"
+            BorderBrush="White"
+            BorderThickness="2"
+            ItemsSource="{Binding SelectedAircraftTypeList}"
+            VerticalScrollBarVisibility="Auto"
+            Visibility="{Binding VisibleSelectedList, Converter={StaticResource Bool2Visible}}">
+            <DataGrid.Columns>
+                <DataGridTemplateColumn Header="USE">
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate DataType="local:TypeItem">
+                            <CheckBox HorizontalAlignment="Center" IsChecked="{Binding IsChecked, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
+                <DataGridTemplateColumn Width="auto" Header="Aircraft Type">
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate DataType="local:TypeItem">
+                            <TextBlock
+                                HorizontalAlignment="Center"
+                                Text="{Binding Type}"
+                                TextAlignment="Center" />
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
+            </DataGrid.Columns>
+        </DataGrid>
+
+        <DataGrid
+            Grid.Row="1"
+            AutoGenerateColumns="False"
+            BorderBrush="White"
+            BorderThickness="2"
+            ItemsSource="{Binding AircraftTypeList}">
+            <DataGrid.Columns>
+                <DataGridTemplateColumn Header="USE">
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate DataType="local:TypeItem">
+                            <CheckBox HorizontalAlignment="Center" IsChecked="{Binding IsChecked, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
+                <DataGridTemplateColumn Width="auto" Header="Aircraft Type">
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate DataType="local:TypeItem">
+                            <TextBlock
+                                HorizontalAlignment="Center"
+                                Text="{Binding Type}"
+                                TextAlignment="Center" />
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
+            </DataGrid.Columns>
+        </DataGrid>
+        <StackPanel
+            Grid.Row="2"
+            Margin="0,10,0,0"
+            HorizontalAlignment="Right"
+            Orientation="Horizontal">
+            <Button
+                Width="90"
+                Height="40"
+                Margin="4,0"
+                Command="{Binding Cmd_Apply}">
+                <StackPanel Orientation="Horizontal">
+                    <iconPacks:PackIconMaterial VerticalAlignment="Center" Kind="CheckBold" />
+                    <TextBlock
+                        Margin="4,0,4,0"
+                        VerticalAlignment="Center"
+                        FontSize="12"
+                        Text="Apply" />
+                </StackPanel>
+            </Button>
+            <Button
+                Width="90"
+                Height="40"
+                Margin="0,0,0,0"
+                Click="Button_Click">
+                <StackPanel Orientation="Horizontal">
+                    <iconPacks:PackIconMaterial VerticalAlignment="Center" Kind="CloseThick" />
+                    <TextBlock
+                        Margin="4,0,0,0"
+                        VerticalAlignment="Center"
+                        FontSize="12"
+                        Text="Cancel" />
+                </StackPanel>
+            </Button>
+        </StackPanel>
+    </Grid>
+</mah:MetroWindow>
