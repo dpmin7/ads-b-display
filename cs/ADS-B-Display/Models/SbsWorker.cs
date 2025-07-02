@@ -1,7 +1,10 @@
 ﻿using ADS_B_Display.Models;
-using ADS_B_Display.Models.Parser;
 using ADS_B_Display.Models.Connector;
+using ADS_B_Display.Models.Parser;
 using ADS_B_Display.Models.Recorder;
+using ADS_B_Display.Views;
+using ADS_B_Display.Utils;
+using NLog;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -22,6 +25,10 @@ namespace ADS_B_Display
     public class SbsWorker
     {
         public ConnectorType ConnectorType { get; private set; }
+
+        private static readonly Logger logger = LogManager.GetCurrentClassLogger();
+
+        enum MsgType { SbsMsg, RawMsg }
         private IConnector _inputSource;
         private InputSourceState _state = new InputSourceState();
         private IRecorder _recorder;
@@ -45,6 +52,12 @@ namespace ADS_B_Display
             _internalOnMessageReceived = (msg, ts) =>
             {
                 RecordMessage(ts, msg); // 항상 먼저 기록
+
+                if (AirScreenPanelView.msgReceiveTime == null)
+                {
+                    logger.Info($"[SBS] First Message: {DateTime.Now:HH:mm:ss.fff}");
+                    AirScreenPanelView.msgReceiveTime = DateTime.Now;
+                }
 
                 uint acio = parser.Parse(msg, ts);
                 PostProcess(acio);

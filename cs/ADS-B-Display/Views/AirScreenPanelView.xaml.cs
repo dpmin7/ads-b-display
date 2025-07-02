@@ -80,6 +80,7 @@ namespace ADS_B_Display.Views
         private Timer _delayTimer;
 
         public static DateTime? connectStartTime = null;
+        public static DateTime? msgReceiveTime = null;
         private static DateTime? firstAircraftDrawTime = null;
 
         public AirScreenPanelView()
@@ -862,11 +863,15 @@ namespace ADS_B_Display.Views
             }
 
             // 최초로 항공기가 그려진 시점 기록
-            if (connectStartTime != null)
+            if ((connectStartTime != null) && (msgReceiveTime != null))
             {
                 firstAircraftDrawTime = DateTime.Now;
-                Logger.Info($"[SBS] 첫 항공기 화면 표시: {firstAircraftDrawTime.Value:HH:mm:ss.fff} (Connect 후 {(firstAircraftDrawTime.Value - connectStartTime.Value).TotalMilliseconds} ms)");
+                Logger.Info($"[SBS] Display Time: {firstAircraftDrawTime.Value:HH:mm:ss.fff}");
+                Logger.Info($"[SBS] Click Button -> Display aircraft: {(firstAircraftDrawTime.Value - connectStartTime.Value).TotalMilliseconds} ms");
+                Logger.Info($"[SBS] Receive Msg -> Display aircraft: {(firstAircraftDrawTime.Value - msgReceiveTime.Value).TotalMilliseconds} ms");
+
                 connectStartTime = null; // 이후에는 다시 초기화
+                msgReceiveTime = null; // 이후에는 다시 초기화
             }
         }
 
