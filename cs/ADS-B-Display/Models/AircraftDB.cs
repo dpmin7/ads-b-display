@@ -324,6 +324,15 @@ namespace ADS_B_Display
             }
         }
 
+        public static string[] AircraftTypes = new string[]
+        {
+            "L1P", "LTA", "BALL", "L2P", "LJ40", "L2J", "GLEX", "GLF6",
+            "CL35", "L6J", "L4J", "L4T", "GDZ", "L2T", "L3J", "FA8X",
+            "T2T", "UAV", "L8J", "L3P", "L4P", "S4P", "A2P", "L4E",
+            "G1P", "H1P", "H1T", "H2T", "Z391", "H3T", "P", "H2P",
+            "H25B"
+        };
+
         public static void Init ()
         {
             Task.Run(() =>
@@ -364,14 +373,14 @@ namespace ADS_B_Display
             return (string.Empty, string.Empty);
         }
 
-        public static string IsMilitary(uint addr)
+        public static bool IsMilitary(uint addr)
         {
             foreach (var range in MilitaryRanges) {
                 if (addr >= range.Low && addr <= range.High) {
-                    return "true";
+                    return true;
                 }
             }
-            return "false";
+            return false;
         }
 
         /// <summary>

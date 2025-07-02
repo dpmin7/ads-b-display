@@ -270,6 +270,20 @@
                                 Text="Military:" />
                             <TextBlock Margin="8,4,0,0" Text="{Binding Aircraft.AircraftData.IsMilitary, FallbackValue=NA}" />
                         </StackPanel>
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock
+                                Margin="0,4,0,0"
+                                FontWeight="Bold"
+                                Text="Dep:" />
+                            <TextBlock Margin="8,4,0,0" Text="{Binding Aircraft.AircraftData.Dep, FallbackValue=NA}" />
+                        </StackPanel>
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock
+                                Margin="0,4,0,0"
+                                FontWeight="Bold"
+                                Text="Arr:" />
+                            <TextBlock Margin="8,4,0,0" Text="{Binding Aircraft.AircraftData.Arr, FallbackValue=NA}" />
+                        </StackPanel>
                     </StackPanel>
                     <Button
                         Grid.Column="1"
@@ -669,7 +683,6 @@
                             </GroupBox.Header>
                             <StackPanel Margin="8,10" Orientation="Vertical">
                                 <DataGrid
-                                    PreviewMouseDoubleClick="dgArea_PreviewMouseDoubleClick"
                                     x:Name="dgArea"
                                     Height="100"
                                     AutoGenerateColumns="False"
@@ -677,6 +690,7 @@
                                     BorderThickness="1"
                                     CanUserAddRows="False"
                                     ItemsSource="{Binding AreaList}"
+                                    PreviewMouseDoubleClick="dgArea_PreviewMouseDoubleClick"
                                     SelectedItem="{Binding SelectedArea, Mode=TwoWay}"
                                     SelectionMode="Single"
                                     VerticalScrollBarVisibility="Auto">
@@ -790,7 +804,7 @@
                                         Margin="0,0,20,0"
                                         IsSnapToTickEnabled="True"
                                         LowerValue="{Binding MinSpeed, Mode=TwoWay}"
-                                        Maximum="3000"
+                                        Maximum="1500"
                                         Minimum="0"
                                         TickFrequency="1"
                                         UpperValue="{Binding MaxSpeed, Mode=TwoWay}" />
@@ -848,6 +862,14 @@
                                                 Text="Aircraft Type Detail" />
                                         </StackPanel>
                                     </Button>
+                                </StackPanel>
+
+                                <StackPanel Orientation="Horizontal">
+                                    <CheckBox
+                                        Margin="0,4,0,0"
+                                        Content="Military"
+                                        IsChecked="{Binding FilterMilitary}" />
+
                                 </StackPanel>
 
                                 <Separator Margin="6,15,10,5" />

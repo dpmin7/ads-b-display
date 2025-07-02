@@ -769,7 +769,7 @@ namespace ADS_B_Display.Views
         {
             _mouseMoveSubscription = EventBus.Observe(EventIds.EvtMouseMoved).Subscribe(msg => UpdateMouseMove(msg));
             EventBus.Observe(EventIds.EvtAircraftDBInitialized).
-                Subscribe(msg => AircraftTypeList = AircraftDB.GetAllAircraftData().Select(x => x.IcaoAircraftType).Distinct().ToList());
+                Subscribe(msg => AircraftTypeList = AircraftDB.AircraftTypes.ToList());
         }
 
         private void UpdateMouseMove(object msg)
@@ -1199,7 +1199,7 @@ namespace ADS_B_Display.Views
         }
 
 
-        private bool useSpeedFilter = true;
+        private bool useSpeedFilter = false;
 
         public bool UseSpeedFilter
         {
@@ -1223,7 +1223,7 @@ namespace ADS_B_Display.Views
             }
         }
 
-        private double maxSpeed = 3000;
+        private double maxSpeed = 1500;
 
         public double MaxSpeed
         {
@@ -1259,7 +1259,7 @@ namespace ADS_B_Display.Views
             }
         }
 
-        private bool useAltitudeFilter = true;
+        private bool useAltitudeFilter = false;
 
         public bool UseAltitudeFilter
         {
@@ -1321,6 +1321,16 @@ namespace ADS_B_Display.Views
                 SetProperty(ref purgeDuration, value);
                 ControlSettings.PurgeDuration = value;
                 AircraftManager.SetPurgeLimitMS(value * 1000);
+            }
+        }
+
+        private bool filterMilitary;
+        public bool FilterMilitary {
+            get => filterMilitary;
+            set
+            {
+                SetProperty(ref filterMilitary, value);
+                AircraftManager.SetMilitaryFilter(filterMilitary);
             }
         }
     }

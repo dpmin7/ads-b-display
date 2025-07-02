@@ -34,7 +34,7 @@
             HorizontalAlignment="Right"
             VerticalAlignment="Bottom"
             Source="/Images/altitude_chart.svg" />
-        <Border
+        <!--<Border
             Margin="10,10,10,50"
             Padding="10"
             HorizontalAlignment="Right"
@@ -60,7 +60,7 @@
                     <Run x:Name="Bottom" />
                 </TextBlock>
             </StackPanel>
-        </Border>
+        </Border>-->
         <!--<Popup
             x:Name="aircraftPopup"
             AllowsTransparency="True"

@@ -158,9 +158,16 @@ namespace ADS_B_Display.Views.Converters
         {
             try
             {
-                if (value is string uriSoruce && string.IsNullOrEmpty(uriSoruce) == false)
+                if (value is string uriSoruce)
                 {
-                    return new BitmapImage(new Uri($"pack://application:,,,/Images/Flags/{value}.png"));
+                    if (string.IsNullOrEmpty(uriSoruce) == false)
+                    {
+                        return new BitmapImage(new Uri($"pack://application:,,,/Images/Flags/{value}.png"));
+                    }   
+                    else
+                    {
+                        return null;// new BitmapImage(new Uri($"pack://application:,,,/Images/Flags/{value}.png"));
+                    }
                 }
             }
             catch

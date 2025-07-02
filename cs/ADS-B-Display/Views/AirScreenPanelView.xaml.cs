@@ -271,15 +271,15 @@ namespace ADS_B_Display.Views
                 UpdateRegion(); // 현재 지역 업데이트
                 _earthView.Drag(_MouseLeftDownX, _MouseLeftDownY, x, y, EarthView.NAV_DRAG_PAN);
                 glControl.InvalidateVisual(); // 화면 갱신
-                eyeX.Text = _earthView.Eye.X.ToString(); eyeY.Text = _earthView.Eye.Y.ToString(); eyeH.Text = _earthView.Eye.H.ToString();
+                //eyeX.Text = _earthView.Eye.X.ToString(); eyeY.Text = _earthView.Eye.Y.ToString(); eyeH.Text = _earthView.Eye.H.ToString();
                 XY2LatLon2(0, 0, out double Lat, out double Lon);
                 XY2LatLon2(glControl.ActualWidth-1, glControl.ActualHeight-1, out double Lat2, out double Lon2);
                 
 
-                Left.Text = DMS.DegreesMinutesSecondsLat(Lat);
-                Right.Text = DMS.DegreesMinutesSecondsLat(Lat2);
-                Top.Text = DMS.DegreesMinutesSecondsLon(Lon);
-                Bottom.Text = DMS.DegreesMinutesSecondsLon(Lon2);
+                //Left.Text = DMS.DegreesMinutesSecondsLat(Lat);
+                //Right.Text = DMS.DegreesMinutesSecondsLat(Lat2);
+                //Top.Text = DMS.DegreesMinutesSecondsLon(Lon);
+                //Bottom.Text = DMS.DegreesMinutesSecondsLon(Lon2);
             }
         }
         
@@ -407,7 +407,7 @@ namespace ADS_B_Display.Views
             _earthView.Eye.H = h;
 
             UpdateRegion(); // 현재 지역 업데이트
-            eyeX.Text = _earthView.Eye.X.ToString(); eyeY.Text = _earthView.Eye.Y.ToString(); eyeH.Text = _earthView.Eye.H.ToString();
+            //eyeX.Text = _earthView.Eye.X.ToString(); eyeY.Text = _earthView.Eye.Y.ToString(); eyeH.Text = _earthView.Eye.H.ToString();
         }
 
         private double airplaneScale;
@@ -430,7 +430,7 @@ namespace ADS_B_Display.Views
 
             UpdateRegion(); // 현재 지역 업데이트
             glControl.InvalidateVisual(); // 마우스 휠 이벤트 후 강제 갱신
-            eyeX.Text = _earthView.Eye.X.ToString(); eyeY.Text = _earthView.Eye.Y.ToString(); eyeH.Text = _earthView.Eye.H.ToString();
+            //eyeX.Text = _earthView.Eye.X.ToString(); eyeY.Text = _earthView.Eye.Y.ToString(); eyeH.Text = _earthView.Eye.H.ToString();
         }
 
         private void ZoomControl(bool isZoomIn)
@@ -444,7 +444,7 @@ namespace ADS_B_Display.Views
 
             UpdateRegion(); // 현재 지역 업데이트
             glControl.InvalidateVisual(); // 마우스 휠 이벤트 후 강제 갱신
-            eyeX.Text = _earthView.Eye.X.ToString(); eyeY.Text = _earthView.Eye.Y.ToString(); eyeH.Text = _earthView.Eye.H.ToString();
+            //eyeX.Text = _earthView.Eye.X.ToString(); eyeY.Text = _earthView.Eye.Y.ToString(); eyeH.Text = _earthView.Eye.H.ToString();
         }
 
         private void glControl_SizeChanged(object sender, SizeChangedEventArgs e)
@@ -457,7 +457,7 @@ namespace ADS_B_Display.Views
             _earthView.Resize((int)e.NewSize.Width, (int)e.NewSize.Height);
 
             UpdateRegion(); // 현재 지역 업데이트
-            eyeX.Text = _earthView.Eye.X.ToString(); eyeY.Text = _earthView.Eye.Y.ToString(); eyeH.Text = _earthView.Eye.H.ToString();
+            //eyeX.Text = _earthView.Eye.X.ToString(); eyeY.Text = _earthView.Eye.Y.ToString(); eyeH.Text = _earthView.Eye.H.ToString();
         }
 
         private void glControl_Render(TimeSpan obj)

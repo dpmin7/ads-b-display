@@ -12,6 +12,7 @@
     Width="1280"
     Height="800"
     Closing="Window_Closing"
+    Icon="/icon.ico"
     ShowTitleBar="True"
     WindowStartupLocation="CenterScreen"
     WindowState="Maximized"

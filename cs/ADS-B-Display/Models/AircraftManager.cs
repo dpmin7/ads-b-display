@@ -116,6 +116,7 @@ namespace ADS_B_Display.Models
         {
             lock (lockObj)
             {
+                logger.Info($"Polygon filter start : {DateTime.Now.ToString("HH:mm:ss.fff")}");
                 foreach (var conflict in _cpaConflicts)
                 {
                     if (TryGet(conflict.ICAO1, out Aircraft aircraft1))
@@ -141,6 +142,8 @@ namespace ADS_B_Display.Models
                         aircraft2.IsConflictRisk = true;
                     }
                 }
+                logger.Info($"Polygon filter end : {DateTime.Now.ToString("HH:mm:ss.fff")}");
+
             }
         }
 
@@ -176,6 +179,15 @@ namespace ADS_B_Display.Models
             }
         }
 
+        private static bool _MilitaryFilter = false;
+        public static void SetMilitaryFilter(bool use)
+        {
+            lock (lockObj)
+            {
+                _MilitaryFilter = use;
+            }
+        }
+
         // Purge, virtual 업데이트
         private static void OnDataTimerElapsed(object sender, ElapsedEventArgs e)
         {
@@ -196,7 +208,8 @@ namespace ADS_B_Display.Models
                     }
                     if (_speedFilter.IsValid(kvp.Value.Speed) &&
                         _altitudeFilter.IsValid(kvp.Value.Altitude) &&
-                        _aircraftTypeFilter.IsValid(kvp.Value.AircraftData.IcaoAircraftType))
+                        _aircraftTypeFilter.IsValid(kvp.Value.AircraftData.IcaoAircraftType) &&
+                        (!_MilitaryFilter || kvp.Value.AircraftData.IsMilitary))
                     {
                         kvp.Value.Filtered = false;
                         num++;
