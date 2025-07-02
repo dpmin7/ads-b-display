@@ -78,7 +78,10 @@ namespace ADS_B_Display.Views
 
         private DispatcherTimer _updateTimer = new DispatcherTimer();
         private Timer _delayTimer;
-        
+
+        public static DateTime? connectStartTime = null;
+        private static DateTime? firstAircraftDrawTime = null;
+
         public AirScreenPanelView()
         {
             InitializeComponent();
@@ -799,6 +802,7 @@ namespace ADS_B_Display.Views
 
             Logger.Debug("DrawAircrafts()");
             var aircraftTable = AircraftManager.GetAll();
+            
             foreach (var data in aircraftTable)
             {
                 //if (data.IsOnScreen(_earthView.Eye, _earthView.Xspan, _earthView.Yspan))
@@ -855,6 +859,14 @@ namespace ADS_B_Display.Views
                 }
                 
                 GL.PopAttrib();
+            }
+
+            // 최초로 항공기가 그려진 시점 기록
+            if (connectStartTime != null)
+            {
+                firstAircraftDrawTime = DateTime.Now;
+                Logger.Info($"[SBS] 첫 항공기 화면 표시: {firstAircraftDrawTime.Value:HH:mm:ss.fff} (Connect 후 {(firstAircraftDrawTime.Value - connectStartTime.Value).TotalMilliseconds} ms)");
+                connectStartTime = null; // 이후에는 다시 초기화
             }
         }
 

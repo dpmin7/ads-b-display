@@ -744,11 +744,8 @@ namespace ADS_B_Display.Views
             if (RawConnectStatus == ConnectStatus.Connect)
                 return;
 
-            if (!NetworkUtil.IsNetworkAvailable())
-            {
-                MessageBox.Show("Please check your network connection and try again.", "Warning", MessageBoxButton.OK, MessageBoxImage.Warning);
-                return;
-            }
+            logger.Info($"[RAW] Connect 버튼 클릭: {DateTime.Now:HH:mm:ss.fff}");
+            AirScreenPanelView.connectStartTime = DateTime.Now;
 
             // 연결 중이 아니면 TextBox에 입력된 host:port로 연결 시도
             string input = ControlSettings.RawAddress.Trim();
@@ -837,11 +834,8 @@ namespace ADS_B_Display.Views
             if (SbsConnectStatus == ConnectStatus.Connect)
                 return;
 
-            if (!NetworkUtil.IsNetworkAvailable())
-            {
-                MessageBox.Show("Please check your network connection and try again.", "Warning", MessageBoxButton.OK, MessageBoxImage.Warning);
-                return;
-            }
+            logger.Info($"[SBS] Connect 버튼 클릭: {DateTime.Now:HH:mm:ss.fff}");
+            AirScreenPanelView.connectStartTime = DateTime.Now;
 
             string input = ControlSettings.SbsAddress.Trim();
             if (string.IsNullOrEmpty(input))
