@@ -598,7 +598,7 @@ namespace ADS_B_Display.Views
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"SBS 기록 파일을 닫는 동안 오류가 발생했습니다:\n{ex.Message}",
+                MessageBox.Show($"An error occurred while closing the SBS log file.:\n{ex.Message}",
                                 "Error", MessageBoxButton.OK, MessageBoxImage.Error);
             }
             finally
@@ -744,11 +744,17 @@ namespace ADS_B_Display.Views
             if (RawConnectStatus == ConnectStatus.Connect)
                 return;
 
+            if (!NetworkUtil.IsNetworkAvailable())
+            {
+                MessageBox.Show("Please check your network connection and try again.", "Warning", MessageBoxButton.OK, MessageBoxImage.Warning);
+                return;
+            }
+
             // 연결 중이 아니면 TextBox에 입력된 host:port로 연결 시도
             string input = ControlSettings.RawAddress.Trim();
             if (string.IsNullOrEmpty(input))
             {
-                MessageBox.Show("Raw Connect 주소를 입력하세요. (예: 127.0.0.1:30002)", "Warning", MessageBoxButton.OK, MessageBoxImage.Warning);
+                MessageBox.Show("Enter the Raw Connect address. (e.g., 127.0.0.1:30002)", "Warning", MessageBoxButton.OK, MessageBoxImage.Warning);
                 return;
             }
 
@@ -763,7 +769,7 @@ namespace ADS_B_Display.Views
                 host = parts[0];
                 if (!int.TryParse(parts[1], out port))
                 {
-                    MessageBox.Show("포트 번호가 올바르지 않습니다.", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                    MessageBox.Show("The port number is invalid.", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
                     return;
                 }
             }
@@ -831,10 +837,16 @@ namespace ADS_B_Display.Views
             if (SbsConnectStatus == ConnectStatus.Connect)
                 return;
 
+            if (!NetworkUtil.IsNetworkAvailable())
+            {
+                MessageBox.Show("Please check your network connection and try again.", "Warning", MessageBoxButton.OK, MessageBoxImage.Warning);
+                return;
+            }
+
             string input = ControlSettings.SbsAddress.Trim();
             if (string.IsNullOrEmpty(input))
             {
-                MessageBox.Show("SBS Connect 주소를 입력하세요. (예: data.adsbhub.org:30003)", "Warning", MessageBoxButton.OK, MessageBoxImage.Warning);
+                MessageBox.Show("Enter the SBS Connect address. (e.g., data.adsbhub.org:30003)", "Warning", MessageBoxButton.OK, MessageBoxImage.Warning);
                 return;
             }
 
@@ -849,7 +861,7 @@ namespace ADS_B_Display.Views
                 host = parts[0];
                 if (!int.TryParse(parts[1], out port))
                 {
-                    MessageBox.Show("포트 번호가 올바르지 않습니다.", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                    MessageBox.Show("The port number is invalid.", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
                     return;
                 }
             }
@@ -863,7 +875,6 @@ namespace ADS_B_Display.Views
             try
             {
                 // 연결 후, 스트림에서 한 줄씩 읽어서 처리 (예시: OnSbsMessageReceived(rawLine))
-
                 var popup = new LoadingPopup()
                 {
                     WindowStartupLocation = WindowStartupLocation.CenterOwner,

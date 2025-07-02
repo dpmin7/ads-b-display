@@ -266,6 +266,7 @@
     <Compile Include="Ntds2d.cs" />
     <Compile Include="Models\SbsWorker.cs" />
     <Compile Include="Models\Parser\SBSParser.cs" />
+    <Compile Include="Utils\NetworkUtil.cs" />
     <Compile Include="Utils\TriangulatPoly.cs" />
     <Compile Include="Utils\MathExt.cs" />
     <Compile Include="Utils\Time.cs" />
