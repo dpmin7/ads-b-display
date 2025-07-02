@@ -97,7 +97,7 @@ namespace ADS_B_Display.Views
         private void CancelButton_Click(object sender, RoutedEventArgs e)
         {
             // DialogResult = false; ❌ 사용 금지
-            Close();
+            Dispatcher.Invoke(() => this.Close());
         }
         private void CpaDataGrid_MouseDoubleClick(object sender, System.Windows.Input.MouseButtonEventArgs e)
         {

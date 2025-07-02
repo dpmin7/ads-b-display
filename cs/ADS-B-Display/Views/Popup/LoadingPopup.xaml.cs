@@ -29,7 +29,7 @@ namespace ADS_B_Display.Views.Popup
         private void Button_Click(object sender, RoutedEventArgs e)
         {
             IsCancelled = true;
-            Close();
+            Dispatcher.Invoke(() => this.Close());
         }
     }
 }

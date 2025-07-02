@@ -39,12 +39,12 @@ namespace ADS_B_Display.Views.Popup
         private void OK_Click(object sender, RoutedEventArgs e)
         {
             DialogResult = true;
-            Close();
+            Dispatcher.Invoke(() => this.Close());
         }
 
         private void Cancel_Click(object sender, RoutedEventArgs e)
         {
-            Close();
+            Dispatcher.Invoke(() => this.Close());
         }
     }
 }

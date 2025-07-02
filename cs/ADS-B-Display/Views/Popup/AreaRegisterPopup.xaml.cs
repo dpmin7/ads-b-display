@@ -40,13 +40,13 @@ namespace ADS_B_Display.Views.Popup
             AreaColor = colorPicker.SelectedColor.Value;
             
             DialogResult = true;
-            Close();
+            Dispatcher.Invoke(() => this.Close());
         }
 
         private void Cancel_Click(object sender, RoutedEventArgs e)
         {
             DialogResult = false;
-            Close();
+            Dispatcher.Invoke(() => this.Close());
         }
 
         private void colorPicker_SelectedColorChanged(object sender, RoutedPropertyChangedEventArgs<Color?> e)
