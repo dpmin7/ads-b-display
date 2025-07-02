@@ -696,7 +696,7 @@ namespace ADS_B_Display.Views
         }
 
         private bool CanRawConnect(object obj) => RawConnectStatus == ConnectStatus.Disconnect;
-        private bool CanRawDisconnect(object obj) => RawConnectStatus == ConnectStatus.Connect || SbsConnectStatus == ConnectStatus.Error;
+        private bool CanRawDisconnect(object obj) => RawConnectStatus == ConnectStatus.Connect || RawConnectStatus == ConnectStatus.Error;
         private bool CanSbsConnect(object obj) => SbsConnectStatus == ConnectStatus.Disconnect;
         private bool CanSbsDisconnect(object obj) => SbsConnectStatus == ConnectStatus.Connect || SbsConnectStatus == ConnectStatus.Error;
 
@@ -785,7 +785,7 @@ namespace ADS_B_Display.Views
                     WindowStartupLocation = WindowStartupLocation.CenterOwner,
                     Owner = Application.Current.MainWindow
                 };
-                popup.Closed += (s, e2) => { if (popup.IsCancelled) _rawCts.Cancel(); };
+                popup.Closed += (s, e2) => { if (popup.IsCancelled) { } };
                 popup.Show();
                 RawConnectStatus = ConnectStatus.Error;
                 var res = await _rawWorker.Start(host, port, _rawCts.Token);
@@ -874,7 +874,7 @@ namespace ADS_B_Display.Views
                     WindowStartupLocation = WindowStartupLocation.CenterOwner,
                     Owner = Application.Current.MainWindow
                 };
-                popup.Closed += (s, e2) => { if (popup.IsCancelled) _sbsCts.Cancel(); };
+                popup.Closed += (s, e2) => { if (popup.IsCancelled) { } };
                 SbsConnectStatus = ConnectStatus.Error;
                 popup.Show();
                 var res = await _sbsWorker.Start(host, port, _sbsCts.Token);

@@ -8,7 +8,7 @@
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     Title="LoadingPopup"
     Width="220"
-    Height="120"
+    Height="160"
     Topmost="True"
     WindowStyle="None"
     mc:Ignorable="d">
