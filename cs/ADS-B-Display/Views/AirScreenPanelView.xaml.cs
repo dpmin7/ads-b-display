@@ -562,12 +562,20 @@ namespace ADS_B_Display.Views
                         if (selectedRoute != null)
                         {
                             var airportCodes = selectedRoute["AirportCodes"].Split('-');
+                            AircraftManager.TrackHook.DrawAirports = new List<Dictionary<string, string>>();
+
+                            foreach (var airport in airportCodes)
+                            {
+                                AircraftManager.TrackHook.DrawAirports.Add(airportsInfo.FirstOrDefault(dict => dict.ContainsKey("ICAO") && dict["ICAO"] == airport));
+                            }
+                            
                             AircraftManager.TrackHook.DepartureAirport = airportsInfo.FirstOrDefault(dict => dict.ContainsKey("ICAO") && dict["ICAO"] == airportCodes[0]);
-                            AircraftManager.TrackHook.ArrivalAirport = airportsInfo.FirstOrDefault(dict => dict.ContainsKey("ICAO") && dict["ICAO"] == airportCodes[1]);
+                            AircraftManager.TrackHook.ArrivalAirport = airportsInfo.FirstOrDefault(dict => dict.ContainsKey("ICAO") && dict["ICAO"] == airportCodes[AircraftManager.TrackHook.DrawAirports.Count - 1]);
                         } else
                         {
                             AircraftManager.TrackHook.DepartureAirport = null;
                             AircraftManager.TrackHook.ArrivalAirport = null;
+                            AircraftManager.TrackHook.DrawAirports = null;
                         }
                     }
                 }
@@ -578,6 +586,7 @@ namespace ADS_B_Display.Views
                     AircraftManager.TrackHook.ICAO_CPA = selectedAircraft.ICAO;
                     AircraftManager.TrackHook.DepartureAirport = null;
                     AircraftManager.TrackHook.ArrivalAirport = null;
+                    AircraftManager.TrackHook.DrawAirports = null;
                 }
             }
             else
@@ -587,6 +596,7 @@ namespace ADS_B_Display.Views
                     AircraftManager.TrackHook.Valid_CC = false;
                     AircraftManager.TrackHook.DepartureAirport = null;
                     AircraftManager.TrackHook.ArrivalAirport = null;
+                    AircraftManager.TrackHook.DrawAirports = null;
                 }
                 else
                 {
@@ -952,40 +962,48 @@ namespace ADS_B_Display.Views
             var hook = AircraftManager.TrackHook;
             if (hook.DepartureAirport == null || hook.ArrivalAirport == null) return;
 
-            if (double.TryParse(hook.DepartureAirport["Latitude"], out double ddLat) &&
-                double.TryParse(hook.DepartureAirport["Longitude"], out double ddLon) &&
-                double.TryParse(hook.ArrivalAirport["Latitude"], out double daLat) &&
-                double.TryParse(hook.ArrivalAirport["Longitude"], out double daLon))
+            for (int i = 0; i < hook.DrawAirports.Count - 1; i++)
             {
-                // 1. 출발지점의 화면 좌표는 기존 방식으로 계산합니다.
-                LatLon2XY(ddLat, ddLon, out double dScrX, out double dScrY);
+                var deptAirport = hook.DrawAirports[i];
+                var arrAirport = hook.DrawAirports[Math.Min(i + 1, hook.DrawAirports.Count - 1)];
 
-                // 2. 도착지점의 경도를 조정할 변수를 만듭니다.
-                double adjustedDaLon = daLon;
+                bool isLast = (i == hook.DrawAirports.Count - 1);
 
-                // 3. 출발지와 도착지의 경도 차이를 계산합니다.
-                double lonDifference = daLon - ddLon;
-
-                // 4. 경도차가 180도보다 크면 '짧은 경로'로 가도록 경도를 조정합니다.
-                //    (예: 동경 170도 -> 서경 170도로 갈 때)
-                if (lonDifference > 180)
+                if (double.TryParse(deptAirport["Latitude"], out double ddLat) &&
+                double.TryParse(deptAirport["Longitude"], out double ddLon) &&
+                double.TryParse(arrAirport["Latitude"], out double daLat) &&
+                double.TryParse(arrAirport["Longitude"], out double daLon))
                 {
-                    adjustedDaLon -= 360; // 서쪽으로 이동한 것처럼 경도를 조정
-                }
-                else if (lonDifference < -180)
-                {
-                    adjustedDaLon += 360; // 동쪽으로 이동한 것처럼 경도를 조정
-                }
+                    // 1. 출발지점의 화면 좌표는 기존 방식으로 계산합니다.
+                    LatLon2XY(ddLat, ddLon, out double dScrX, out double dScrY);
 
-                // 5. WrapLongitude()를 피하기 위해, LatLon2XY의 계산 로직을 직접 사용하여
-                //    '조정된 경도(adjustedDaLon)'로 도착지점의 화면 좌표를 계산합니다.
-                double aScrX, aScrY;
-                aScrX = (Map_v[1].X - ((Map_w[1].X - (adjustedDaLon / 360.0)) / xf));
-                aScrY = Map_v[3].Y - (Map_w[1].Y / yf) + (MathExt.Asinh(Math.Tan(daLat * Math.PI / 180.0)) / (2 * Math.PI * yf));
+                    // 2. 도착지점의 경도를 조정할 변수를 만듭니다.
+                    double adjustedDaLon = daLon;
 
-                // 6. 계산된 화면 좌표로 경로를 그립니다.
-                // Ntds2d.DrawGreatCircleArc(ddLat, ddLon, daLat, daLon, 50, LatLon2XY);
-                Ntds2d.Draw2dCurve(dScrX, dScrY, aScrX, aScrY, 0.2, 30);
+                    // 3. 출발지와 도착지의 경도 차이를 계산합니다.
+                    double lonDifference = daLon - ddLon;
+
+                    // 4. 경도차가 180도보다 크면 '짧은 경로'로 가도록 경도를 조정합니다.
+                    //    (예: 동경 170도 -> 서경 170도로 갈 때)
+                    if (lonDifference > 180)
+                    {
+                        adjustedDaLon -= 360; // 서쪽으로 이동한 것처럼 경도를 조정
+                    }
+                    else if (lonDifference < -180)
+                    {
+                        adjustedDaLon += 360; // 동쪽으로 이동한 것처럼 경도를 조정
+                    }
+
+                    // 5. WrapLongitude()를 피하기 위해, LatLon2XY의 계산 로직을 직접 사용하여
+                    //    '조정된 경도(adjustedDaLon)'로 도착지점의 화면 좌표를 계산합니다.
+                    double aScrX, aScrY;
+                    aScrX = (Map_v[1].X - ((Map_w[1].X - (adjustedDaLon / 360.0)) / xf));
+                    aScrY = Map_v[3].Y - (Map_w[1].Y / yf) + (MathExt.Asinh(Math.Tan(daLat * Math.PI / 180.0)) / (2 * Math.PI * yf));
+
+                    // 6. 계산된 화면 좌표로 경로를 그립니다.
+                    // Ntds2d.DrawGreatCircleArc(ddLat, ddLon, daLat, daLon, 50, LatLon2XY);
+                    Ntds2d.Draw2dCurve(dScrX, dScrY, aScrX, aScrY, 0.2, 30, isLast);
+                }
             }
         }
 

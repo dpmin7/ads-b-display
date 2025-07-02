@@ -622,7 +622,7 @@ namespace ADS_B_Display
             GL.PopMatrix(); // 전체 이동 행렬 복원
         }
 
-        public static void Draw2dCurve(double p1_x, double p1_y, double p2_x, double p2_y, double curvature, int segments)
+        public static void Draw2dCurve(double p1_x, double p1_y, double p2_x, double p2_y, double curvature, int segments, bool isLast)
         {
             var arrowSize = 30;
 

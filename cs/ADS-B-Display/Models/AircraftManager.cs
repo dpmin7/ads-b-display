@@ -409,6 +409,8 @@ namespace ADS_B_Display.Models
         public uint ICAO_CPA { get; set; }
         public Dictionary<string, string> DepartureAirport { get; set; }
         public Dictionary<string, string> ArrivalAirport { get; set; }
+
+        public List<Dictionary<string, string>> DrawAirports { get; set; }
     }
 
     public class CPAConflictInfo
