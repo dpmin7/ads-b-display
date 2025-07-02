@@ -299,77 +299,39 @@ namespace ADS_B_Display
             {
                 switch (icaoaircrafttype)
                 {
-                    case "L1P":
-                        return 0;
-                    case "LTA":
-                        return 1;
-                    case "BALL":
-                        return 2;
-                    case "L2P":
-                        return 3;
-                    case "LJ40":
-                        return 4;
-                    case "L2J":
-                        return 5;
-                    case "GLEX":
-                        return 8;
-                    case "GLF6":
-                        return 9;
-                    case "H25B":
-                        return 80;
-                    case "CL35":
-                        return 12;
-                    case "L6J":
-                        return 13;
-                    case "L4J":
-                        return 14;
-                    case "L4T":
-                        return 15;
-                    case "GDZ":
-                        return 16;
-                    case "L2T":
-                        return 17;
-                    case "FA8X": // 18을 반환하는 첫 번째 케이스
-                    case "L3J":  // 동일하게 18을 반환
-                        return 18;
-                    case "T2T":
-                        return 19;
-                    case "UAV":
-                        return 27;
-                    case "L8J":
-                        return 29;
-                    case "L3P":
-                        return 32;
-                    case "L4P":
-                        return 33;
-                    case "S4P":
-                        return 34;
-                    case "A2P":
-                        return 37;
-                    case "L4E":
-                        return 39;
-                    case "H3T":
-                        return 54;
-                    case "H1P":
-                        return 46;
-                    case "H1T":
-                        return 46; // 76
-                    case "G1P":
-                        return 43;
-                    case "H2T":
-                        return 53;
-                    case "H2P":
-                        return 75;
-                    case "Z391":
-                        return 53;
-                    case "P":
-                        return 55;
-                    case "GRND":
-                        // 참고: GRND는 73과 74 두 번 나타나지만,
-                        // switch 문에서는 첫 번째 값인 73만 반환 가능합니다.
-                        return 73;
-                    case "S602":
-                        return 76;
+                    case "L1P": return 43;
+                    case "LTA": return 1;
+                    case "BALL": return 2;
+                    case "L2P": return 55;
+                    case "LJ40": return 13;
+                    case "L2J": return 0;
+                    case "GLEX": return 13;
+                    case "GLF6": return 13;
+                    case "CL35": return 13;
+                    case "L6J": return 17;
+                    case "L4J": return 10;
+                    case "L4T": return 42;
+                    case "GDZ": return 41;
+                    case "L2T": return 15;
+                    case "L3J": return 33;
+                    case "FA8X": return 13;
+                    case "T2T": return 20;
+                    case "UAV": return 28;
+                    case "L8J": return 17;
+                    case "L3P": return 37;
+                    case "L4P": return 32;
+                    case "S4P": return 32;
+                    case "A2P": return 14;
+                    case "L4E": return 77;
+                    case "G1P": return 41;
+                    case "H1P": return 51;
+                    case "H1T": return 46;
+                    case "H2T": return 52;
+                    case "Z391": return 78;
+                    case "H3T": return 74;
+                    case "P": return 47;
+                    case "H2P": return 51;
+                    case "H25B": return 13;
                     default:
                         // 목록에 없는 값이 들어올 경우 기본값 반환
                         return 0;
