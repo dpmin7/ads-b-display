@@ -261,6 +261,13 @@
                                 Text=" / ARR: " />
                             <TextBlock Margin="8,4,0,0" Text="{Binding Aircraft.AircraftData.Arr, FallbackValue=NA}" />
                         </StackPanel>
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock
+                                Margin="0,4,0,0"
+                                FontWeight="Bold"
+                                Text="Military:" />
+                            <TextBlock Margin="8,4,0,0" Text="{Binding Aircraft.AircraftData.IsMilitary, FallbackValue=NA}" />
+                        </StackPanel>
                     </StackPanel>
                     <Button
                         Grid.Column="1"

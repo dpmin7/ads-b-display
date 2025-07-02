@@ -151,7 +151,7 @@ namespace ADS_B_Display.Models
         /// <summary>
         /// 항공기에 대한 Militery 설명입니다.
         /// </summary>
-        public bool IsMilitary { get; set; }
+        public string IsMilitary { get; set; }
 
         public int AircraftImageNum { get; set; }
 

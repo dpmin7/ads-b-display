@@ -281,61 +281,46 @@ namespace ADS_B_Display
             new ICAORange(0xE40000, 0xE41FFF, "IN", "India Military")
         };
 
-        private static int ConvertSpriteImage(string icaoaircrafttype, bool isMilitary)
+        private static int ConvertSpriteImage(string icaoaircrafttype)
         {
-            if (isMilitary)
+            switch (icaoaircrafttype)
             {
-                switch (icaoaircrafttype)
-                {
-                    case "H3T":
-                    case "H1P":
-                    case "H1T":
-                    case "H2T":
-                        return 72;
-                    default:
-                        return 76;
-                }
-            } else
-            {
-                switch (icaoaircrafttype)
-                {
-                    case "L1P": return 43;
-                    case "LTA": return 1;
-                    case "BALL": return 2;
-                    case "L2P": return 55;
-                    case "LJ40": return 13;
-                    case "L2J": return 0;
-                    case "GLEX": return 13;
-                    case "GLF6": return 13;
-                    case "CL35": return 13;
-                    case "L6J": return 17;
-                    case "L4J": return 10;
-                    case "L4T": return 42;
-                    case "GDZ": return 41;
-                    case "L2T": return 15;
-                    case "L3J": return 33;
-                    case "FA8X": return 13;
-                    case "T2T": return 20;
-                    case "UAV": return 28;
-                    case "L8J": return 17;
-                    case "L3P": return 37;
-                    case "L4P": return 32;
-                    case "S4P": return 32;
-                    case "A2P": return 14;
-                    case "L4E": return 77;
-                    case "G1P": return 41;
-                    case "H1P": return 51;
-                    case "H1T": return 46;
-                    case "H2T": return 52;
-                    case "Z391": return 78;
-                    case "H3T": return 74;
-                    case "P": return 47;
-                    case "H2P": return 51;
-                    case "H25B": return 13;
-                    default:
-                        // 목록에 없는 값이 들어올 경우 기본값 반환
-                        return 0;
-                }
+                case "L1P": return 43;
+                case "LTA": return 1;
+                case "BALL": return 2;
+                case "L2P": return 55;
+                case "LJ40": return 13;
+                case "L2J": return 0;
+                case "GLEX": return 13;
+                case "GLF6": return 13;
+                case "CL35": return 13;
+                case "L6J": return 17;
+                case "L4J": return 10;
+                case "L4T": return 42;
+                case "GDZ": return 41;
+                case "L2T": return 15;
+                case "L3J": return 33;
+                case "FA8X": return 13;
+                case "T2T": return 20;
+                case "UAV": return 28;
+                case "L8J": return 17;
+                case "L3P": return 37;
+                case "L4P": return 32;
+                case "S4P": return 32;
+                case "A2P": return 14;
+                case "L4E": return 77;
+                case "G1P": return 41;
+                case "H1P": return 51;
+                case "H1T": return 46;
+                case "H2T": return 52;
+                case "Z391": return 78;
+                case "H3T": return 74;
+                case "P": return 47;
+                case "H2P": return 51;
+                case "H25B": return 13;
+                default:
+                    // 목록에 없는 값이 들어올 경우 기본값 반환
+                    return 0;
             }
         }
 
@@ -366,7 +351,7 @@ namespace ADS_B_Display
             (var countryShort, var country) = GetCountry(addr);
             var isMilitary = IsMilitary(addr);
 
-            return new AircraftData { Icao24 = addr, Country = country, CountryShort = countryShort, IsMilitary = isMilitary, AircraftImageNum = isMilitary ? 76 : 0 };
+            return new AircraftData { Icao24 = addr, Country = country, CountryShort = countryShort, IsMilitary = isMilitary };
         }
 
         public static (string, string) GetCountry(uint addr)
@@ -379,14 +364,14 @@ namespace ADS_B_Display
             return (string.Empty, string.Empty);
         }
 
-        public static bool IsMilitary(uint addr)
+        public static string IsMilitary(uint addr)
         {
             foreach (var range in MilitaryRanges) {
                 if (addr >= range.Low && addr <= range.High) {
-                    return true;
+                    return "true";
                 }
             }
-            return false;
+            return "false";
         }
 
         /// <summary>
@@ -452,7 +437,7 @@ namespace ADS_B_Display
 
                 aircraft.IsMilitary = IsMilitary(aircraft.Icao24);
                 // 72
-                aircraft.AircraftImageNum = ConvertSpriteImage(aircraft.IcaoAircraftType, aircraft.IsMilitary);
+                aircraft.AircraftImageNum = ConvertSpriteImage(aircraft.IcaoAircraftType);
 
                 aircraftDataTable[icaoUintValue] = aircraft;
             }
